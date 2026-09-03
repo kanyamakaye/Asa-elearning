@@ -1,0 +1,29 @@
+# Node / frontend
+node_modules/
+dist/
+dist-ssr/
+*.local
+npm-debug.log*
+
+# Python / Django backend
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+db.sqlite3
+media/
+staticfiles/
+*.egg-info/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
