@@ -1,10 +1,12 @@
 from django.contrib import admin
 
+from .forms import AssignmentForm
 from .models import Assignment, AssignmentSubmission
 
 
 @admin.register(Assignment)
 class AssignmentAdmin(admin.ModelAdmin):
+    form = AssignmentForm
     list_display = ('title', 'course', 'due_date', 'status', 'maximum_marks')
     list_filter = ('status',)
 

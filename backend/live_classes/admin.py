@@ -5,6 +5,9 @@ from .models import Attendance, LiveSession
 
 @admin.register(LiveSession)
 class LiveSessionAdmin(admin.ModelAdmin):
+    # LiveSessionForm (forms.py) omits `instructor` since it's set from the
+    # current user in the app flow; the admin uses Django's default full-field
+    # form so staff can assign sessions to any instructor explicitly.
     list_display = ('title', 'course', 'instructor', 'scheduled_date', 'status')
     list_filter = ('status',)
 

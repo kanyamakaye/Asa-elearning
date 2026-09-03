@@ -1,5 +1,6 @@
 from django.contrib import admin
 
+from .forms import FAQForm
 from .models import FAQ, Feedback, SupportTicket
 
 
@@ -11,6 +12,7 @@ class SupportTicketAdmin(admin.ModelAdmin):
 
 @admin.register(FAQ)
 class FAQAdmin(admin.ModelAdmin):
+    form = FAQForm
     list_display = ('question', 'category', 'display_order', 'is_active')
     list_filter = ('is_active', 'category')
 
