@@ -15,8 +15,8 @@ class CourseAdmin(admin.ModelAdmin):
     # their own course" app flow, where `instructor` is implied by the current
     # user and so isn't a form field. The admin needs to assign courses to any
     # instructor explicitly, so it keeps Django's default full-field form here.
-    list_display = ('title', 'course_code', 'instructor', 'category', 'status', 'price', 'created_at')
-    list_filter = ('status', 'level', 'is_free', 'category')
+    list_display = ('title', 'course_code', 'instructor', 'category', 'status', 'visibility', 'price', 'created_at')
+    list_filter = ('status', 'visibility', 'level', 'is_free', 'category')
     search_fields = ('title', 'course_code')
     inlines = [CourseModuleInline]
 

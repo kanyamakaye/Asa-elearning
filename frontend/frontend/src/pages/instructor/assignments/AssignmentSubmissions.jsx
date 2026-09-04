@@ -1,0 +1,122 @@
+import { useEffect, useState } from 'react'
+import { useParams } from 'react-router-dom'
+import { getAssignment, getSubmissions, gradeSubmission } from '../../../services/assignmentService'
+import Alert from '../../../components/ui/Alert'
+import Badge from '../../../components/ui/Badge'
+import Breadcrumb from '../../../components/ui/Breadcrumb'
+import Button from '../../../components/ui/Button'
+import Input from '../../../components/ui/Input'
+import LoadingSpinner from '../../../components/ui/LoadingSpinner'
+import PageHeader from '../../../components/ui/PageHeader'
+import Textarea from '../../../components/ui/Textarea'
+
+const statusTone = { submitted: 'neutral', late: 'warning', graded: 'success', returned: 'brand', draft: 'neutral' }
+
+function GradeRow({ submission, maxMarks, onGraded }) {
+  const [marks, setMarks] = useState(submission.marks_awarded ?? '')
+  const [feedback, setFeedback] = useState(submission.feedback ?? '')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  async function submit() {
+    if (marks === '' || Number(marks) < 0 || Number(marks) > maxMarks) {
+      setError(`Enter a score between 0 and ${maxMarks}.`)
+      return
+    }
+    setSaving(true)
+    setError('')
+    try {
+      const res = await gradeSubmission(submission.id, { marks_awarded: marks, feedback })
+      onGraded(res.data)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="rounded-2xl bg-white p-5 ring-1 ring-navy-900/8">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="text-sm font-bold text-navy-900">{submission.student?.full_name ?? submission.student?.username}</p>
+          <p className="text-xs text-navy-700/45">Submitted {new Date(submission.submitted_at).toLocaleString()}</p>
+        </div>
+        <Badge tone={statusTone[submission.status]}>{submission.status}</Badge>
+      </div>
+
+      {submission.submission_text && (
+        <p className="mt-3 rounded-xl bg-navy-50/60 p-3 text-sm text-navy-800">{submission.submission_text}</p>
+      )}
+      {submission.file && (
+        <a href={submission.file} target="_blank" rel="noreferrer" className="mt-2 inline-block text-xs font-semibold text-brand-500 hover:text-navy-900">
+          View submitted file
+        </a>
+      )}
+
+      {error && <Alert tone="error" className="mt-3">{error}</Alert>}
+
+      <div className="mt-4 grid gap-3 sm:grid-cols-[120px_1fr_auto] sm:items-end">
+        <div>
+          <span className="text-xs font-semibold text-navy-700/60">Score / {maxMarks}</span>
+          <Input type="number" min="0" max={maxMarks} className="mt-1.5" value={marks} onChange={(e) => setMarks(e.target.value)} />
+        </div>
+        <div>
+          <span className="text-xs font-semibold text-navy-700/60">Feedback</span>
+          <Textarea rows={1} className="mt-1.5" value={feedback} onChange={(e) => setFeedback(e.target.value)} />
+        </div>
+        <Button size="sm" loading={saving} disabled={saving} onClick={submit}>
+          {saving ? 'Saving…' : submission.status === 'graded' ? 'Update Grade' : 'Grade'}
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+export default function AssignmentSubmissions() {
+  const { id } = useParams()
+  const [assignment, setAssignment] = useState(null)
+  const [submissions, setSubmissions] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    let cancelled = false
+    Promise.all([getAssignment(id), getSubmissions(id)]).then(([a, subs]) => {
+      if (cancelled) return
+      setAssignment(a)
+      setSubmissions(subs)
+    }).catch((err) => !cancelled && setError(err.message))
+      .finally(() => !cancelled && setLoading(false))
+    return () => { cancelled = true }
+  }, [id])
+
+  function handleGraded(updated) {
+    setSubmissions((subs) => subs.map((s) => (s.id === updated.id ? updated : s)))
+  }
+
+  if (loading) return <LoadingSpinner label="Loading submissions…" />
+  if (error) return <Alert tone="error">{error}</Alert>
+
+  return (
+    <div className="mx-auto max-w-3xl space-y-6">
+      <PageHeader
+        breadcrumb={<Breadcrumb items={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Assignments', to: '/dashboard/assignments' }, { label: 'Submissions' }]} />}
+        title={assignment?.title}
+        description={`${submissions.length} submission${submissions.length === 1 ? '' : 's'} · ${submissions.filter((s) => s.status === 'graded').length} graded`}
+      />
+
+      {submissions.length === 0 ? (
+        <div className="rounded-2xl bg-white p-10 text-center ring-1 ring-navy-900/8">
+          <p className="text-sm text-navy-700/50">No submissions yet.</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {submissions.map((s) => (
+            <GradeRow key={s.id} submission={s} maxMarks={assignment.maximum_marks} onGraded={handleGraded} />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}

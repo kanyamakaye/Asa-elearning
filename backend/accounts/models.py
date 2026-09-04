@@ -7,8 +7,11 @@ from django.db import models
 class User(AbstractUser):
     class UserType(models.TextChoices):
         ADMIN = 'admin', 'Administrator'
+        ACADEMIC_MANAGER = 'academic_manager', 'Academic Manager'
         INSTRUCTOR = 'instructor', 'Instructor'
         STUDENT = 'student', 'Student'
+        CONTENT_MANAGER = 'content_manager', 'Content Manager'
+        SUPPORT_STAFF = 'support_staff', 'Support Staff'
 
     class Status(models.TextChoices):
         ACTIVE = 'active', 'Active'

@@ -205,8 +205,13 @@ SIMPLE_JWT = {
     'USER_ID_CLAIM': 'user_id',
 }
 
-# CORS — the React frontend runs on Vite's dev server by default.
+# CORS — the React frontend runs on Vite's dev server by default. Vite falls
+# back to 5174+ when 5173 is already taken (e.g. another dev server left
+# running), so the default allowlist covers a small range of dev ports.
 CORS_ALLOWED_ORIGINS = os.getenv(
-    'CORS_ALLOWED_ORIGINS', 'http://localhost:5173,http://127.0.0.1:5173'
+    'CORS_ALLOWED_ORIGINS',
+    'http://localhost:5173,http://127.0.0.1:5173,'
+    'http://localhost:5174,http://127.0.0.1:5174,'
+    'http://localhost:5175,http://127.0.0.1:5175',
 ).split(',')
 CORS_ALLOW_CREDENTIALS = True

@@ -14,7 +14,7 @@ class SupportTicketViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         qs = SupportTicket.objects.select_related('user', 'assigned_to')
-        if user.user_type == 'admin' or user.is_staff:
+        if user.user_type in ('admin', 'support_staff') or user.is_staff:
             return qs
         return qs.filter(user=user)
 
@@ -29,10 +29,15 @@ class SupportTicketViewSet(viewsets.ModelViewSet):
 
 
 class FAQViewSet(viewsets.ModelViewSet):
-    queryset = FAQ.objects.filter(is_active=True)
     serializer_class = FAQSerializer
     permission_classes = [IsAdminOrReadOnly]
     search_fields = ['question', 'answer', 'category']
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_authenticated and (user.is_staff or user.user_type in ('admin', 'content_manager')):
+            return FAQ.objects.all()
+        return FAQ.objects.filter(is_active=True)
 
 
 class FeedbackViewSet(viewsets.ModelViewSet):

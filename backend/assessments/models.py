@@ -17,6 +17,7 @@ class Quiz(models.Model):
     )
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
+    instructions = models.TextField(blank=True)
     duration_minutes = models.PositiveIntegerField(default=30)
     total_marks = models.PositiveIntegerField(default=100)
     passing_marks = models.PositiveIntegerField(default=50)
@@ -39,6 +40,7 @@ class Quiz(models.Model):
 class QuizQuestion(models.Model):
     class QuestionType(models.TextChoices):
         MULTIPLE_CHOICE = 'multiple_choice', 'Multiple Choice'
+        MULTIPLE_SELECT = 'multiple_select', 'Multiple Select'
         TRUE_FALSE = 'true_false', 'True/False'
         SHORT_ANSWER = 'short_answer', 'Short Answer'
         ESSAY = 'essay', 'Essay'

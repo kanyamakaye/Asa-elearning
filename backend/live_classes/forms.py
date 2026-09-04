@@ -8,7 +8,8 @@ class LiveSessionForm(forms.ModelForm):
         model = LiveSession
         fields = [
             'course', 'title', 'description', 'meeting_platform', 'meeting_url', 'meeting_id',
-            'meeting_password', 'scheduled_date', 'start_time', 'end_time', 'status', 'recording_url',
+            'meeting_password', 'scheduled_date', 'start_time', 'end_time', 'timezone', 'capacity',
+            'status', 'recording_url',
         ]
         widgets = {
             'scheduled_date': forms.DateInput(attrs={'type': 'date'}),

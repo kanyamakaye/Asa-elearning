@@ -6,6 +6,7 @@ from . import views
 
 router = DefaultRouter()
 router.register('users', views.UserViewSet, basename='user')
+router.register('audit-logs', views.LoginHistoryViewSet, basename='audit-log')
 
 urlpatterns = [
     path('auth/register/', views.RegisterView.as_view(), name='auth-register'),
@@ -16,6 +17,8 @@ urlpatterns = [
     path('auth/password-reset/', views.PasswordResetRequestView.as_view(), name='auth-password-reset'),
     path('auth/password-reset/confirm/', views.PasswordResetConfirmView.as_view(), name='auth-password-reset-confirm'),
     path('auth/verify-email/', views.EmailVerificationConfirmView.as_view(), name='auth-verify-email'),
+
+    path('instructors/', views.InstructorListView.as_view(), name='instructor-list'),
 
     path('users/me/', views.MeView.as_view(), name='user-me'),
     path('users/me/student-profile/', views.MyStudentProfileView.as_view(), name='user-me-student-profile'),

@@ -3,7 +3,7 @@ from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from .models import EmailVerificationToken, InstructorProfile, PasswordResetToken, StudentProfile
+from .models import EmailVerificationToken, InstructorProfile, LoginHistory, PasswordResetToken, StudentProfile
 
 User = get_user_model()
 
@@ -44,6 +44,27 @@ class UserSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'user_type', 'status', 'email_verified', 'date_joined', 'last_login']
 
 
+class InstructorPublicSerializer(serializers.ModelSerializer):
+    """Public, marketing-site representation of an instructor with aggregate stats."""
+
+    full_name = serializers.ReadOnlyField()
+    title = serializers.SerializerMethodField()
+    course_count = serializers.IntegerField(read_only=True)
+    student_count = serializers.IntegerField(read_only=True)
+    average_rating = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'full_name', 'profile_picture', 'title', 'course_count', 'student_count', 'average_rating']
+
+    def get_title(self, obj):
+        profile = getattr(obj, 'instructor_profile', None)
+        return profile.specialization if profile and profile.specialization else 'Instructor'
+
+    def get_average_rating(self, obj):
+        return round(obj.average_rating, 2) if obj.average_rating else None
+
+
 class UserPublicSerializer(serializers.ModelSerializer):
     """Minimal, safe-to-expose representation used when nested in other resources."""
 
@@ -52,6 +73,17 @@ class UserPublicSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'full_name', 'profile_picture', 'user_type']
+
+
+class LoginHistorySerializer(serializers.ModelSerializer):
+    user = UserPublicSerializer(read_only=True)
+
+    class Meta:
+        model = LoginHistory
+        fields = [
+            'id', 'user', 'ip_address', 'device_information', 'browser_information',
+            'login_status', 'login_at', 'logout_at',
+        ]
 
 
 class RegisterSerializer(serializers.ModelSerializer):

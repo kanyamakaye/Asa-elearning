@@ -1,16 +1,20 @@
 from rest_framework import viewsets
 
-from accounts.permissions import IsInstructorOrReadOnly
+from accounts.permissions import CanManageCourseContent
+from common.responses import StandardResponseMixin
 
 from .models import LearningResource, Lesson
 from .serializers import LearningResourceSerializer, LessonSerializer
 
 
-class LessonViewSet(viewsets.ModelViewSet):
-    queryset = Lesson.objects.select_related('module').all()
+class LessonViewSet(StandardResponseMixin, viewsets.ModelViewSet):
+    queryset = Lesson.objects.select_related('module', 'module__course').all()
     serializer_class = LessonSerializer
-    permission_classes = [IsInstructorOrReadOnly]
+    permission_classes = [CanManageCourseContent]
     search_fields = ['title', 'description']
+    create_message = 'Lesson created successfully.'
+    update_message = 'Lesson updated successfully.'
+    delete_message = 'Lesson deleted successfully.'
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -26,9 +30,9 @@ class LessonViewSet(viewsets.ModelViewSet):
 
 
 class LearningResourceViewSet(viewsets.ModelViewSet):
-    queryset = LearningResource.objects.all()
+    queryset = LearningResource.objects.select_related('course', 'lesson__module__course').all()
     serializer_class = LearningResourceSerializer
-    permission_classes = [IsInstructorOrReadOnly]
+    permission_classes = [CanManageCourseContent]
 
     def get_queryset(self):
         qs = super().get_queryset()

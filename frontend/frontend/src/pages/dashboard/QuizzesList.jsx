@@ -1,0 +1,100 @@
+import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { useAuth } from '../../context/AuthContext'
+import { deleteQuiz, getQuizzes, publishQuiz } from '../../services/quizService'
+import DataTable from '../../components/dashboard/DataTable'
+import Badge from '../../components/ui/Badge'
+import Button from '../../components/ui/Button'
+import PageHeader from '../../components/ui/PageHeader'
+import { IconEdit, IconPlus, IconTrash } from '../../components/icons'
+
+const statusTone = { draft: 'warning', published: 'success', closed: 'neutral' }
+
+export default function QuizzesList() {
+  const { user } = useAuth()
+  const [quizzes, setQuizzes] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [busyId, setBusyId] = useState(null)
+  const isManager = user?.user_type === 'admin' || user?.user_type === 'academic_manager'
+
+  async function load() {
+    setLoading(true)
+    try {
+      const data = await getQuizzes({ page_size: 100 })
+      let rows = data.results ?? data
+      if (!isManager) rows = rows.filter((q) => q.created_by === user?.id)
+      setQuizzes(rows)
+    } catch {
+      // handled by empty state
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => { load() }, [user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function handlePublish(id) {
+    setBusyId(id)
+    try {
+      await publishQuiz(id)
+      await load()
+    } catch (err) {
+      window.alert(err.message)
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  async function handleDelete(quiz) {
+    if (!window.confirm(`Delete quiz "${quiz.title}"? This cannot be undone.`)) return
+    setBusyId(quiz.id)
+    try {
+      await deleteQuiz(quiz.id)
+      await load()
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <PageHeader
+        title="Quizzes"
+        description={`${quizzes.length} quiz${quizzes.length === 1 ? '' : 'zes'}`}
+        actions={<Button as={Link} to="/dashboard/quizzes/create"><IconPlus className="h-4 w-4" /> Create Quiz</Button>}
+      />
+
+      <DataTable
+        loading={loading}
+        rows={quizzes}
+        emptyMessage="No quizzes yet. Create your first one."
+        columns={[
+          { key: 'title', label: 'Title', render: (q) => <span className="font-semibold text-navy-900">{q.title}</span> },
+          { key: 'question_count', label: 'Questions' },
+          { key: 'attempt_limit', label: 'Max Attempts' },
+          { key: 'passing_marks', label: 'Passing', render: (q) => `${q.passing_marks}/${q.total_marks}` },
+          { key: 'status', label: 'Status', render: (q) => <Badge tone={statusTone[q.status]}>{q.status}</Badge> },
+          {
+            key: 'actions',
+            label: '',
+            render: (q) => (
+              <div className="flex items-center justify-end gap-2">
+                {q.status === 'draft' && (
+                  <Button size="sm" variant="secondary" disabled={busyId === q.id} onClick={() => handlePublish(q.id)}>
+                    Publish
+                  </Button>
+                )}
+                <Link to={`/dashboard/quizzes/${q.id}/edit`} className="rounded-lg p-1.5 text-navy-700/50 hover:bg-navy-50" aria-label="Edit quiz">
+                  <IconEdit className="h-4 w-4" />
+                </Link>
+                <button type="button" disabled={busyId === q.id} onClick={() => handleDelete(q)} className="rounded-lg p-1.5 text-red-500 hover:bg-red-50" aria-label="Delete quiz">
+                  <IconTrash className="h-4 w-4" />
+                </button>
+              </div>
+            ),
+          },
+        ]}
+      />
+    </div>
+  )
+}

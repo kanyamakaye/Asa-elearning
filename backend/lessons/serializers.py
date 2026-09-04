@@ -25,3 +25,23 @@ class LessonSerializer(serializers.ModelSerializer):
             'resources', 'created_at', 'updated_at',
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def validate_module(self, value):
+        request = self.context.get('request')
+        user = request.user if request else None
+        if user and not (user.is_staff or user.user_type in ('admin', 'academic_manager', 'content_manager')):
+            if value.course.instructor_id != user.id:
+                raise serializers.ValidationError('You can only manage content for your own courses.')
+        return value
+
+    def validate_title(self, value):
+        if not value.strip():
+            raise serializers.ValidationError('This field is required.')
+        return value
+
+    def validate(self, attrs):
+        lesson_type = attrs.get('lesson_type', getattr(self.instance, 'lesson_type', None))
+        video_url = attrs.get('video_url', getattr(self.instance, 'video_url', ''))
+        if lesson_type == Lesson.LessonType.VIDEO and not video_url:
+            raise serializers.ValidationError({'video_url': 'A video URL is required for video lessons.'})
+        return attrs

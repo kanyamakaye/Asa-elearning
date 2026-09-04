@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from accounts.serializers import UserPublicSerializer
 from courses.serializers import CourseListSerializer
 
 from .models import Payment, Refund
@@ -22,6 +23,8 @@ class PaymentSerializer(serializers.ModelSerializer):
 
 
 class RefundSerializer(serializers.ModelSerializer):
+    student = UserPublicSerializer(read_only=True)
+
     class Meta:
         model = Refund
         fields = [

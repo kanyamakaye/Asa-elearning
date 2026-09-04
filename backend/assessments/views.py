@@ -4,7 +4,9 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 
-from accounts.permissions import IsInstructorOrReadOnly
+from accounts.permissions import CanManageAssessment, IsInstructorOrReadOnly
+from common.responses import StandardResponseMixin, success_response
+from notifications.services import notify_enrolled_students
 
 from .models import Exam, Grade, QuestionOption, Quiz, QuizAnswer, QuizAttempt, QuizQuestion
 from .serializers import (
@@ -20,9 +22,12 @@ from .serializers import (
 AUTO_GRADABLE_TYPES = {QuizQuestion.QuestionType.MULTIPLE_CHOICE, QuizQuestion.QuestionType.TRUE_FALSE}
 
 
-class QuizViewSet(viewsets.ModelViewSet):
-    queryset = Quiz.objects.all()
-    permission_classes = [IsInstructorOrReadOnly]
+class QuizViewSet(StandardResponseMixin, viewsets.ModelViewSet):
+    queryset = Quiz.objects.select_related('course', 'created_by').all()
+    permission_classes = [CanManageAssessment]
+    create_message = 'Quiz created successfully.'
+    update_message = 'Quiz updated successfully.'
+    delete_message = 'Quiz deleted successfully.'
 
     def get_serializer_class(self):
         return QuizDetailSerializer if self.action == 'retrieve' else QuizSerializer
@@ -37,6 +42,34 @@ class QuizViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
 
+    @action(detail=True, methods=['get', 'post'], url_path='questions')
+    def questions(self, request, pk=None):
+        quiz = self.get_object()
+        if request.method == 'GET':
+            return Response(QuizQuestionSerializer(quiz.questions.all(), many=True).data)
+        self.check_object_permissions(request, quiz)
+        serializer = QuizQuestionSerializer(data={**request.data, 'quiz': quiz.id})
+        serializer.is_valid(raise_exception=True)
+        serializer.save(quiz=quiz)
+        return success_response(serializer.data, 'Question added successfully.', 201)
+
+    @action(detail=True, methods=['post'])
+    def publish(self, request, pk=None):
+        quiz = self.get_object()
+        if not quiz.questions.exists():
+            raise ValidationError('A quiz must have at least one question before it can be published.')
+        quiz.status = Quiz.Status.PUBLISHED
+        quiz.save(update_fields=['status'])
+        notify_enrolled_students(
+            quiz.course,
+            notification_type='quiz_published',
+            title='New Quiz Available',
+            message=f'A new quiz "{quiz.title}" is available in {quiz.course.title}.',
+            reference_type='quiz',
+            reference_id=quiz.id,
+        )
+        return success_response(QuizDetailSerializer(quiz, context=self.get_serializer_context()).data, 'Quiz published successfully.')
+
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def start(self, request, pk=None):
         quiz = self.get_object()
@@ -50,9 +83,9 @@ class QuizViewSet(viewsets.ModelViewSet):
 
 
 class QuizQuestionViewSet(viewsets.ModelViewSet):
-    queryset = QuizQuestion.objects.prefetch_related('options').all()
+    queryset = QuizQuestion.objects.select_related('quiz', 'quiz__course').prefetch_related('options').all()
     serializer_class = QuizQuestionSerializer
-    permission_classes = [IsInstructorOrReadOnly]
+    permission_classes = [CanManageAssessment]
 
     def get_queryset(self):
         qs = super().get_queryset()

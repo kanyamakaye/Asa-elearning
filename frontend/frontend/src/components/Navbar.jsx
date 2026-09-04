@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import logo from '../assets/logo.png'
+import { useAuth } from '../context/AuthContext'
 import { IconClose, IconMenu } from './icons'
 
 const links = [
@@ -14,6 +15,7 @@ const links = [
 
 export default function Navbar() {
   const [open, setOpen] = useState(false)
+  const { user, isAuthenticated, logout } = useAuth()
 
   return (
     <header className="sticky top-0 z-50 border-b border-navy-900/5 bg-white/85 backdrop-blur-md">
@@ -38,18 +40,41 @@ export default function Navbar() {
         </nav>
 
         <div className="hidden items-center gap-3 lg:flex">
-          <a
-            href="#login"
-            className="text-sm font-semibold text-navy-800 transition-colors hover:text-brand-500"
-          >
-            Log In
-          </a>
-          <a
-            href="#signup"
-            className="rounded-full bg-navy-900 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-navy-900/20 transition-colors hover:bg-brand-500"
-          >
-            Get Started
-          </a>
+          {isAuthenticated ? (
+            <>
+              <span className="text-sm font-medium text-navy-700/70">
+                Hi, {user?.first_name || user?.username}
+              </span>
+              <Link
+                to="/dashboard"
+                className="rounded-full bg-navy-900 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-navy-900/20 transition-colors hover:bg-brand-500"
+              >
+                Dashboard
+              </Link>
+              <button
+                type="button"
+                onClick={logout}
+                className="text-sm font-semibold text-navy-800 transition-colors hover:text-brand-500"
+              >
+                Log Out
+              </button>
+            </>
+          ) : (
+            <>
+              <Link
+                to="/login"
+                className="text-sm font-semibold text-navy-800 transition-colors hover:text-brand-500"
+              >
+                Log In
+              </Link>
+              <Link
+                to="/signup"
+                className="rounded-full bg-navy-900 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-navy-900/20 transition-colors hover:bg-brand-500"
+              >
+                Get Started
+              </Link>
+            </>
+          )}
         </div>
 
         <button
@@ -77,18 +102,44 @@ export default function Navbar() {
             ))}
           </nav>
           <div className="mt-4 flex flex-col gap-2.5 border-t border-navy-900/5 pt-4">
-            <a
-              href="#login"
-              className="rounded-full px-4 py-2.5 text-center text-sm font-semibold text-navy-800 ring-1 ring-navy-900/10"
-            >
-              Log In
-            </a>
-            <a
-              href="#signup"
-              className="rounded-full bg-navy-900 px-4 py-2.5 text-center text-sm font-semibold text-white"
-            >
-              Get Started
-            </a>
+            {isAuthenticated ? (
+              <>
+                <Link
+                  to="/dashboard"
+                  onClick={() => setOpen(false)}
+                  className="rounded-full bg-navy-900 px-4 py-2.5 text-center text-sm font-semibold text-white"
+                >
+                  Dashboard
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => {
+                    logout()
+                    setOpen(false)
+                  }}
+                  className="rounded-full px-4 py-2.5 text-center text-sm font-semibold text-navy-800 ring-1 ring-navy-900/10"
+                >
+                  Log Out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  onClick={() => setOpen(false)}
+                  className="rounded-full px-4 py-2.5 text-center text-sm font-semibold text-navy-800 ring-1 ring-navy-900/10"
+                >
+                  Log In
+                </Link>
+                <Link
+                  to="/signup"
+                  onClick={() => setOpen(false)}
+                  className="rounded-full bg-navy-900 px-4 py-2.5 text-center text-sm font-semibold text-white"
+                >
+                  Get Started
+                </Link>
+              </>
+            )}
           </div>
         </div>
       )}

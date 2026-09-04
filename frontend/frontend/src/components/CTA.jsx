@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { IconArrowRight } from './icons'
 
 export default function CTA() {
@@ -12,13 +13,13 @@ export default function CTA() {
           skills on Asa Academy.
         </p>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
-          <a
-            href="#signup"
+          <Link
+            to="/signup"
             className="inline-flex items-center gap-2 rounded-full bg-brand-500 px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-brand-500/30 transition-transform hover:-translate-y-0.5"
           >
             Create Free Account
             <IconArrowRight className="h-4 w-4" />
-          </a>
+          </Link>
           <a
             href="#courses"
             className="inline-flex items-center gap-2 rounded-full px-6 py-3.5 text-sm font-semibold text-white ring-1 ring-white/25 transition-colors hover:bg-white/10"

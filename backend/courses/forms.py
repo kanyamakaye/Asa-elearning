@@ -14,7 +14,8 @@ class CourseForm(forms.ModelForm):
         model = Course
         fields = [
             'title', 'description', 'short_description', 'category', 'level', 'language',
-            'duration_hours', 'image', 'video_url', 'price', 'is_free', 'status',
+            'duration_hours', 'image', 'thumbnail', 'video_url', 'price', 'discount_price',
+            'is_free', 'status', 'visibility', 'requirements', 'learning_objectives',
             'enrollment_limit', 'start_date', 'end_date', 'certificate_enabled',
         ]
         widgets = {

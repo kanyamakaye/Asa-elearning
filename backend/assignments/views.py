@@ -4,16 +4,21 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 
-from accounts.permissions import IsInstructorOrReadOnly
+from accounts.permissions import CanManageAssessment
+from common.responses import StandardResponseMixin, success_response
+from notifications.services import notify_enrolled_students
 
 from .models import Assignment, AssignmentSubmission
 from .serializers import AssignmentSerializer, AssignmentSubmissionSerializer, GradeSubmissionSerializer
 
 
-class AssignmentViewSet(viewsets.ModelViewSet):
-    queryset = Assignment.objects.all()
+class AssignmentViewSet(StandardResponseMixin, viewsets.ModelViewSet):
+    queryset = Assignment.objects.select_related('course', 'created_by').all()
     serializer_class = AssignmentSerializer
-    permission_classes = [IsInstructorOrReadOnly]
+    permission_classes = [CanManageAssessment]
+    create_message = 'Assignment created successfully.'
+    update_message = 'Assignment updated successfully.'
+    delete_message = 'Assignment deleted successfully.'
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -22,6 +27,54 @@ class AssignmentViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
+
+    @action(detail=True, methods=['post'])
+    def publish(self, request, pk=None):
+        assignment = self.get_object()
+        assignment.status = Assignment.Status.PUBLISHED
+        assignment.save(update_fields=['status'])
+        notify_enrolled_students(
+            assignment.course,
+            notification_type='assignment_published',
+            title='New Assignment Posted',
+            message=f'A new assignment "{assignment.title}" has been posted in {assignment.course.title}.',
+            reference_type='assignment',
+            reference_id=assignment.id,
+        )
+        return success_response(AssignmentSerializer(assignment).data, 'Assignment published successfully.')
+
+    @action(detail=True, methods=['get'])
+    def submissions(self, request, pk=None):
+        assignment = self.get_object()
+        qs = assignment.submissions.select_related('student')
+        if request.user.user_type not in ('admin', 'instructor', 'academic_manager') and not request.user.is_staff:
+            qs = qs.filter(student=request.user)
+        return Response(AssignmentSubmissionSerializer(qs, many=True).data)
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def submit(self, request, pk=None):
+        assignment = self.get_object()
+        is_late = bool(assignment.due_date and timezone.now() > assignment.due_date)
+        if is_late and not assignment.allow_late_submission:
+            raise ValidationError('The due date for this assignment has passed.')
+        data = {**request.data, 'assignment': assignment.id}
+        submission, created = AssignmentSubmission.objects.get_or_create(
+            assignment=assignment, student=request.user,
+            defaults={
+                'submission_text': data.get('submission_text', ''),
+                'file': request.FILES.get('file'),
+                'is_late': is_late,
+                'status': AssignmentSubmission.Status.LATE if is_late else AssignmentSubmission.Status.SUBMITTED,
+            },
+        )
+        if not created:
+            submission.submission_text = data.get('submission_text', submission.submission_text)
+            if request.FILES.get('file'):
+                submission.file = request.FILES.get('file')
+            submission.is_late = is_late
+            submission.status = AssignmentSubmission.Status.LATE if is_late else AssignmentSubmission.Status.SUBMITTED
+            submission.save()
+        return success_response(AssignmentSubmissionSerializer(submission).data, 'Assignment submitted successfully.', 201)
 
 
 class AssignmentSubmissionViewSet(viewsets.ModelViewSet):
@@ -45,13 +98,21 @@ class AssignmentSubmissionViewSet(viewsets.ModelViewSet):
             raise ValidationError('The due date for this assignment has passed.')
         serializer.save(student=self.request.user, is_late=is_late)
 
-    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    @action(detail=True, methods=['post', 'patch'], permission_classes=[permissions.IsAuthenticated])
     def grade(self, request, pk=None):
         submission = self.get_object()
-        if request.user.user_type not in ('instructor', 'admin') and not request.user.is_staff:
+        if request.user.user_type not in ('instructor', 'admin', 'academic_manager') and not request.user.is_staff:
             raise PermissionDenied('Only instructors can grade submissions.')
+        if submission.assignment.created_by_id != request.user.id and not (
+            request.user.is_staff or request.user.user_type in ('admin', 'academic_manager')
+        ) and submission.assignment.course.instructor_id != request.user.id:
+            raise PermissionDenied('You can only grade submissions for your own assignments.')
         serializer = GradeSubmissionSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+
+        max_marks = submission.assignment.maximum_marks
+        if serializer.validated_data['marks_awarded'] > max_marks:
+            raise ValidationError({'marks_awarded': [f'Cannot exceed the assignment maximum of {max_marks}.']})
 
         submission.marks_awarded = serializer.validated_data['marks_awarded']
         submission.feedback = serializer.validated_data.get('feedback', '')
@@ -59,4 +120,4 @@ class AssignmentSubmissionViewSet(viewsets.ModelViewSet):
         submission.graded_at = timezone.now()
         submission.status = AssignmentSubmission.Status.GRADED
         submission.save()
-        return Response(AssignmentSubmissionSerializer(submission).data)
+        return success_response(AssignmentSubmissionSerializer(submission).data, 'Submission graded successfully.')

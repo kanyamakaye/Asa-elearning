@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
-import { categories, courses } from '../data/content'
+import { useEffect, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
+import { getCategories, getCourses } from '../lib/queries'
 import {
   IconArrowRight,
+  IconBook,
   IconClipboard,
   IconClose,
   IconSearch,
@@ -10,45 +11,68 @@ import {
   IconUsers,
 } from './icons'
 
-const PAGE_SIZE = 9
-
 const badgeStyles = {
   Bestseller: 'bg-amber-400 text-navy-900',
   New: 'bg-brand-500 text-white',
   Free: 'bg-emerald-500 text-white',
 }
 
-const categoryById = Object.fromEntries(categories.map((c) => [c.id, c]))
-
 export default function Courses() {
-  const [activeTab, setActiveTab] = useState('all')
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
+  const [categories, setCategories] = useState([])
+  const [activeCategory, setActiveCategory] = useState('all')
   const [searchParams, setSearchParams] = useSearchParams()
   const query = searchParams.get('q') || ''
 
-  const filtered = useMemo(() => {
-    const byTab =
-      activeTab === 'all' ? courses : courses.filter((c) => c.categoryId === activeTab)
-    if (!query) return byTab
-
-    const q = query.trim().toLowerCase()
-    return byTab.filter((c) => {
-      const cat = categoryById[c.categoryId]
-      return (
-        c.title.toLowerCase().includes(q) ||
-        c.instructor.toLowerCase().includes(q) ||
-        cat.name.toLowerCase().includes(q)
-      )
-    })
-  }, [activeTab, query])
-  const visible = filtered.slice(0, visibleCount)
+  const [courses, setCourses] = useState([])
+  const [count, setCount] = useState(0)
+  const [next, setNext] = useState(null)
+  const [page, setPage] = useState(1)
+  const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
 
   useEffect(() => {
-    setVisibleCount(PAGE_SIZE)
-  }, [activeTab, query])
+    getCategories()
+      .then((data) => setCategories(data.results ?? data))
+      .catch(() => {})
+  }, [])
 
-  function selectTab(id) {
-    setActiveTab(id)
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    setPage(1)
+    getCourses({ search: query, category: activeCategory === 'all' ? undefined : activeCategory, page: 1 })
+      .then((data) => {
+        if (cancelled) return
+        setCourses(data.results ?? data)
+        setCount(data.count ?? (data.results ?? data).length)
+        setNext(data.next ?? null)
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setCourses([])
+          setCount(0)
+          setNext(null)
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [activeCategory, query])
+
+  function loadMore() {
+    setLoadingMore(true)
+    const nextPage = page + 1
+    getCourses({ search: query, category: activeCategory === 'all' ? undefined : activeCategory, page: nextPage })
+      .then((data) => {
+        setCourses((prev) => [...prev, ...(data.results ?? [])])
+        setNext(data.next ?? null)
+        setPage(nextPage)
+      })
+      .catch(() => {})
+      .finally(() => setLoadingMore(false))
   }
 
   function clearSearch() {
@@ -69,7 +93,7 @@ export default function Courses() {
               Learn from courses students love
             </h2>
             <p className="mt-2 text-sm text-navy-700/55">
-              {courses.length} courses across {categories.length} categories
+              {count} course{count === 1 ? '' : 's'} across {categories.length} categories
             </p>
           </div>
         </div>
@@ -78,7 +102,7 @@ export default function Courses() {
           <div className="mt-6 flex flex-wrap items-center gap-3 rounded-2xl bg-brand-50 px-5 py-3.5">
             <IconSearch className="h-4 w-4 shrink-0 text-brand-500" />
             <p className="text-sm text-navy-800">
-              {filtered.length} result{filtered.length === 1 ? '' : 's'} for{' '}
+              {count} result{count === 1 ? '' : 's'} for{' '}
               <span className="font-bold">&ldquo;{query}&rdquo;</span>
             </p>
             <button
@@ -95,134 +119,139 @@ export default function Courses() {
         <div className="mt-8 flex flex-wrap gap-2">
           <button
             type="button"
-            onClick={() => selectTab('all')}
+            onClick={() => setActiveCategory('all')}
             className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
-              activeTab === 'all'
+              activeCategory === 'all'
                 ? 'bg-navy-900 text-white'
                 : 'bg-navy-50 text-navy-700/70 hover:bg-navy-100'
             }`}
           >
-            All ({courses.length})
+            All
           </button>
           {categories.map((cat) => (
             <button
               key={cat.id}
               type="button"
-              onClick={() => selectTab(cat.id)}
+              onClick={() => setActiveCategory(cat.slug)}
               className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
-                activeTab === cat.id
+                activeCategory === cat.slug
                   ? 'bg-navy-900 text-white'
                   : 'bg-navy-50 text-navy-700/70 hover:bg-navy-100'
               }`}
             >
-              {cat.name} ({cat.count})
+              {cat.name} ({cat.course_count})
             </button>
           ))}
         </div>
 
-        {filtered.length === 0 ? (
+        {loading ? (
+          <div className="mt-10 grid gap-7 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="h-80 animate-pulse rounded-2xl bg-navy-50" />
+            ))}
+          </div>
+        ) : courses.length === 0 ? (
           <div className="mt-14 flex flex-col items-center rounded-2xl border border-dashed border-navy-900/15 py-16 text-center">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-navy-50 text-navy-700/50">
               <IconSearch className="h-5 w-5" />
             </div>
             <h3 className="mt-4 text-base font-bold text-navy-900">No courses found</h3>
             <p className="mt-1 max-w-sm text-sm text-navy-700/55">
-              We couldn&apos;t find any courses matching &ldquo;{query}&rdquo;. Try a
-              different keyword or browse all courses.
+              {query
+                ? `We couldn't find any courses matching "${query}".`
+                : 'No courses have been published in this category yet.'}
             </p>
-            <button
-              type="button"
-              onClick={clearSearch}
-              className="mt-5 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-navy-900 ring-1 ring-navy-900/15 transition-colors hover:bg-navy-50"
-            >
-              Clear search
-            </button>
+            {query && (
+              <button
+                type="button"
+                onClick={clearSearch}
+                className="mt-5 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-navy-900 ring-1 ring-navy-900/15 transition-colors hover:bg-navy-50"
+              >
+                Clear search
+              </button>
+            )}
           </div>
         ) : (
           <>
             <div className="mt-10 grid gap-7 sm:grid-cols-2 lg:grid-cols-3">
-              {visible.map((c) => {
-            const cat = categoryById[c.categoryId]
-            return (
-              <article
-                key={c.id}
-                className="group flex flex-col overflow-hidden rounded-2xl ring-1 ring-navy-900/8 transition-shadow hover:shadow-xl hover:shadow-navy-900/10"
-              >
-                <div className={`relative h-36 overflow-hidden ${cat.color}`}>
-                  <img
-                    src={cat.image}
-                    alt=""
-                    loading="lazy"
-                    decoding="async"
-                    className="absolute inset-0 h-full w-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-black/0 to-black/10" />
-
-                  <div className="relative flex items-start justify-between p-4">
-                    <span className="rounded-full bg-white/95 px-3 py-1 text-xs font-semibold text-navy-900">
-                      {c.level}
-                    </span>
-                    {c.badge && (
-                      <span
-                        className={`rounded-full px-3 py-1 text-xs font-bold ${badgeStyles[c.badge]}`}
-                      >
-                        {c.badge}
-                      </span>
+              {courses.map((c) => (
+                <Link
+                  key={c.id}
+                  to={`/courses/${c.slug}`}
+                  className="group flex flex-col overflow-hidden rounded-2xl ring-1 ring-navy-900/8 transition-shadow hover:shadow-xl hover:shadow-navy-900/10"
+                >
+                  <div className="relative h-36 overflow-hidden bg-navy-900">
+                    {c.image ? (
+                      <img src={c.image} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <IconBook className="h-10 w-10 text-white/15" />
+                      </div>
                     )}
-                  </div>
-                </div>
-
-                <div className="flex flex-1 flex-col p-5">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-brand-500">
-                    {cat.name}
-                  </p>
-                  <h3 className="mt-2 text-base font-bold leading-snug text-navy-900">
-                    {c.title}
-                  </h3>
-
-                  <div className="mt-4 flex items-center gap-2">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-navy-100 text-[11px] font-bold text-navy-700">
-                      {c.initials}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-black/0 to-black/10" />
+                    <div className="relative flex items-start justify-between p-4">
+                      <span className="rounded-full bg-white/95 px-3 py-1 text-xs font-semibold capitalize text-navy-900">
+                        {c.level}
+                      </span>
+                      {c.is_free && (
+                        <span className={`rounded-full px-3 py-1 text-xs font-bold ${badgeStyles.Free}`}>
+                          Free
+                        </span>
+                      )}
                     </div>
-                    <span className="text-sm text-navy-700/70">{c.instructor}</span>
                   </div>
 
-                  <div className="mt-4 flex items-center gap-4 text-xs text-navy-700/55">
-                    <span className="inline-flex items-center gap-1">
-                      <IconClipboard className="h-3.5 w-3.5" />
-                      {c.lessons} lessons
-                    </span>
-                    <span>{c.duration}</span>
-                  </div>
+                  <div className="flex flex-1 flex-col p-5">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-brand-500">
+                      {c.category?.name ?? 'General'}
+                    </p>
+                    <h3 className="mt-2 text-base font-bold leading-snug text-navy-900">
+                      {c.title}
+                    </h3>
 
-                  <div className="mt-4 flex items-center justify-between border-t border-navy-900/8 pt-4 text-sm">
-                    <span className="inline-flex items-center gap-1 font-semibold text-navy-900">
-                      <IconStar className="h-3.5 w-3.5 text-amber-400" />
-                      {c.rating}
-                      <span className="font-normal text-navy-700/50">({c.reviews})</span>
-                    </span>
-                    <span className="font-bold text-navy-900">{c.price}</span>
-                  </div>
+                    <div className="mt-4 flex items-center gap-2">
+                      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-navy-100 text-[11px] font-bold text-navy-700">
+                        {c.instructor?.full_name?.[0] ?? '?'}
+                      </div>
+                      <span className="text-sm text-navy-700/70">{c.instructor?.full_name}</span>
+                    </div>
 
-                  <div className="mt-2 flex items-center gap-1 text-xs text-navy-700/55">
-                    <IconUsers className="h-3.5 w-3.5" />
-                    {c.students} students enrolled
-                  </div>
-                </div>
-              </article>
-            )
-          })}
-        </div>
+                    <div className="mt-4 flex items-center gap-4 text-xs text-navy-700/55">
+                      <span className="inline-flex items-center gap-1">
+                        <IconClipboard className="h-3.5 w-3.5" />
+                        {c.duration_hours}h
+                      </span>
+                    </div>
 
-            {visibleCount < filtered.length && (
+                    <div className="mt-4 flex items-center justify-between border-t border-navy-900/8 pt-4 text-sm">
+                      <span className="inline-flex items-center gap-1 font-semibold text-navy-900">
+                        <IconStar className="h-3.5 w-3.5 text-amber-400" />
+                        {c.average_rating ?? '—'}
+                      </span>
+                      <span className="font-bold text-navy-900">
+                        {c.is_free ? 'Free' : `$${c.price}`}
+                      </span>
+                    </div>
+
+                    <div className="mt-2 flex items-center gap-1 text-xs text-navy-700/55">
+                      <IconUsers className="h-3.5 w-3.5" />
+                      {c.enrolled_count} students enrolled
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+
+            {next && (
               <div className="mt-12 flex justify-center">
                 <button
                   type="button"
-                  onClick={() => setVisibleCount((n) => n + PAGE_SIZE)}
-                  className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold text-navy-900 ring-1 ring-navy-900/15 transition-colors hover:bg-navy-50"
+                  onClick={loadMore}
+                  disabled={loadingMore}
+                  className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold text-navy-900 ring-1 ring-navy-900/15 transition-colors hover:bg-navy-50 disabled:opacity-60"
                 >
-                  Load More Courses
-                  <IconArrowRight className="h-4 w-4" />
+                  {loadingMore ? 'Loading…' : 'Load More Courses'}
+                  {!loadingMore && <IconArrowRight className="h-4 w-4" />}
                 </button>
               </div>
             )}

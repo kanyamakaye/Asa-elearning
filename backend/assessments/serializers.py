@@ -31,6 +31,20 @@ class QuizQuestionSerializer(serializers.ModelSerializer):
             QuestionOption.objects.create(question=question, **option_data)
         return question
 
+    def update(self, instance, validated_data):
+        options_data = validated_data.pop('options', None)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        if options_data is not None:
+            # Full replace keeps the option-management UI simple: it always
+            # PUTs the complete option list for a question rather than
+            # diffing adds/edits/deletes itself.
+            instance.options.all().delete()
+            for option_data in options_data:
+                QuestionOption.objects.create(question=instance, **option_data)
+        return instance
+
 
 class QuizQuestionPublicSerializer(QuizQuestionSerializer):
     options = QuestionOptionPublicSerializer(many=True, read_only=True)
@@ -45,11 +59,27 @@ class QuizSerializer(serializers.ModelSerializer):
     class Meta:
         model = Quiz
         fields = [
-            'id', 'course', 'module', 'lesson', 'title', 'description', 'duration_minutes',
+            'id', 'course', 'module', 'lesson', 'title', 'description', 'instructions', 'duration_minutes',
             'total_marks', 'passing_marks', 'attempt_limit', 'shuffle_questions', 'show_answers',
             'available_from', 'available_until', 'status', 'question_count', 'created_by', 'created_at',
         ]
         read_only_fields = ['id', 'created_by', 'created_at']
+
+    def validate_title(self, value):
+        if len(value.strip()) < 3:
+            raise serializers.ValidationError('Must be at least 3 characters long.')
+        return value
+
+    def validate(self, attrs):
+        total = attrs.get('total_marks', getattr(self.instance, 'total_marks', None))
+        passing = attrs.get('passing_marks', getattr(self.instance, 'passing_marks', None))
+        if total is not None and passing is not None and passing > total:
+            raise serializers.ValidationError({'passing_marks': 'Cannot exceed the total marks.'})
+        available_from = attrs.get('available_from', getattr(self.instance, 'available_from', None))
+        available_until = attrs.get('available_until', getattr(self.instance, 'available_until', None))
+        if available_from and available_until and available_until <= available_from:
+            raise serializers.ValidationError({'available_until': 'Must be after the opening time.'})
+        return attrs
 
 
 class QuizDetailSerializer(QuizSerializer):
@@ -110,10 +140,13 @@ class ExamSerializer(serializers.ModelSerializer):
 
 
 class GradeSerializer(serializers.ModelSerializer):
+    course_title = serializers.CharField(source='course.title', read_only=True)
+
     class Meta:
         model = Grade
         fields = [
-            'id', 'student', 'course', 'assessment_type', 'assessment_id', 'marks_obtained',
-            'maximum_marks', 'percentage', 'letter_grade', 'remarks', 'graded_by', 'graded_at',
+            'id', 'student', 'course', 'course_title', 'assessment_type', 'assessment_id',
+            'marks_obtained', 'maximum_marks', 'percentage', 'letter_grade', 'remarks',
+            'graded_by', 'graded_at',
         ]
         read_only_fields = ['id', 'percentage', 'letter_grade', 'graded_by', 'graded_at']

@@ -2,6 +2,7 @@ import uuid
 
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
+from django.db.models import Avg, Count
 from django.utils import timezone
 from datetime import timedelta
 from rest_framework import generics, permissions, status, viewsets
@@ -16,10 +17,13 @@ from .serializers import (
     CustomTokenObtainPairSerializer,
     EmailVerificationConfirmSerializer,
     InstructorProfileSerializer,
+    InstructorPublicSerializer,
+    LoginHistorySerializer,
     PasswordResetConfirmSerializer,
     PasswordResetRequestSerializer,
     RegisterSerializer,
     StudentProfileSerializer,
+    UserPublicSerializer,
     UserSerializer,
 )
 
@@ -175,11 +179,68 @@ class EmailVerificationConfirmView(APIView):
         return Response({'detail': 'Email verified successfully.'})
 
 
+class InstructorListView(generics.ListAPIView):
+    """Public list of instructors, with aggregate course/rating stats, for the marketing site."""
+
+    serializer_class = InstructorPublicSerializer
+    permission_classes = [permissions.AllowAny]
+    pagination_class = None
+
+    def get_queryset(self):
+        return (
+            User.objects.filter(user_type=User.UserType.INSTRUCTOR, status=User.Status.ACTIVE)
+            .select_related('instructor_profile')
+            .annotate(
+                course_count=Count('courses_taught', distinct=True),
+                student_count=Count('courses_taught__enrollments', distinct=True),
+                average_rating=Avg('courses_taught__reviews__rating'),
+            )
+            .filter(course_count__gt=0)
+            .order_by('-student_count')
+        )
+
+
 class UserViewSet(viewsets.ModelViewSet):
-    """Admin-only user management."""
+    """Full management (create/update/delete) is admin-only; list/retrieve are
+    open to any authenticated user (with a minimal public serializer) so
+    features like the message composer can offer a recipient picker."""
 
     queryset = User.objects.all().order_by('-date_joined')
     serializer_class = UserSerializer
     permission_classes = [IsAdmin]
     search_fields = ['username', 'email', 'first_name', 'last_name']
     ordering_fields = ['date_joined', 'username']
+
+    def get_permissions(self):
+        if self.action in ('list', 'retrieve'):
+            return [permissions.IsAuthenticated()]
+        return super().get_permissions()
+
+    def get_serializer_class(self):
+        if self.action in ('list', 'retrieve') and not (self.request.user.is_staff or self.request.user.user_type == 'admin'):
+            return UserPublicSerializer
+        return UserSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        role = self.request.query_params.get('role')
+        if role:
+            roles = [r for r in role.split(',') if r]
+            qs = qs.filter(user_type__in=roles) if len(roles) > 1 else qs.filter(user_type=roles[0])
+        return qs
+
+
+class LoginHistoryViewSet(viewsets.ReadOnlyModelViewSet):
+    """Admin-only audit log of login attempts (see accounts.LoginHistory,
+    populated from CustomTokenObtainPairView on every login)."""
+
+    queryset = LoginHistory.objects.select_related('user').all()
+    serializer_class = LoginHistorySerializer
+    permission_classes = [IsAdmin]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        status_param = self.request.query_params.get('status')
+        if status_param:
+            qs = qs.filter(login_status=status_param)
+        return qs

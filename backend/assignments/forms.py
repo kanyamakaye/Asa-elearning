@@ -8,8 +8,9 @@ class AssignmentForm(forms.ModelForm):
     class Meta:
         model = Assignment
         fields = [
-            'course', 'module', 'title', 'description', 'maximum_marks', 'passing_marks',
-            'due_date', 'allow_late_submission', 'attachment', 'status',
+            'course', 'module', 'lesson', 'title', 'description', 'instructions', 'maximum_marks',
+            'passing_marks', 'due_date', 'submission_type', 'allowed_file_types', 'max_file_size',
+            'allow_late_submission', 'late_penalty', 'attachment', 'status',
         ]
         widgets = {
             'due_date': forms.DateTimeInput(attrs={'type': 'datetime-local'}),

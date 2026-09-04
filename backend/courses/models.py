@@ -39,6 +39,10 @@ class Course(models.Model):
         ARCHIVED = 'archived', 'Archived'
         SUSPENDED = 'suspended', 'Suspended'
 
+    class Visibility(models.TextChoices):
+        PUBLIC = 'public', 'Public'
+        PRIVATE = 'private', 'Private'
+
     course_code = models.CharField(max_length=20, unique=True, blank=True)
     title = models.CharField(max_length=255)
     slug = models.SlugField(max_length=280, unique=True, blank=True)
@@ -54,14 +58,20 @@ class Course(models.Model):
     language = models.CharField(max_length=50, default='English')
     duration_hours = models.PositiveIntegerField(default=0)
     image = models.ImageField(upload_to='courses/', blank=True, null=True)
+    thumbnail = models.ImageField(upload_to='courses/thumbnails/', blank=True, null=True)
     video_url = models.URLField(blank=True)
     price = models.DecimalField(max_digits=8, decimal_places=2, default=0)
+    discount_price = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
     is_free = models.BooleanField(default=False)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.DRAFT)
+    visibility = models.CharField(max_length=10, choices=Visibility.choices, default=Visibility.PUBLIC)
+    requirements = models.JSONField(default=list, blank=True)
+    learning_objectives = models.JSONField(default=list, blank=True)
     enrollment_limit = models.PositiveIntegerField(null=True, blank=True)
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
     certificate_enabled = models.BooleanField(default=True)
+    published_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

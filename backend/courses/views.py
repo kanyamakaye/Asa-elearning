@@ -1,8 +1,10 @@
+from django.utils import timezone
 from rest_framework import permissions, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from accounts.permissions import IsCourseInstructorOrReadOnly, IsInstructorOrReadOnly
+from accounts.permissions import CanManageCourse, CanManageCourseContent, IsInstructorOrReadOnly
+from common.responses import StandardResponseMixin, success_response
 
 from .models import Course, CourseCategory, CourseInstructor, CourseModule
 from .serializers import (
@@ -22,10 +24,13 @@ class CourseCategoryViewSet(viewsets.ModelViewSet):
     search_fields = ['name', 'description']
 
 
-class CourseViewSet(viewsets.ModelViewSet):
+class CourseViewSet(StandardResponseMixin, viewsets.ModelViewSet):
     queryset = Course.objects.select_related('category', 'instructor').all()
-    permission_classes = [IsInstructorOrReadOnly, IsCourseInstructorOrReadOnly]
+    permission_classes = [CanManageCourse]
     lookup_field = 'slug'
+    create_message = 'Course created successfully.'
+    update_message = 'Course updated successfully.'
+    delete_message = 'Course deleted successfully.'
     search_fields = ['title', 'description', 'course_code']
     ordering_fields = ['created_at', 'price', 'title']
 
@@ -69,11 +74,29 @@ class CourseViewSet(viewsets.ModelViewSet):
         serializer = CourseListSerializer(qs, many=True)
         return Response(serializer.data)
 
+    @action(detail=True, methods=['post'])
+    def publish(self, request, slug=None):
+        course = self.get_object()
+        course.status = Course.Status.PUBLISHED
+        course.published_at = timezone.now()
+        course.save(update_fields=['status', 'published_at'])
+        return success_response(CourseDetailSerializer(course, context=self.get_serializer_context()).data, 'Course published successfully.')
 
-class CourseModuleViewSet(viewsets.ModelViewSet):
-    queryset = CourseModule.objects.all()
+    @action(detail=True, methods=['post'])
+    def archive(self, request, slug=None):
+        course = self.get_object()
+        course.status = Course.Status.ARCHIVED
+        course.save(update_fields=['status'])
+        return success_response(CourseDetailSerializer(course, context=self.get_serializer_context()).data, 'Course archived successfully.')
+
+
+class CourseModuleViewSet(StandardResponseMixin, viewsets.ModelViewSet):
+    queryset = CourseModule.objects.select_related('course').all()
     serializer_class = CourseModuleSerializer
-    permission_classes = [IsInstructorOrReadOnly]
+    permission_classes = [CanManageCourseContent]
+    create_message = 'Module created successfully.'
+    update_message = 'Module updated successfully.'
+    delete_message = 'Module deleted successfully.'
 
     def get_queryset(self):
         qs = super().get_queryset()

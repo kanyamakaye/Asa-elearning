@@ -8,18 +8,27 @@ class LiveSession(models.Model):
         LIVE = 'live', 'Live'
         COMPLETED = 'completed', 'Completed'
         CANCELLED = 'cancelled', 'Cancelled'
+        POSTPONED = 'postponed', 'Postponed'
+
+    class Platform(models.TextChoices):
+        ZOOM = 'zoom', 'Zoom'
+        GOOGLE_MEET = 'google_meet', 'Google Meet'
+        TEAMS = 'teams', 'Microsoft Teams'
+        OTHER = 'other', 'Other'
 
     course = models.ForeignKey('courses.Course', on_delete=models.CASCADE, related_name='live_sessions')
     instructor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='live_sessions')
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
-    meeting_platform = models.CharField(max_length=100, blank=True)
+    meeting_platform = models.CharField(max_length=20, choices=Platform.choices, default=Platform.ZOOM)
     meeting_url = models.URLField(blank=True)
     meeting_id = models.CharField(max_length=100, blank=True)
     meeting_password = models.CharField(max_length=100, blank=True)
     scheduled_date = models.DateField(null=True, blank=True)
     start_time = models.TimeField(null=True, blank=True)
     end_time = models.TimeField(null=True, blank=True)
+    timezone = models.CharField(max_length=64, default='UTC')
+    capacity = models.PositiveIntegerField(null=True, blank=True)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.SCHEDULED)
     recording_url = models.URLField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
