@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { createCourse, getCategories, publishCourse } from '../../../services/courseService'
+import { useNavigate, useParams } from 'react-router-dom'
+import { createCourse, getCourse, getCategories, publishCourse, updateCourse } from '../../../services/courseService'
 import useUnsavedChanges from '../../../hooks/useUnsavedChanges'
 import Alert from '../../../components/ui/Alert'
 import Badge from '../../../components/ui/Badge'
@@ -9,6 +9,7 @@ import Button from '../../../components/ui/Button'
 import FileUpload from '../../../components/ui/FileUpload'
 import FormField from '../../../components/ui/FormField'
 import Input from '../../../components/ui/Input'
+import LoadingSpinner from '../../../components/ui/LoadingSpinner'
 import PageHeader from '../../../components/ui/PageHeader'
 import Select from '../../../components/ui/Select'
 import Textarea from '../../../components/ui/Textarea'
@@ -81,13 +82,35 @@ function TagListEditor({ items, onChange, placeholder }) {
   )
 }
 
+function toFormShape(course) {
+  return {
+    title: course.title,
+    course_code: course.course_code,
+    category_id: course.category?.id ?? '',
+    level: course.level,
+    language: course.language,
+    short_description: course.short_description,
+    description: course.description,
+    thumbnail: course.thumbnail ?? null,
+    price: String(course.price ?? '0'),
+    discount_price: course.discount_price != null ? String(course.discount_price) : '',
+    duration_hours: String(course.duration_hours ?? ''),
+    visibility: course.visibility,
+    learning_objectives: course.learning_objectives ?? [],
+    requirements: course.requirements ?? [],
+  }
+}
+
 export default function CreateCourse() {
   const navigate = useNavigate()
+  const { slug } = useParams()
+  const isEdit = Boolean(slug)
   const [step, setStep] = useState(0)
   const [form, setForm] = useState(INITIAL_FORM)
   const [categories, setCategories] = useState([])
   const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(false)
+  const [initialLoading, setInitialLoading] = useState(isEdit)
   const [submitError, setSubmitError] = useState('')
   const [success, setSuccess] = useState(false)
 
@@ -99,6 +122,15 @@ export default function CreateCourse() {
       .then((data) => setCategories(data.results ?? data))
       .catch(() => {})
   }, [])
+
+  useEffect(() => {
+    if (!isEdit) return
+    let cancelled = false
+    getCourse(slug).then((course) => !cancelled && setForm(toFormShape(course)))
+      .catch((err) => !cancelled && setSubmitError(err.message))
+      .finally(() => !cancelled && setInitialLoading(false))
+    return () => { cancelled = true }
+  }, [slug, isEdit])
 
   function update(field, value) {
     setForm((f) => ({ ...f, [field]: value }))
@@ -161,9 +193,9 @@ export default function CreateCourse() {
         requirements: form.requirements,
         thumbnail: form.thumbnail ?? undefined,
       }
-      const created = await createCourse(payload)
-      const slug = created.data.slug
-      if (publish) await publishCourse(slug)
+      const resultSlug = isEdit ? slug : (await createCourse(payload)).data.slug
+      if (isEdit) await updateCourse(slug, payload)
+      if (publish) await publishCourse(resultSlug)
       setSuccess(true)
       // No standalone course-detail route exists yet — land back on the
       // courses list (matches CourseCard's own "Manage" link expectations).
@@ -176,10 +208,12 @@ export default function CreateCourse() {
     }
   }
 
+  if (initialLoading) return <LoadingSpinner label="Loading course…" />
+
   if (success) {
     return (
       <div className="mx-auto max-w-xl py-16">
-        <Alert tone="success" title="Course created successfully.">
+        <Alert tone="success" title={`Course ${isEdit ? 'updated' : 'created'} successfully.`}>
           Redirecting to your course…
         </Alert>
       </div>
@@ -189,9 +223,9 @@ export default function CreateCourse() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <PageHeader
-        breadcrumb={<Breadcrumb items={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Create Course' }]} />}
-        title="Create a New Course"
-        description="Build your course step by step — you can save a draft at any time."
+        breadcrumb={<Breadcrumb items={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Courses', to: '/dashboard/courses' }, { label: isEdit ? 'Edit Course' : 'Create Course' }]} />}
+        title={isEdit ? 'Edit Course' : 'Create a New Course'}
+        description={isEdit ? 'Update your course details below.' : 'Build your course step by step — you can save a draft at any time.'}
       />
 
       <div className="flex flex-wrap gap-2">
@@ -338,10 +372,10 @@ export default function CreateCourse() {
           {step === STEPS.length - 1 && (
             <>
               <Button type="button" variant="secondary" loading={loading} disabled={loading} onClick={() => handleSubmit(false)}>
-                {loading ? 'Creating Course…' : 'Save as Draft'}
+                {loading ? (isEdit ? 'Saving…' : 'Creating Course…') : isEdit ? 'Save Changes' : 'Save as Draft'}
               </Button>
               <Button type="button" loading={loading} disabled={loading} onClick={() => handleSubmit(true)}>
-                {loading ? 'Creating Course…' : 'Create Course'}
+                {loading ? (isEdit ? 'Saving…' : 'Creating Course…') : isEdit ? 'Save & Publish' : 'Create Course'}
               </Button>
             </>
           )}

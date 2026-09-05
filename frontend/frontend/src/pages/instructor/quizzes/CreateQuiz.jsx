@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import {
   addQuestion, createQuiz, deleteQuestion, getQuestions, getQuiz, publishQuiz, updateQuestion, updateQuiz,
 } from '../../../services/quizService'
+import { getModulesForCourse } from '../../../services/moduleService'
 import useCourseOptions from '../../../hooks/useCourseOptions'
 import useUnsavedChanges from '../../../hooks/useUnsavedChanges'
 import QuestionBuilder from '../../../components/quizzes/QuestionBuilder'
@@ -21,6 +22,7 @@ const STEPS = ['Quiz Information', 'Configuration', 'Questions', 'Availability']
 
 const INITIAL_FORM = {
   course: '',
+  module: '',
   title: '',
   description: '',
   instructions: '',
@@ -37,6 +39,7 @@ const INITIAL_FORM = {
 function toFormShape(quiz) {
   return {
     course: quiz.course,
+    module: quiz.module ?? '',
     title: quiz.title,
     description: quiz.description,
     instructions: quiz.instructions ?? '',
@@ -58,6 +61,7 @@ export default function CreateQuiz() {
   const { courses } = useCourseOptions()
   const [step, setStep] = useState(0)
   const [form, setForm] = useState(INITIAL_FORM)
+  const [modules, setModules] = useState([])
   const [questions, setQuestions] = useState([])
   const [deletedQuestionIds, setDeletedQuestionIds] = useState([])
   const [errors, setErrors] = useState({})
@@ -78,6 +82,16 @@ export default function CreateQuiz() {
     return () => { cancelled = true }
   }, [id, isEdit])
 
+  useEffect(() => {
+    if (!form.course) {
+      setModules([])
+      return
+    }
+    let cancelled = false
+    getModulesForCourse(form.course).then((data) => !cancelled && setModules(data.results ?? data)).catch(() => {})
+    return () => { cancelled = true }
+  }, [form.course])
+
   function onQuestionsChange(next) {
     const removedIds = questions.filter((q) => q.id && !next.some((n) => n.id === q.id)).map((q) => q.id)
     if (removedIds.length) setDeletedQuestionIds((d) => [...d, ...removedIds])
@@ -93,6 +107,11 @@ export default function CreateQuiz() {
   function update(field, value) {
     setForm((f) => ({ ...f, [field]: value }))
     setErrors((e) => ({ ...e, [field]: undefined }))
+  }
+
+  function updateCourse(value) {
+    setForm((f) => ({ ...f, course: value, module: '' }))
+    setErrors((e) => ({ ...e, course: undefined }))
   }
 
   function validateStep(index) {
@@ -131,6 +150,7 @@ export default function CreateQuiz() {
     try {
       const payload = {
         ...form,
+        module: form.module || null,
         available_from: form.available_from ? new Date(form.available_from).toISOString() : undefined,
         available_until: form.available_until ? new Date(form.available_until).toISOString() : undefined,
       }
@@ -196,10 +216,18 @@ export default function CreateQuiz() {
               <Input value={form.title} onChange={(e) => update('title', e.target.value)} error={errors.title} />
             </FormField>
             <FormField label="Course" required error={errors.course}>
-              <Select value={form.course} onChange={(e) => update('course', e.target.value)} error={errors.course}>
+              <Select value={form.course} onChange={(e) => updateCourse(e.target.value)} error={errors.course}>
                 <option value="">Select a course</option>
                 {courses.map((c) => (
                   <option key={c.id} value={c.id}>{c.title}</option>
+                ))}
+              </Select>
+            </FormField>
+            <FormField label="Module" hint="Optional — attach this quiz to a specific module">
+              <Select value={form.module} onChange={(e) => update('module', e.target.value)} disabled={!form.course}>
+                <option value="">Whole course</option>
+                {modules.map((m) => (
+                  <option key={m.id} value={m.id}>{m.title}</option>
                 ))}
               </Select>
             </FormField>

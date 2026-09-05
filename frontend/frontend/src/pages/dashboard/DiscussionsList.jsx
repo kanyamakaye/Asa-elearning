@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { createDiscussionTopic, listDiscussionTopics } from '../../lib/dashboardApi'
+import { createDiscussionTopic, deleteDiscussionTopic, listDiscussionTopics } from '../../lib/dashboardApi'
 import useCourseOptions from '../../hooks/useCourseOptions'
 import Alert from '../../components/ui/Alert'
 import Badge from '../../components/ui/Badge'
@@ -12,10 +12,12 @@ import Modal from '../../components/ui/Modal'
 import PageHeader from '../../components/ui/PageHeader'
 import Select from '../../components/ui/Select'
 import Textarea from '../../components/ui/Textarea'
-import { IconChat, IconPlus } from '../../components/icons'
+import { IconChat, IconPlus, IconTrash } from '../../components/icons'
+
+const MODERATOR_ROLES = ['admin', 'academic_manager', 'instructor', 'content_manager']
 
 export default function DiscussionsList() {
-  const { accessToken } = useAuth()
+  const { accessToken, user } = useAuth()
   const { courses } = useCourseOptions()
   const [topics, setTopics] = useState([])
   const [loading, setLoading] = useState(true)
@@ -37,6 +39,16 @@ export default function DiscussionsList() {
   }
 
   useEffect(() => { load() }, [accessToken]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function remove(topic) {
+    if (!window.confirm(`Delete discussion topic "${topic.title}"? This removes all its replies too.`)) return
+    await deleteDiscussionTopic(topic.id, accessToken)
+    await load()
+  }
+
+  function canDelete(topic) {
+    return topic.created_by?.id === user?.id || MODERATOR_ROLES.includes(user?.user_type)
+  }
 
   async function submit() {
     if (!form.course || !form.title.trim()) {
@@ -87,6 +99,11 @@ export default function DiscussionsList() {
                 <p className="mt-0.5 text-xs text-navy-700/45">by {t.created_by?.full_name ?? t.created_by?.username} · {new Date(t.created_at).toLocaleDateString()}</p>
               </div>
               <span className="shrink-0 text-xs font-semibold text-navy-700/50">{t.reply_count} repl{t.reply_count === 1 ? 'y' : 'ies'}</span>
+              {canDelete(t) && (
+                <button type="button" onClick={() => remove(t)} className="shrink-0 rounded-lg p-1.5 text-red-500 hover:bg-red-50" aria-label="Delete topic">
+                  <IconTrash className="h-4 w-4" />
+                </button>
+              )}
             </li>
           ))}
         </ul>

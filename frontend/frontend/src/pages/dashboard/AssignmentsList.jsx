@@ -9,10 +9,12 @@ import PageHeader from '../../components/ui/PageHeader'
 import { IconClipboard, IconEdit, IconPlus, IconTrash } from '../../components/icons'
 
 const statusTone = { draft: 'warning', published: 'success', closed: 'neutral' }
+const PAGE_SIZE = 20
 
 export default function AssignmentsList() {
   const { user } = useAuth()
-  const [assignments, setAssignments] = useState([])
+  const [allAssignments, setAllAssignments] = useState([])
+  const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState(null)
   const isManager = user?.user_type === 'admin' || user?.user_type === 'academic_manager'
@@ -20,10 +22,11 @@ export default function AssignmentsList() {
   async function load() {
     setLoading(true)
     try {
-      const data = await getAssignments({ page_size: 100 })
+      const data = await getAssignments({ page_size: 200 })
       let rows = data.results ?? data
       if (!isManager) rows = rows.filter((a) => a.created_by === user?.id)
-      setAssignments(rows)
+      setAllAssignments(rows)
+      setPage(1)
     } catch {
       // handled by empty state
     } finally {
@@ -32,6 +35,8 @@ export default function AssignmentsList() {
   }
 
   useEffect(() => { load() }, [user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const assignments = allAssignments.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   async function handlePublish(id) {
     setBusyId(id)
@@ -60,13 +65,16 @@ export default function AssignmentsList() {
     <div className="space-y-4">
       <PageHeader
         title="Assignments"
-        description={`${assignments.length} assignment${assignments.length === 1 ? '' : 's'}`}
+        description={`${allAssignments.length} assignment${allAssignments.length === 1 ? '' : 's'}`}
         actions={<Button as={Link} to="/dashboard/assignments/create"><IconPlus className="h-4 w-4" /> Create Assignment</Button>}
       />
 
       <DataTable
         loading={loading}
         rows={assignments}
+        page={page}
+        total={allAssignments.length}
+        onPageChange={setPage}
         emptyMessage="No assignments yet. Create your first one."
         columns={[
           { key: 'title', label: 'Title', render: (a) => <span className="font-semibold text-navy-900">{a.title}</span> },

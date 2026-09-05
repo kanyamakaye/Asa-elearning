@@ -6,19 +6,29 @@ from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
-from accounts.models import InstructorProfile, StudentProfile
-from assessments.models import QuestionOption, Quiz, QuizAnswer, QuizAttempt, QuizQuestion
+from accounts.models import (
+    EmailVerificationToken,
+    InstructorProfile,
+    LoginHistory,
+    Permission,
+    PasswordResetToken,
+    Role,
+    RolePermission,
+    StudentProfile,
+    UserRole,
+)
+from assessments.models import Exam, Grade, QuestionOption, Quiz, QuizAnswer, QuizAttempt, QuizQuestion
 from assignments.models import Assignment, AssignmentSubmission
 from certificates.models import Certificate
-from courses.models import Course, CourseCategory, CourseModule
+from courses.models import Course, CourseCategory, CourseInstructor, CourseModule, CourseUnit
 from discussions.models import DiscussionReply, DiscussionTopic
 from enrollments.models import Enrollment
-from lessons.models import Lesson
+from lessons.models import LearningResource, Lesson
 from live_classes.models import Attendance, LiveSession
 from messaging.models import Message
 from notifications.models import Announcement, Notification
-from payments.models import Payment
-from reviews.models import CourseReview
+from payments.models import Payment, Refund
+from reviews.models import CourseReview, Wishlist
 from support.models import FAQ, Feedback, SupportTicket
 
 User = get_user_model()
@@ -59,6 +69,62 @@ STUDENTS = [
     'Naledi Dube', 'Peter Achebe', 'Rita Owusu', 'Tariq Hassan', 'Chidinma Eze',
     'John Kim', 'Maria Santos', 'Ahmed Hassan', 'Wei Zhang', 'Fatou Diallo',
     'Carlos Rivera', 'Aisha Bakr', 'Liam O\'Brien', 'Yuki Tanaka', 'Sara Mensah',
+]
+
+# Additional instructors beyond the 16 curated above (which own the courses in
+# COURSE_ROWS by name) — used for co-instructor assignments, extra courses,
+# and to pad general user/activity counts toward realistic dev-seed volumes.
+EXTRA_INSTRUCTOR_FIRST_NAMES = [
+    'Elena', 'Farid', 'Hassan', 'Imani', 'Jonas', 'Kavya', 'Liu', 'Mateus', 'Nia', 'Omar',
+    'Paula', 'Quang', 'Rita', 'Sanjay', 'Tanvi', 'Ugo', 'Vera', 'Walid', 'Xena', 'Yara',
+    'Zane', 'Bianca', 'Carlos', 'Deepa', 'Elias', 'Fumiko', 'Gideon', 'Hana', 'Ines', 'Jamal',
+    'Keiko', 'Leon', 'Mira', 'Noor',
+    # second wave — doubles the extra-instructor pool
+    'Adaeze', 'Boris', 'Chiara', 'Dawit', 'Esi', 'Faisal', 'Greta', 'Hiro', 'Ifeoma', 'Jaroslav',
+    'Kemal', 'Lucia', 'Mohsin', 'Naomi', 'Oleg', 'Petra', 'Qadir', 'Ronke', 'Stella', 'Tomas',
+    'Uche', 'Valeria', 'Wole', 'Ximena', 'Yosef', 'Zara', 'Abel', 'Bilal', 'Chinwe', 'Dmitri',
+    'Ekaterina', 'Femi', 'Giulia', 'Habib', 'Ingrid', 'Junior', 'Khalid', 'Lerato', 'Mohammed', 'Nasrin',
+    'Ola', 'Pilar', 'Quinn', 'Ravi', 'Selim', 'Temitope', 'Ulla', 'Vikram', 'Winnie', 'Zaid',
+]
+EXTRA_INSTRUCTOR_LAST_NAMES = [
+    'Abara', 'Bakr', 'Chen', 'Dlamini', 'Eze', 'Faruk', 'Garcia', 'Haile', 'Ivanov', 'Jansen',
+    'Kariuki', 'Lund', 'Mensah', 'Nakamura', 'Okonkwo', 'Patel', 'Quinones', 'Rossi', 'Suarez', 'Tesfaye',
+    'Umeh', 'Vance', 'Wanjala', 'Xu', 'Yamada', 'Zulu', 'Abioye', 'Baptiste', 'Costa', 'Diallo',
+    'Ekwueme', 'Farooq', 'Gomez', 'Haruna',
+    # second wave — doubles the extra-instructor pool
+    'Adeyinka', 'Botha', 'Castro', 'Demir', 'Eshun', 'Fontaine', 'Gebre', 'Hadid', 'Ilori', 'Jovanovic',
+    'Kagawa', 'Lindqvist', 'Moyo', 'Nwachukwu', 'Ochieng', 'Petrov', 'Qureshi', 'Rahimi', 'Silva', 'Tanaka',
+    'Uwimana', 'Vargas', 'Wong', 'Yilmaz', 'Zaman', 'Anwar', 'Bello', 'Chowdhury', 'Duarte', 'Essien',
+    'Fischer', 'Gyasi', 'Hassan', 'Idowu', 'Jallow', 'Kimathi', 'Lombard', 'Mwakalinga', 'Njoku', 'Okoro',
+    'Pereira', 'Qasim', 'Reyes', 'Siddiqui', 'Tadesse', 'Ude', 'Villanueva', 'Wachira', 'Yeboah', 'Zubair',
+]
+
+# Extra students beyond the 15 curated above — same rationale as instructors,
+# gives enough volume for enrollments/reviews/payments/notifications to
+# comfortably clear ~50 rows once every student enrolls in a few courses.
+EXTRA_STUDENT_NAMES = [
+    'Grace Nyambura', 'Daniel Otieno', 'Amina Yusuf', 'Samuel Adebayo', 'Wanjiku Njoroge',
+    'Ibrahim Suleiman', 'Kwame Asante', 'Priya Sharma', 'Victor Nwosu', 'Lydia Wambui',
+    'Ana Beatriz', 'Noah Abara', 'Marc Petit', 'Sophie Martin', 'Fatima Al-Sayed',
+    'Chidi Nnamdi', 'Rachel Kimani', 'David Mwangi', 'Miriam Cohen', 'Youssef Khalil',
+    'Ling Wei', 'Isabella Rossi', 'Kofi Boateng', 'Halima Bello', 'Erik Johansson',
+    'Nadia Rahman', 'Thabo Nkosi', 'Camila Torres', 'Femi Adeyemi', 'Anika Chowdhury',
+    'Gabriel Santos', 'Zanele Dube', 'Hiroshi Sato', 'Layla Haddad', 'Michael Osei',
+    'Valentina Cruz', 'Idris Bello', 'Aiko Yamamoto', 'Ronald Kiptoo', 'Selam Tesfaye',
+    'Bongani Zulu', 'Esperanza Diaz', 'Tunde Bakare', 'Meera Nair', 'Oscar Mensah',
+    # second wave — doubles the extra-student pool
+    'Adanna Okeke', 'Boris Ivanov', 'Chiara Bianchi', 'Dawit Alemu', 'Esi Owusu',
+    'Faisal Rahman', 'Greta Nilsson', 'Hiro Nakata', 'Ifeoma Chukwu', 'Jaroslav Novak',
+    'Kemal Yildiz', 'Lucia Fernandez', 'Mohsin Raza', 'Naomi Wanjiru', 'Oleg Petrenko',
+    'Petra Horvat', 'Qadir Malik', 'Ronke Adigun', 'Stella Achieng', 'Tomas Novotny',
+    'Uche Okafor', 'Valeria Moreno', 'Wole Fashola', 'Ximena Rojas', 'Yosef Girma',
+    'Zara Ahmadi', 'Abel Tesfaye', 'Bilal Ansari', 'Chinwe Obi', 'Dmitri Volkov',
+    'Ekaterina Popova', 'Femi Alabi', 'Giulia Ferrari', 'Habib Rahimi', 'Ingrid Larsen',
+    'Junior Baptiste', 'Khalid Nasser', 'Lerato Mokoena', 'Mohammed Farah', 'Nasrin Karimi',
+    'Ola Adekunle', 'Pilar Sanchez', 'Quinn Fitzgerald', 'Ravi Kapoor', 'Selim Aydin',
+    'Temitope Balogun', 'Ulla Berg', 'Vikram Malhotra', 'Winnie Achola', 'Zaid Hamdan',
+    'Aliyah Bashir', 'Benedict Osei', 'Carmen Lopez', 'Diego Fuentes', 'Ebele Nwankwo',
+    'Frida Karlsson', 'Godwin Etim', 'Halina Kowalski', 'Ismail Hodzic', 'Jia Li',
 ]
 
 # category_key -> list of (title, level, duration_hours, price_or_None, instructor_full_name)
@@ -121,6 +187,59 @@ COURSE_ROWS = {
     ],
 }
 
+# 8 extra courses per category, assigned to the extra_by_category instructor
+# pool (see seed_instructors) rather than the curated named instructors above.
+EXTRA_COURSE_TOPICS = {
+    'Information Technology': [
+        ('Windows Server Administration Essentials', 'intermediate', 12, 41), ('Virtualization with VMware & Hyper-V', 'advanced', 14, 52),
+        ('Network Security Fundamentals', 'intermediate', 11, 45), ('Introduction to Containers & Docker', 'beginner', 9, 36),
+        ('IT Help Desk & Technical Support', 'beginner', 8, None), ('Cloud Computing with AWS Basics', 'intermediate', 13, 48),
+        ('Database Administration Essentials', 'intermediate', 10, 42), ('Kubernetes for Beginners', 'advanced', 15, 58),
+    ],
+    'Software Development': [
+        ('Testing & Test-Driven Development with Python', 'intermediate', 10, 38), ('GraphQL API Development', 'intermediate', 9, 40),
+        ('Introduction to Go Programming', 'beginner', 11, 39), ('Building Microservices with Docker', 'advanced', 16, 56),
+        ('Vue.js for Frontend Development', 'intermediate', 10, 37), ('Java Programming Essentials', 'beginner', 14, None),
+        ('DevOps Practices for Developers', 'intermediate', 12, 46), ('Mobile App Development with Flutter', 'intermediate', 15, 50),
+    ],
+    'Data Science': [
+        ('Data Engineering Fundamentals', 'intermediate', 15, 55), ('A/B Testing for Product Teams', 'beginner', 6, None),
+        ('Natural Language Processing Basics', 'advanced', 18, 62), ('Data Cleaning & Preprocessing', 'beginner', 7, 29),
+        ('Time Series Analysis & Forecasting', 'advanced', 16, 59), ('Big Data with Apache Spark', 'advanced', 17, 61),
+        ('Python for Data Analysis', 'beginner', 9, 33), ('Business Intelligence Fundamentals', 'beginner', 8, None),
+    ],
+    'Business': [
+        ('Financial Modeling for Startups', 'intermediate', 9, 44), ('Change Management Essentials', 'beginner', 7, 33),
+        ('Business Analytics Fundamentals', 'intermediate', 10, 41), ('Risk Management Basics', 'beginner', 6, 28),
+        ('Corporate Governance Essentials', 'intermediate', 8, 39), ('Introduction to Business Law', 'beginner', 7, None),
+        ('Lean Six Sigma Fundamentals', 'advanced', 12, 53), ('Customer Relationship Management', 'beginner', 6, 27),
+    ],
+    'Accounting': [
+        ('Payroll Management Basics', 'beginner', 6, 26), ('Cost Accounting Fundamentals', 'intermediate', 8, 37),
+        ('Auditing Principles & Practice', 'advanced', 11, 48), ('Introduction to QuickBooks', 'beginner', 5, None),
+        ('Forensic Accounting Basics', 'advanced', 10, 46), ('Budgeting & Forecasting Essentials', 'intermediate', 7, 34),
+        ('International Financial Reporting Standards', 'advanced', 13, 51), ('Small Business Accounting', 'beginner', 6, None),
+    ],
+    'Digital Marketing': [
+        ('Email Marketing Automation', 'beginner', 6, 28), ('Influencer Marketing Strategy', 'intermediate', 7, 31),
+        ('Marketing Analytics Fundamentals', 'intermediate', 9, 36), ('Affiliate Marketing Basics', 'beginner', 5, None),
+        ('Brand Strategy & Positioning', 'intermediate', 8, 34), ('TikTok & Short-Form Video Marketing', 'beginner', 6, 25),
+        ('Conversion Rate Optimization', 'advanced', 10, 42), ('E-commerce Marketing Essentials', 'beginner', 7, None),
+    ],
+    'Languages': [
+        ('Portuguese for Beginners', 'beginner', 12, 28), ('Italian Conversation Basics', 'beginner', 10, None),
+        ('Japanese for Absolute Beginners', 'beginner', 14, 32), ('Korean Language Foundations', 'beginner', 13, 30),
+        ('Arabic for Travel & Business', 'beginner', 11, None), ('Advanced French Grammar', 'advanced', 10, 33),
+        ('Dutch Language Essentials', 'beginner', 9, 26), ('Swahili for Beginners', 'beginner', 8, None),
+    ],
+    'Professional Development': [
+        ('Conflict Resolution at Work', 'beginner', 5, 23), ('Effective Delegation Skills', 'beginner', 5, None),
+        ('Critical Thinking & Problem Solving', 'beginner', 6, 25), ('Workplace Communication Skills', 'beginner', 5, None),
+        ('Building Resilience & Stress Management', 'beginner', 6, 24), ('Coaching & Mentoring Fundamentals', 'intermediate', 7, 30),
+        ('Personal Branding for Professionals', 'beginner', 5, None), ('Effective Meetings & Facilitation', 'beginner', 4, 20),
+    ],
+}
+
 FAQS = [
     ('Is Asa Academy free to use?',
      'Creating an account and browsing the course catalog is completely free. Many courses are free, while others are paid and priced individually by their instructors.'),
@@ -134,6 +253,35 @@ FAQS = [
      'Yes, the platform is fully responsive and works in any mobile browser, so you can learn from your phone, tablet, or laptop.'),
     ('What payment methods are supported?',
      'We support major cards and mobile money for paid courses. All transactions are processed securely and refunds follow each course’s policy.'),
+]
+
+# Category-specific FAQ patterns — combined with CATEGORIES to generate a
+# larger, still-plausible FAQ set without hand-writing 50 bespoke entries.
+FAQ_PATTERNS = [
+    ('Do I need prior experience for {cat} courses?',
+     'Most {cat_lower} courses are beginner-friendly and list any prerequisites in the course description, so check there before enrolling.'),
+    ('How long does it take to complete a {cat} course?',
+     'Course length varies, but most {cat_lower} courses on Asa Academy range from a few hours to under 30 hours of content, and you can always learn at your own pace.'),
+    ('Will I get a certificate for {cat} courses?',
+     'Yes, {cat_lower} courses with certification enabled award a verifiable certificate once you complete all required lessons and assessments.'),
+    ('Are there live classes for {cat} courses?',
+     'Some {cat_lower} courses include scheduled live sessions with the instructor — check the course page for the upcoming schedule.'),
+    ('How much do {cat} courses cost?',
+     '{cat} courses range from free introductory courses to paid, in-depth programs — pricing is shown on each course page.'),
+    ('Can I ask the instructor questions in a {cat} course?',
+     'Yes, every {cat_lower} course has a discussion area where you can post questions and get help from the instructor and other learners.'),
+    ('Are {cat} courses updated regularly?',
+     'Instructors periodically refresh {cat_lower} courses with new examples and resources, and any major update is noted on the course page.'),
+    ('Can I get a refund for a {cat} course?',
+     'Yes, {cat_lower} courses follow the platform-wide refund policy — reach out to support within the eligible window from the payments page.'),
+    ('Is there a mobile-friendly version of {cat} courses?',
+     'Yes, all {cat_lower} course content is fully responsive and works well on phones, tablets, and laptops alike.'),
+    ('Do {cat} courses include downloadable resources?',
+     'Many {cat_lower} courses include downloadable slides, worksheets, or code samples alongside the video and text lessons.'),
+    ('Can I retake a {cat} course quiz if I fail?',
+     'Yes, most {cat_lower} course quizzes allow multiple attempts — check the specific quiz settings for its attempt limit.'),
+    ('How do I track my progress in a {cat} course?',
+     'Your dashboard shows a progress bar for every {cat_lower} course you are enrolled in, updated automatically as you complete lessons.'),
 ]
 
 REVIEW_QUOTES = [
@@ -180,6 +328,45 @@ TICKET_SUBJECTS = [
     ('account', 'low', 'Unable to update profile picture'),
     ('academic', 'high', 'Instructor has not responded to messages in a week'),
     ('technical', 'low', 'PDF download link is broken'),
+    ('technical', 'medium', 'Course thumbnail not displaying correctly'),
+    ('technical', 'high', 'App crashes when submitting a quiz'),
+    ('academic', 'low', 'How is the final grade calculated?'),
+    ('academic', 'medium', 'Requesting an assignment deadline extension'),
+    ('academic', 'high', 'Live class recording is missing'),
+    ('payment', 'medium', 'Discount code not applying at checkout'),
+    ('payment', 'low', 'Invoice needed for a completed purchase'),
+    ('payment', 'high', 'Payment failed but amount was deducted'),
+    ('account', 'medium', 'Two-factor login keeps failing'),
+    ('account', 'low', 'How do I delete my account?'),
+    ('account', 'medium', 'Wrong name shown on my certificate'),
+    ('general', 'low', 'Feature request: bookmark favorite lessons'),
+    ('general', 'medium', 'Feedback on the new dashboard layout'),
+    ('general', 'low', 'How do I contact an instructor directly?'),
+    ('technical', 'urgent', 'Site is completely unresponsive on mobile'),
+    ('technical', 'medium', 'Search results are not showing recent courses'),
+    ('technical', 'low', 'Typo found in a lesson transcript'),
+    ('academic', 'urgent', 'Suspected error in exam grading'),
+    ('academic', 'medium', 'Cannot access a lesson marked as preview'),
+    ('payment', 'urgent', 'Subscription renewed without consent'),
+    ('payment', 'medium', 'Currency shown is incorrect for my region'),
+    ('account', 'high', 'Account locked after multiple login attempts'),
+    ('account', 'low', 'Notification emails are not arriving'),
+    ('general', 'medium', 'Suggestion: add a course completion checklist'),
+    ('technical', 'high', 'Downloaded certificate PDF is corrupted'),
+    ('technical', 'medium', 'Progress bar not updating after finishing a lesson'),
+    ('academic', 'low', 'Where can I see my quiz attempt history?'),
+    ('academic', 'medium', 'Group project submission is unclear'),
+    ('payment', 'low', 'Question about refund processing time'),
+    ('account', 'medium', 'Unable to switch from student to instructor account'),
+    ('general', 'low', 'Request for a mobile app'),
+    ('technical', 'medium', 'Live class audio keeps cutting out'),
+    ('technical', 'low', 'Course filter by price is not working'),
+    ('academic', 'high', 'Plagiarism flag on my assignment seems incorrect'),
+    ('payment', 'medium', 'Need to update my saved card details'),
+    ('account', 'low', 'How do I merge two accounts?'),
+    ('general', 'medium', 'Dark mode causes text contrast issues'),
+    ('technical', 'urgent', 'Cannot upload assignment file — upload stuck at 0%'),
+    ('academic', 'medium', 'Missing lesson in module 3'),
 ]
 
 NOTIFICATION_TEMPLATES = [
@@ -217,6 +404,12 @@ FEEDBACK_TEMPLATES = [
     ('appreciation', 'Loving the platform', 'The dashboard is clean and easy to use — great work!'),
     ('technical', 'Slow video loading', 'Videos sometimes take a while to start buffering on my connection.'),
     ('complaint', 'Mobile layout issue', 'Some tables are hard to read on my phone screen.'),
+    ('suggestion', 'Add a dark mode toggle', 'A dark mode option would be great for late-night studying.'),
+    ('appreciation', 'Great instructor support', 'My instructor responded quickly and the explanation really helped.'),
+    ('technical', 'Quiz page loads slowly', 'The quiz page takes a few seconds longer than the rest of the site.'),
+    ('complaint', 'Too many notification emails', 'I would like more control over how many emails I receive.'),
+    ('suggestion', 'Offline course downloads', 'Being able to download lessons for offline viewing would help a lot.'),
+    ('appreciation', 'Certificates look professional', 'The certificate design is clean and I was proud to share it.'),
 ]
 
 MESSAGE_SUBJECTS = [
@@ -224,6 +417,10 @@ MESSAGE_SUBJECTS = [
     'Clarification on grading rubric',
     'Thank you for the detailed feedback',
     'Extension request for assignment',
+    'Question about upcoming live class',
+    'Trouble accessing course materials',
+    'Follow-up on quiz results',
+    'Request for additional resources',
 ]
 
 
@@ -243,34 +440,50 @@ class Command(BaseCommand):
         categories = self.seed_categories()
 
         self.stdout.write('Seeding instructors...')
-        instructors = self.seed_instructors()
+        instructors, extra_by_category, all_instructors = self.seed_instructors()
 
         self.stdout.write('Seeding students...')
         students = self.seed_students()
 
         self.stdout.write('Seeding courses, modules, and lessons...')
         courses = self.seed_courses(categories, instructors)
+        courses += self.seed_extra_courses(categories, extra_by_category)
+
+        self.stdout.write('Seeding co-instructor assignments...')
+        self.seed_course_instructors(courses, all_instructors)
 
         self.stdout.write('Seeding enrollments, reviews, and certificates...')
         self.seed_activity(students, courses)
+        self.ensure_minimum_certificates(students, courses)
 
         self.stdout.write('Seeding FAQs...')
-        self.seed_faqs()
+        self.seed_faqs(categories)
 
-        self.stdout.write('Seeding a sample quiz per category...')
+        self.stdout.write('Seeding quizzes (one per course)...')
         quizzes = self.seed_quizzes(courses)
 
         self.stdout.write('Seeding extra quiz attempts (including some pending manual grading)...')
         self.seed_quiz_attempts(students, quizzes)
 
         self.stdout.write('Seeding assignments and submissions...')
-        self.seed_assignments(courses, students)
+        assignments = self.seed_assignments(courses, students)
 
-        self.stdout.write('Seeding payments for paid enrollments...')
+        self.stdout.write('Seeding exams and grades...')
+        exams = self.seed_exams(courses)
+        self.seed_grades(quizzes, assignments, exams)
+
+        self.stdout.write('Seeding payments and refunds...')
         self.seed_payments(students, courses)
+        self.seed_refunds()
+
+        self.stdout.write('Seeding wishlists...')
+        self.seed_wishlists(students, courses)
+
+        self.stdout.write('Seeding learning resources...')
+        self.seed_learning_resources(courses)
 
         self.stdout.write('Seeding support tickets...')
-        self.seed_support_tickets(students, instructors)
+        self.seed_support_tickets(students, all_instructors)
 
         self.stdout.write('Seeding notifications...')
         self.seed_notifications(students)
@@ -286,13 +499,24 @@ class Command(BaseCommand):
 
         self.stdout.write('Seeding feedback and messages...')
         self.seed_feedback(students)
-        self.seed_messages(students, instructors)
+        self.seed_messages(students, all_instructors)
+
+        all_users = list(User.objects.all())
+
+        self.stdout.write('Seeding login history...')
+        self.seed_login_history(all_users)
+
+        self.stdout.write('Seeding password reset / email verification tokens...')
+        self.seed_tokens(all_users)
+
+        self.stdout.write('Seeding roles and permissions...')
+        self.seed_role_permissions(all_users)
 
         self.stdout.write('Backfilling newer course/quiz/assignment/live-class fields...')
         self.backfill_new_fields(courses)
 
         self.stdout.write(self.style.SUCCESS(
-            f'\nDone. {len(courses)} courses, {len(instructors)} instructors, '
+            f'\nDone. {len(courses)} courses, {len(all_instructors)} instructors, '
             f'{len(students)} students, {Enrollment.objects.count()} enrollments, '
             f'{Payment.objects.count()} payments, {SupportTicket.objects.count()} tickets, '
             f'{Notification.objects.count()} notifications.'
@@ -337,58 +561,78 @@ class Command(BaseCommand):
             categories[name] = cat
         return categories
 
+    def _create_instructor(self, first, last, specialization, bio):
+        email = f'{first.lower()}.{last.lower()}@asaacademy.com'
+        user, created = User.objects.get_or_create(
+            email=email,
+            defaults={
+                'username': f'{first.lower()}{last.lower()}',
+                'first_name': first,
+                'last_name': last,
+                'user_type': User.UserType.INSTRUCTOR,
+                'email_verified': True,
+            },
+        )
+        if created:
+            user.set_password(SEED_PASSWORD)
+            user.save()
+        InstructorProfile.objects.get_or_create(
+            user=user,
+            defaults={
+                'specialization': specialization,
+                'biography': bio,
+                'years_of_experience': random.randint(3, 12),
+                'qualification': 'MSc' if random.random() > 0.5 else 'BSc',
+            },
+        )
+        return user
+
     def seed_instructors(self):
+        """Returns (instructors, extra_by_category, all_instructors):
+        - instructors: name -> User, for the 16 curated instructors that own
+          COURSE_ROWS by name.
+        - extra_by_category: category name -> list of additional instructor
+          Users (not tied to a curated course), used for extra courses and
+          co-instructor assignments.
+        - all_instructors: every instructor User, curated + extra.
+        """
         instructors = {}
         for first, last, specialization, bio in INSTRUCTORS:
-            email = f'{first.lower()}.{last.lower()}@asaacademy.com'
-            user, created = User.objects.get_or_create(
-                email=email,
-                defaults={
-                    'username': f'{first.lower()}{last.lower()}',
-                    'first_name': first,
-                    'last_name': last,
-                    'user_type': User.UserType.INSTRUCTOR,
-                    'email_verified': True,
-                },
-            )
-            if created:
-                user.set_password(SEED_PASSWORD)
-                user.save()
-            InstructorProfile.objects.get_or_create(
-                user=user,
-                defaults={
-                    'specialization': specialization,
-                    'biography': bio,
-                    'years_of_experience': random.randint(3, 12),
-                    'qualification': 'MSc' if random.random() > 0.5 else 'BSc',
-                },
-            )
-            instructors[f'{first} {last}'] = user
-        return instructors
+            instructors[f'{first} {last}'] = self._create_instructor(first, last, specialization, bio)
+
+        extra_by_category = {name: [] for name, _ in CATEGORIES}
+        for i, (first, last) in enumerate(zip(EXTRA_INSTRUCTOR_FIRST_NAMES, EXTRA_INSTRUCTOR_LAST_NAMES)):
+            category_name = CATEGORIES[i % len(CATEGORIES)][0]
+            bio = f'{category_name}-focused instructor with hands-on industry experience.'
+            user = self._create_instructor(first, last, category_name, bio)
+            extra_by_category[category_name].append(user)
+
+        all_instructors = list(instructors.values()) + [u for users in extra_by_category.values() for u in users]
+        return instructors, extra_by_category, all_instructors
+
+    def _create_student(self, full_name):
+        first, last = full_name.split(' ', 1)
+        clean_last = last.lower().replace(' ', '').replace("'", '')
+        email = f'{first.lower()}.{clean_last}@student.asaacademy.com'
+        username = f'{first.lower()}{clean_last}'
+        user, created = User.objects.get_or_create(
+            email=email,
+            defaults={
+                'username': username,
+                'first_name': first,
+                'last_name': last,
+                'user_type': User.UserType.STUDENT,
+                'email_verified': True,
+            },
+        )
+        if created:
+            user.set_password(SEED_PASSWORD)
+            user.save()
+        StudentProfile.objects.get_or_create(user=user)
+        return user
 
     def seed_students(self):
-        students = []
-        for full_name in STUDENTS:
-            first, last = full_name.split(' ', 1)
-            clean_last = last.lower().replace(' ', '').replace("'", '')
-            email = f'{first.lower()}.{clean_last}@student.asaacademy.com'
-            username = f'{first.lower()}{clean_last}'
-            user, created = User.objects.get_or_create(
-                email=email,
-                defaults={
-                    'username': username,
-                    'first_name': first,
-                    'last_name': last,
-                    'user_type': User.UserType.STUDENT,
-                    'email_verified': True,
-                },
-            )
-            if created:
-                user.set_password(SEED_PASSWORD)
-                user.save()
-            StudentProfile.objects.get_or_create(user=user)
-            students.append(user)
-        return students
+        return [self._create_student(full_name) for full_name in STUDENTS + EXTRA_STUDENT_NAMES]
 
     def seed_courses(self, categories, instructors):
         courses = []
@@ -421,10 +665,11 @@ class Command(BaseCommand):
         return courses
 
     def seed_modules_and_lessons(self, course):
+        unit = CourseUnit.objects.create(course=course, title='Lesson 1: Course Content', order=0)
         num_modules = random.randint(2, 4)
         for m_index, module_title in enumerate(MODULE_TITLES[:num_modules]):
             module = CourseModule.objects.create(
-                course=course, title=module_title, order=m_index,
+                unit=unit, title=module_title, order=m_index,
                 description=f'{module_title} for {course.title}.',
             )
             for l_index in range(random.randint(3, 5)):
@@ -448,6 +693,56 @@ class Command(BaseCommand):
                     lesson.content_url = 'https://zoom.us/j/1234567890'
                     lesson.save(update_fields=['content_url'])
 
+    def seed_extra_courses(self, categories, extra_by_category):
+        """2 additional courses per category (see EXTRA_COURSE_TOPICS),
+        assigned to the extra_by_category instructor pool rather than the
+        curated named instructors in COURSE_ROWS."""
+        courses = []
+        for category_name, rows in EXTRA_COURSE_TOPICS.items():
+            category = categories[category_name]
+            pool = extra_by_category[category_name]
+            for i, (title, level, duration_hours, price) in enumerate(rows):
+                instructor = pool[i % len(pool)]
+                course, created = Course.objects.get_or_create(
+                    title=title,
+                    instructor=instructor,
+                    defaults={
+                        'category': category,
+                        'description': (
+                            f'{title} is a {level}-level course covering the essential skills you need '
+                            f'in {category_name.lower()}. This course combines lessons, hands-on practice, '
+                            'and assessments to help you build real competence.'
+                        ),
+                        'short_description': f'A {level} course in {category_name.lower()}.',
+                        'level': level,
+                        'duration_hours': duration_hours,
+                        'price': Decimal(price) if price else Decimal('0'),
+                        'is_free': price is None,
+                        'status': Course.Status.PUBLISHED,
+                        'certificate_enabled': True,
+                    },
+                )
+                if created:
+                    self.seed_modules_and_lessons(course)
+                courses.append(course)
+        return courses
+
+    def seed_course_instructors(self, courses, all_instructors):
+        """Assigns a co-instructor to most courses (skips a course's own
+        primary instructor)."""
+        for course in courses:
+            co_random = random.Random(f'co-{course.id}')
+            candidates = [i for i in all_instructors if i.id != course.instructor_id]
+            if not candidates:
+                continue
+            co_instructor = co_random.choice(candidates)
+            CourseInstructor.objects.get_or_create(
+                course=course, instructor=co_instructor,
+                defaults={'instructor_role': co_random.choice(
+                    [CourseInstructor.Role.ASSISTANT, CourseInstructor.Role.TUTOR, CourseInstructor.Role.MODERATOR]
+                )},
+            )
+
     def seed_activity(self, students, courses):
         for student in students:
             if Enrollment.objects.filter(student=student).exists():
@@ -460,7 +755,7 @@ class Command(BaseCommand):
             for course in enrolled_courses:
                 enrollment, created = Enrollment.objects.get_or_create(
                     student=student, course=course,
-                    defaults={'completion_percentage': Decimal(random.choice([10, 25, 40, 60, 80, 100]))},
+                    defaults={'completion_percentage': Decimal(random.choice([10, 25, 40, 60, 80, 100, 100]))},
                 )
                 if not created:
                     continue
@@ -483,19 +778,49 @@ class Command(BaseCommand):
                         },
                     )
 
-    def seed_faqs(self):
+    def ensure_minimum_certificates(self, students, courses, target=100):
+        """Certificate count depends on the random 100%-completion draw above
+        — top it up deterministically so dev seeds always have plenty to
+        page through, regardless of how the randomness falls."""
+        existing = Certificate.objects.count()
+        if existing >= target:
+            return
+        candidates = list(
+            Enrollment.objects.exclude(certificates__isnull=False)
+            .select_related('student', 'course').order_by('id')
+        )
+        cert_random = random.Random('certificates')
+        cert_random.shuffle(candidates)
+        for enrollment in candidates:
+            if Certificate.objects.count() >= target:
+                break
+            enrollment.completion_percentage = Decimal('100')
+            enrollment.status = Enrollment.Status.COMPLETED
+            enrollment.completed_at = enrollment.completed_at or timezone.now() - timedelta(days=cert_random.randint(1, 60))
+            enrollment.certificate_issued = True
+            enrollment.save()
+            Certificate.objects.get_or_create(
+                student=enrollment.student, course=enrollment.course, defaults={'enrollment': enrollment},
+            )
+
+    def seed_faqs(self, categories):
         for order, (question, answer) in enumerate(FAQS):
             FAQ.objects.get_or_create(question=question, defaults={'answer': answer, 'display_order': order})
 
-    def seed_quizzes(self, courses):
-        # One quiz per category, on that category's first course.
-        quizzes = []
-        seen_categories = set()
-        for course in courses:
-            if course.category_id in seen_categories:
-                continue
-            seen_categories.add(course.category_id)
+        order = len(FAQS)
+        for category_name in categories:
+            for question_tpl, answer_tpl in FAQ_PATTERNS:
+                fmt = {'cat': category_name, 'cat_lower': category_name.lower()}
+                FAQ.objects.get_or_create(
+                    question=question_tpl.format(**fmt),
+                    defaults={'answer': answer_tpl.format(**fmt), 'category': category_name, 'display_order': order},
+                )
+                order += 1
 
+    def seed_quizzes(self, courses):
+        # One quiz per course.
+        quizzes = []
+        for course in courses:
             quiz, created = Quiz.objects.get_or_create(
                 course=course,
                 title=f'{course.title} - Knowledge Check',
@@ -594,12 +919,9 @@ class Command(BaseCommand):
                 attempt.save()
 
     def seed_assignments(self, courses, students):
-        seen_categories = set()
+        # One assignment per course.
+        assignments = []
         for course in courses:
-            if course.category_id in seen_categories:
-                continue
-            seen_categories.add(course.category_id)
-
             assignment, created = Assignment.objects.get_or_create(
                 course=course,
                 title=f'{course.title} - Practical Assignment',
@@ -613,6 +935,7 @@ class Command(BaseCommand):
                     'created_by': course.instructor,
                 },
             )
+            assignments.append(assignment)
             if not created:
                 continue
 
@@ -637,6 +960,7 @@ class Command(BaseCommand):
                         'graded_at': timezone.now() if graded else None,
                     },
                 )
+        return assignments
 
     def seed_payments(self, students, courses):
         paid_courses = {c.id: c for c in courses if not c.is_free}
@@ -659,35 +983,165 @@ class Command(BaseCommand):
                 payment_date=timezone.now() - timedelta(days=pay_random.randint(0, 45)) if status == Payment.Status.SUCCESSFUL else None,
             )
 
-    def seed_support_tickets(self, students, instructors):
-        all_users = students + list(instructors.values())
-        for i, (category, priority, subject) in enumerate(TICKET_SUBJECTS):
-            if SupportTicket.objects.filter(subject=subject).exists():
+    def seed_refunds(self):
+        reasons = [
+            'Course was not as described.',
+            'Accidentally purchased a duplicate course.',
+            'Technical issues prevented access to the content.',
+            'Changed my mind shortly after purchase.',
+            'Requested a switch to a different course instead.',
+        ]
+        successful_payments = list(Payment.objects.filter(payment_status=Payment.Status.SUCCESSFUL).select_related('student'))
+        refund_random = random.Random('refunds')
+        refund_random.shuffle(successful_payments)
+        # Enough of the successful payments to comfortably clear ~50 refunds.
+        for payment in successful_payments[:120]:
+            if Refund.objects.filter(payment=payment).exists():
                 continue
-            ticket_random = random.Random(subject)
-            user = ticket_random.choice(all_users)
-            status = ticket_random.choices(
-                [SupportTicket.Status.OPEN, SupportTicket.Status.IN_PROGRESS,
-                 SupportTicket.Status.RESOLVED, SupportTicket.Status.CLOSED],
-                weights=[35, 20, 30, 15],
+            status = refund_random.choices(
+                [Refund.Status.PENDING, Refund.Status.APPROVED, Refund.Status.REJECTED, Refund.Status.COMPLETED],
+                weights=[30, 20, 20, 30],
             )[0]
-            ticket = SupportTicket.objects.create(
-                user=user,
-                subject=subject,
-                description=f'{subject}. Please look into this when you get a chance.',
-                category=category,
-                priority=priority,
-                status=status,
+            requested_at = timezone.now() - timedelta(days=refund_random.randint(1, 30))
+            refund = Refund.objects.create(
+                payment=payment,
+                student=payment.student,
+                refund_amount=payment.amount,
+                refund_reason=refund_random.choice(reasons),
+                refund_status=status,
+                processed_by=payment.course.instructor if status != Refund.Status.PENDING else None,
+                processed_at=requested_at + timedelta(days=refund_random.randint(1, 5)) if status != Refund.Status.PENDING else None,
             )
-            # auto_now_add stamps created_at at creation time ("now"); backdate it
-            # here, then place resolved_at *after* it (never before, never future).
-            days_ago = ticket_random.randint(1, 20)
-            created_at = timezone.now() - timedelta(days=days_ago)
-            updates = {'created_at': created_at}
-            if status in (SupportTicket.Status.RESOLVED, SupportTicket.Status.CLOSED):
-                response_hours = ticket_random.randint(1, min(72, days_ago * 24))
-                updates['resolved_at'] = created_at + timedelta(hours=response_hours)
-            SupportTicket.objects.filter(pk=ticket.pk).update(**updates)
+            Refund.objects.filter(pk=refund.pk).update(requested_at=requested_at)
+
+    def seed_wishlists(self, students, courses):
+        for student in students:
+            wish_random = random.Random(f'wishlist-{student.id}')
+            enrolled_ids = set(Enrollment.objects.filter(student=student).values_list('course_id', flat=True))
+            candidates = [c for c in courses if c.id not in enrolled_ids]
+            if not candidates:
+                continue
+            picks = wish_random.sample(candidates, k=min(len(candidates), wish_random.randint(1, 2)))
+            for course in picks:
+                Wishlist.objects.get_or_create(student=student, course=course)
+
+    def seed_learning_resources(self, courses):
+        resource_random = random.Random('resources')
+        resource_types = [LearningResource.ResourceType.PRESENTATION, LearningResource.ResourceType.PDF, LearningResource.ResourceType.DOCUMENT]
+        for course in courses:
+            lessons = list(Lesson.objects.filter(module__unit__course=course).order_by('order')[:2])
+            for lesson in lessons:
+                if LearningResource.objects.filter(lesson=lesson).exists():
+                    continue
+                resource_type = resource_random.choice(resource_types)
+                LearningResource.objects.create(
+                    course=course, lesson=lesson,
+                    title=f'{lesson.title} - Supplementary Material',
+                    resource_type=resource_type,
+                    file_url='https://example.com/resources/sample.pdf',
+                    file_name='sample.pdf',
+                    is_downloadable=True,
+                    uploaded_by=course.instructor,
+                )
+
+    def seed_exams(self, courses):
+        exams = []
+        exam_random = random.Random('exams')
+        for course in courses:
+            exam, created = Exam.objects.get_or_create(
+                course=course,
+                title=f'{course.title} - Final Exam',
+                defaults={
+                    'description': f'Comprehensive final exam covering all modules of {course.title}.',
+                    'exam_date': (timezone.now() + timedelta(days=exam_random.randint(-30, 30))).date(),
+                    'start_time': '09:00',
+                    'end_time': '11:00',
+                    'duration_minutes': 120,
+                    'total_marks': 100,
+                    'passing_marks': 50,
+                    'attempt_limit': 1,
+                    'status': exam_random.choice([Exam.Status.SCHEDULED, Exam.Status.COMPLETED]),
+                    'created_by': course.instructor,
+                },
+            )
+            exams.append(exam)
+        return exams
+
+    def seed_grades(self, quizzes, assignments, exams):
+        grade_random = random.Random('grades')
+
+        for quiz in quizzes:
+            for attempt in QuizAttempt.objects.filter(quiz=quiz, status=QuizAttempt.Status.GRADED).select_related('student'):
+                if Grade.objects.filter(student=attempt.student, course=quiz.course, assessment_type=Grade.AssessmentType.QUIZ, assessment_id=quiz.id).exists():
+                    continue
+                Grade.objects.create(
+                    student=attempt.student, course=quiz.course,
+                    assessment_type=Grade.AssessmentType.QUIZ, assessment_id=quiz.id,
+                    marks_obtained=attempt.score, maximum_marks=quiz.total_marks,
+                    remarks='Auto-generated from quiz attempt.', graded_by=quiz.course.instructor,
+                )
+
+        for assignment in assignments:
+            for submission in AssignmentSubmission.objects.filter(
+                assignment=assignment, status=AssignmentSubmission.Status.GRADED, marks_awarded__isnull=False,
+            ).select_related('student'):
+                if Grade.objects.filter(student=submission.student, course=assignment.course, assessment_type=Grade.AssessmentType.ASSIGNMENT, assessment_id=assignment.id).exists():
+                    continue
+                Grade.objects.create(
+                    student=submission.student, course=assignment.course,
+                    assessment_type=Grade.AssessmentType.ASSIGNMENT, assessment_id=assignment.id,
+                    marks_obtained=submission.marks_awarded, maximum_marks=assignment.maximum_marks,
+                    remarks='Auto-generated from assignment submission.', graded_by=assignment.course.instructor,
+                )
+
+        for exam in exams:
+            if exam.status != Exam.Status.COMPLETED:
+                continue
+            enrolled_students = [e.student for e in Enrollment.objects.filter(course=exam.course).select_related('student')]
+            for student in grade_random.sample(enrolled_students, k=min(len(enrolled_students), grade_random.randint(1, 3))):
+                if Grade.objects.filter(student=student, course=exam.course, assessment_type=Grade.AssessmentType.EXAM, assessment_id=exam.id).exists():
+                    continue
+                marks = grade_random.choice([55, 62, 70, 78, 85, 91])
+                Grade.objects.create(
+                    student=student, course=exam.course,
+                    assessment_type=Grade.AssessmentType.EXAM, assessment_id=exam.id,
+                    marks_obtained=marks, maximum_marks=exam.total_marks,
+                    remarks='Final exam result.', graded_by=exam.course.instructor,
+                )
+
+    def seed_support_tickets(self, students, instructors, rounds=2):
+        # Each round assigns every template to a (deterministically) different
+        # user, roughly multiplying ticket volume by `rounds` — subjects repeat
+        # across different users, which the model allows (no unique constraint).
+        all_users = students + list(instructors)
+        for round_num in range(rounds):
+            for category, priority, subject in TICKET_SUBJECTS:
+                ticket_random = random.Random(f'{subject}-{round_num}')
+                user = ticket_random.choice(all_users)
+                if SupportTicket.objects.filter(subject=subject, user=user).exists():
+                    continue
+                status = ticket_random.choices(
+                    [SupportTicket.Status.OPEN, SupportTicket.Status.IN_PROGRESS,
+                     SupportTicket.Status.RESOLVED, SupportTicket.Status.CLOSED],
+                    weights=[35, 20, 30, 15],
+                )[0]
+                ticket = SupportTicket.objects.create(
+                    user=user,
+                    subject=subject,
+                    description=f'{subject}. Please look into this when you get a chance.',
+                    category=category,
+                    priority=priority,
+                    status=status,
+                )
+                # auto_now_add stamps created_at at creation time ("now"); backdate it
+                # here, then place resolved_at *after* it (never before, never future).
+                days_ago = ticket_random.randint(1, 20)
+                created_at = timezone.now() - timedelta(days=days_ago)
+                updates = {'created_at': created_at}
+                if status in (SupportTicket.Status.RESOLVED, SupportTicket.Status.CLOSED):
+                    response_hours = ticket_random.randint(1, min(72, days_ago * 24))
+                    updates['resolved_at'] = created_at + timedelta(hours=response_hours)
+                SupportTicket.objects.filter(pk=ticket.pk).update(**updates)
 
     def seed_notifications(self, students):
         for student in students:
@@ -720,27 +1174,24 @@ class Command(BaseCommand):
             ]
             if len(enrolled_students) < 2:
                 continue
-            if DiscussionTopic.objects.filter(course=course).exists():
-                continue
             topic_random = random.Random(course.id)
-            topic_title = topic_random.choice(DISCUSSION_TOPICS)
-            starter = topic_random.choice(enrolled_students)
-            topic = DiscussionTopic.objects.create(
-                course=course, created_by=starter, title=topic_title,
-                description='Starting a thread for this course — feel free to jump in!',
-            )
-            repliers = topic_random.sample(enrolled_students, k=min(len(enrolled_students), topic_random.randint(1, 3)))
-            for replier in repliers:
-                DiscussionReply.objects.create(
-                    topic=topic, user=replier, reply_text=topic_random.choice(DISCUSSION_REPLIES),
+            topic_titles = topic_random.sample(DISCUSSION_TOPICS, k=min(len(DISCUSSION_TOPICS), topic_random.randint(1, 2)))
+            for topic_title in topic_titles:
+                if DiscussionTopic.objects.filter(course=course, title=topic_title).exists():
+                    continue
+                starter = topic_random.choice(enrolled_students)
+                topic = DiscussionTopic.objects.create(
+                    course=course, created_by=starter, title=topic_title,
+                    description='Starting a thread for this course — feel free to jump in!',
                 )
+                repliers = topic_random.sample(enrolled_students, k=min(len(enrolled_students), topic_random.randint(1, 3)))
+                for replier in repliers:
+                    DiscussionReply.objects.create(
+                        topic=topic, user=replier, reply_text=topic_random.choice(DISCUSSION_REPLIES),
+                    )
 
     def seed_announcements(self, courses):
-        seen_categories = set()
         for course in courses:
-            if course.category_id in seen_categories:
-                continue
-            seen_categories.add(course.category_id)
             title, message = random.Random(course.id).choice(ANNOUNCEMENT_TEMPLATES)
             Announcement.objects.get_or_create(
                 course=course, title=title,
@@ -752,11 +1203,7 @@ class Command(BaseCommand):
             )
 
     def seed_live_classes(self, courses):
-        seen_categories = set()
         for course in courses:
-            if course.category_id in seen_categories:
-                continue
-            seen_categories.add(course.category_id)
             if LiveSession.objects.filter(course=course).exists():
                 continue
 
@@ -788,21 +1235,21 @@ class Command(BaseCommand):
                             },
                         )
 
-    def seed_feedback(self, students):
-        for i, (feedback_type, subject, message) in enumerate(FEEDBACK_TEMPLATES):
-            if i >= len(students):
-                break
+    def seed_feedback(self, students, target=100):
+        # Cycle the template pool across students — Feedback has no unique
+        # constraint, and get_or_create is scoped by (user, subject), so a
+        # repeated subject across different students still creates a new row.
+        for i, student in enumerate(students[:target]):
+            feedback_type, subject, message = FEEDBACK_TEMPLATES[i % len(FEEDBACK_TEMPLATES)]
             Feedback.objects.get_or_create(
-                user=students[i], subject=subject,
+                user=student, subject=subject,
                 defaults={'feedback_type': feedback_type, 'message': message, 'rating': random.randint(3, 5)},
             )
 
-    def seed_messages(self, students, instructors):
-        instructor_list = list(instructors.values())
-        for i, subject in enumerate(MESSAGE_SUBJECTS):
-            if i >= len(students):
-                break
-            student = students[i]
+    def seed_messages(self, students, instructors, target=100):
+        instructor_list = list(instructors)
+        for i, student in enumerate(students[:target]):
+            subject = MESSAGE_SUBJECTS[i % len(MESSAGE_SUBJECTS)]
             instructor = instructor_list[i % len(instructor_list)]
             if Message.objects.filter(sender=student, subject=subject).exists():
                 continue
@@ -811,6 +1258,110 @@ class Command(BaseCommand):
                 message_body=f'{subject}. Could you help clarify this when you have a moment?',
                 is_read=random.random() < 0.5,
             )
+
+    def seed_login_history(self, users, target=160):
+        history_random = random.Random('login-history')
+        devices = [
+            'Windows 11 / Chrome 128', 'macOS Sonoma / Safari 17', 'Ubuntu 22.04 / Firefox 129',
+            'Android 14 / Chrome Mobile', 'iOS 17 / Safari Mobile', 'Windows 10 / Edge 127',
+        ]
+        sample_users = history_random.sample(users, k=min(len(users), target))
+        for user in sample_users:
+            for _ in range(history_random.randint(1, 2)):
+                status = history_random.choices(
+                    [LoginHistory.LoginStatus.SUCCESSFUL, LoginHistory.LoginStatus.FAILED],
+                    weights=[85, 15],
+                )[0]
+                login_at = timezone.now() - timedelta(
+                    days=history_random.randint(0, 60), hours=history_random.randint(0, 23),
+                )
+                entry = LoginHistory.objects.create(
+                    user=user,
+                    ip_address=f'{history_random.randint(41, 197)}.{history_random.randint(0, 255)}.{history_random.randint(0, 255)}.{history_random.randint(1, 254)}',
+                    device_information=history_random.choice(devices),
+                    login_status=status,
+                )
+                LoginHistory.objects.filter(pk=entry.pk).update(login_at=login_at)
+
+    def seed_tokens(self, users, target=60):
+        """Historical password-reset / email-verification requests — kept
+        smaller than the general 100+ target since these are one-off action
+        records rather than an open-ended activity log like LoginHistory."""
+        token_random = random.Random('tokens')
+        sample_users = token_random.sample(users, k=min(len(users), target))
+        for i, user in enumerate(sample_users):
+            created_at = timezone.now() - timedelta(days=token_random.randint(1, 90))
+            used = token_random.random() < 0.6
+            PasswordResetToken.objects.get_or_create(
+                user=user, token=f'seed-reset-{user.id}-{i}',
+                defaults={
+                    'expires_at': created_at + timedelta(hours=1),
+                    'used_at': created_at + timedelta(minutes=token_random.randint(1, 30)) if used else None,
+                },
+            )
+        for i, user in enumerate(sample_users[:40]):
+            created_at = timezone.now() - timedelta(days=token_random.randint(1, 90))
+            verified = token_random.random() < 0.8
+            EmailVerificationToken.objects.get_or_create(
+                user=user, token=f'seed-verify-{user.id}-{i}',
+                defaults={
+                    'expires_at': created_at + timedelta(days=2),
+                    'verified_at': created_at + timedelta(hours=token_random.randint(1, 40)) if verified else None,
+                },
+            )
+
+    def seed_role_permissions(self, users):
+        """Role/Permission/RolePermission/UserRole are a legacy RBAC scaffold
+        not consulted anywhere in accounts.permissions (which checks
+        user_type directly) — seeded here purely so every model has demo
+        rows, not because the app reads them."""
+        permission_codes = [
+            ('View Courses', 'view_course'), ('Create Course', 'create_course'), ('Edit Course', 'edit_course'),
+            ('Delete Course', 'delete_course'), ('Publish Course', 'publish_course'), ('Manage Users', 'manage_users'),
+            ('Manage Content', 'manage_content'), ('Grade Assignment', 'grade_assignment'),
+            ('Manage Payments', 'manage_payments'), ('View Reports', 'view_reports'),
+            ('Manage Live Classes', 'manage_live_classes'), ('Moderate Discussions', 'moderate_discussions'),
+            ('Manage Certificates', 'manage_certificates'), ('Manage Notifications', 'manage_notifications'),
+            ('Manage Support Tickets', 'manage_support_tickets'), ('Manage Categories', 'manage_categories'),
+            ('Manage Enrollments', 'manage_enrollments'), ('Issue Refunds', 'issue_refunds'),
+            ('Manage Reviews', 'manage_reviews'), ('Manage Announcements', 'manage_announcements'),
+        ]
+        permissions = {code: Permission.objects.get_or_create(code=code, defaults={'name': name})[0] for name, code in permission_codes}
+
+        role_permission_map = {
+            User.UserType.ADMIN: list(permissions.keys()),
+            User.UserType.ACADEMIC_MANAGER: [
+                'view_course', 'create_course', 'edit_course', 'publish_course', 'manage_content',
+                'manage_enrollments', 'view_reports', 'manage_live_classes', 'moderate_discussions',
+                'manage_announcements',
+            ],
+            User.UserType.INSTRUCTOR: [
+                'view_course', 'create_course', 'edit_course', 'manage_content', 'grade_assignment',
+                'manage_live_classes', 'moderate_discussions', 'manage_announcements',
+            ],
+            User.UserType.CONTENT_MANAGER: [
+                'view_course', 'edit_course', 'manage_content', 'manage_categories', 'manage_announcements',
+                'moderate_discussions', 'manage_reviews', 'manage_notifications',
+            ],
+            User.UserType.SUPPORT_STAFF: [
+                'view_course', 'manage_support_tickets', 'manage_notifications', 'issue_refunds',
+                'manage_payments', 'manage_enrollments',
+            ],
+            User.UserType.STUDENT: ['view_course'],
+        }
+        roles = {}
+        for user_type, codes in role_permission_map.items():
+            role, _ = Role.objects.get_or_create(
+                name=User.UserType(user_type).label, defaults={'description': f'{User.UserType(user_type).label} role.'},
+            )
+            roles[user_type] = role
+            for code in codes:
+                RolePermission.objects.get_or_create(role=role, permission=permissions[code])
+
+        for user in users:
+            role = roles.get(user.user_type)
+            if role:
+                UserRole.objects.get_or_create(user=user, role=role)
 
     def backfill_new_fields(self, courses):
         """Fields added to Course/Quiz/Assignment/LiveSession after the main
@@ -877,7 +1428,7 @@ class Command(BaseCommand):
         # already-seeded courses kept every lesson at the old VIDEO-only
         # default — diversify those in place (an update, not a delete/recreate).
         for course in courses:
-            for module in course.modules.all().order_by('order'):
+            for module in CourseModule.objects.filter(unit__course=course).order_by('order'):
                 for lesson in module.lessons.all().order_by('order'):
                     lesson_type = LESSON_TYPE_CYCLE[(module.order + lesson.order) % len(LESSON_TYPE_CYCLE)]
                     if lesson.lesson_type == lesson_type:

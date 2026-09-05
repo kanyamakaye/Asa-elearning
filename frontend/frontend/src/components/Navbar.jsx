@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import logo from '../assets/logo.png'
 import { useAuth } from '../context/AuthContext'
 import { IconClose, IconMenu } from './icons'
@@ -16,6 +16,12 @@ const links = [
 export default function Navbar() {
   const [open, setOpen] = useState(false)
   const { user, isAuthenticated, logout } = useAuth()
+  const navigate = useNavigate()
+
+  function handleLogout() {
+    logout()
+    navigate('/')
+  }
 
   return (
     <header className="sticky top-0 z-50 border-b border-navy-900/5 bg-white/85 backdrop-blur-md">
@@ -53,7 +59,7 @@ export default function Navbar() {
               </Link>
               <button
                 type="button"
-                onClick={logout}
+                onClick={handleLogout}
                 className="text-sm font-semibold text-navy-800 transition-colors hover:text-brand-500"
               >
                 Log Out
@@ -114,7 +120,7 @@ export default function Navbar() {
                 <button
                   type="button"
                   onClick={() => {
-                    logout()
+                    handleLogout()
                     setOpen(false)
                   }}
                   className="rounded-full px-4 py-2.5 text-center text-sm font-semibold text-navy-800 ring-1 ring-navy-900/10"

@@ -6,13 +6,15 @@ from rest_framework.response import Response
 from accounts.permissions import CanManageCourse, CanManageCourseContent, IsInstructorOrReadOnly
 from common.responses import StandardResponseMixin, success_response
 
-from .models import Course, CourseCategory, CourseInstructor, CourseModule
+from .models import Course, CourseCategory, CourseInstructor, CourseModule, CourseUnit
 from .serializers import (
     CourseCategorySerializer,
     CourseDetailSerializer,
     CourseInstructorSerializer,
     CourseListSerializer,
     CourseModuleSerializer,
+    CourseUnitDetailSerializer,
+    CourseUnitSerializer,
 )
 
 
@@ -65,7 +67,14 @@ class CourseViewSet(StandardResponseMixin, viewsets.ModelViewSet):
     @action(detail=True, methods=['get'])
     def modules(self, request, slug=None):
         course = self.get_object()
-        serializer = CourseModuleSerializer(course.modules.all(), many=True)
+        modules = CourseModule.objects.filter(unit__course=course).select_related('unit')
+        serializer = CourseModuleSerializer(modules, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['get'])
+    def units(self, request, slug=None):
+        course = self.get_object()
+        serializer = CourseUnitDetailSerializer(course.units.prefetch_related('modules'), many=True)
         return Response(serializer.data)
 
     @action(detail=False, methods=['get'], url_path='my-courses', permission_classes=[permissions.IsAuthenticated])
@@ -90,8 +99,24 @@ class CourseViewSet(StandardResponseMixin, viewsets.ModelViewSet):
         return success_response(CourseDetailSerializer(course, context=self.get_serializer_context()).data, 'Course archived successfully.')
 
 
+class CourseUnitViewSet(StandardResponseMixin, viewsets.ModelViewSet):
+    queryset = CourseUnit.objects.select_related('course').all()
+    serializer_class = CourseUnitSerializer
+    permission_classes = [CanManageCourseContent]
+    create_message = 'Unit created successfully.'
+    update_message = 'Unit updated successfully.'
+    delete_message = 'Unit deleted successfully.'
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        course_id = self.request.query_params.get('course')
+        if course_id:
+            qs = qs.filter(course_id=course_id)
+        return qs
+
+
 class CourseModuleViewSet(StandardResponseMixin, viewsets.ModelViewSet):
-    queryset = CourseModule.objects.select_related('course').all()
+    queryset = CourseModule.objects.select_related('unit', 'unit__course').all()
     serializer_class = CourseModuleSerializer
     permission_classes = [CanManageCourseContent]
     create_message = 'Module created successfully.'
@@ -100,9 +125,12 @@ class CourseModuleViewSet(StandardResponseMixin, viewsets.ModelViewSet):
 
     def get_queryset(self):
         qs = super().get_queryset()
+        unit_id = self.request.query_params.get('unit')
         course_id = self.request.query_params.get('course')
+        if unit_id:
+            qs = qs.filter(unit_id=unit_id)
         if course_id:
-            qs = qs.filter(course_id=course_id)
+            qs = qs.filter(unit__course_id=course_id)
         return qs
 
 

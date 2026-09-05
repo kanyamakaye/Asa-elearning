@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { cancelLiveClass, completeLiveClass, getLiveClasses } from '../../services/liveClassService'
+import { cancelLiveClass, completeLiveClass, deleteLiveClass, getLiveClasses } from '../../services/liveClassService'
 import DataTable from '../../components/dashboard/DataTable'
 import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
 import PageHeader from '../../components/ui/PageHeader'
-import { IconPlus } from '../../components/icons'
+import { IconEdit, IconPlus, IconTrash } from '../../components/icons'
 
 const statusTone = { scheduled: 'brand', live: 'success', completed: 'neutral', cancelled: 'danger', postponed: 'warning' }
 const MANAGER_ROLES = ['admin', 'academic_manager', 'instructor']
@@ -15,14 +15,17 @@ export default function LiveClassesList() {
   const { user } = useAuth()
   const canManage = MANAGER_ROLES.includes(user?.user_type)
   const [sessions, setSessions] = useState([])
+  const [count, setCount] = useState(0)
+  const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState(null)
 
   async function load() {
     setLoading(true)
     try {
-      const data = await getLiveClasses({ page_size: 100 })
+      const data = await getLiveClasses({ page })
       setSessions(data.results ?? data)
+      setCount(data.count ?? (data.results ?? data).length)
     } catch {
       // handled by empty state
     } finally {
@@ -30,7 +33,7 @@ export default function LiveClassesList() {
     }
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => { load() }, [page]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleCancel(session) {
     if (!window.confirm(`Cancel "${session.title}"?`)) return
@@ -53,17 +56,31 @@ export default function LiveClassesList() {
     }
   }
 
+  async function handleDelete(session) {
+    if (!window.confirm(`Delete "${session.title}"? This cannot be undone.`)) return
+    setBusyId(session.id)
+    try {
+      await deleteLiveClass(session.id)
+      await load()
+    } finally {
+      setBusyId(null)
+    }
+  }
+
   return (
     <div className="space-y-4">
       <PageHeader
         title="Live Classes"
-        description={`${sessions.length} session${sessions.length === 1 ? '' : 's'}`}
+        description={`${count} session${count === 1 ? '' : 's'}`}
         actions={canManage ? <Button as={Link} to="/dashboard/live-classes/create"><IconPlus className="h-4 w-4" /> Schedule Class</Button> : null}
       />
 
       <DataTable
         loading={loading}
         rows={sessions}
+        page={page}
+        total={count}
+        onPageChange={setPage}
         emptyMessage="No live classes scheduled yet."
         columns={[
           { key: 'title', label: 'Session', render: (s) => <span className="font-semibold text-navy-900">{s.title}</span> },
@@ -84,6 +101,16 @@ export default function LiveClassesList() {
                   <>
                     <Button size="sm" variant="secondary" disabled={busyId === s.id} onClick={() => handleComplete(s)}>Complete</Button>
                     <Button size="sm" variant="danger" disabled={busyId === s.id} onClick={() => handleCancel(s)}>Cancel</Button>
+                  </>
+                )}
+                {canManage && (
+                  <>
+                    <Link to={`/dashboard/live-classes/${s.id}/edit`} className="rounded-lg p-1.5 text-navy-700/50 hover:bg-navy-50" aria-label="Edit live class">
+                      <IconEdit className="h-4 w-4" />
+                    </Link>
+                    <button type="button" disabled={busyId === s.id} onClick={() => handleDelete(s)} className="rounded-lg p-1.5 text-red-500 hover:bg-red-50" aria-label="Delete live class">
+                      <IconTrash className="h-4 w-4" />
+                    </button>
                   </>
                 )}
               </div>

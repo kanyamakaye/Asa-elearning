@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import Course, CourseCategory, CourseInstructor, CourseModule
+from .models import Course, CourseCategory, CourseInstructor, CourseModule, CourseUnit
 
 
 class CourseCategoryForm(forms.ModelForm):
@@ -35,10 +35,16 @@ class CourseForm(forms.ModelForm):
         return cleaned_data
 
 
+class CourseUnitForm(forms.ModelForm):
+    class Meta:
+        model = CourseUnit
+        fields = ['course', 'title', 'description', 'order', 'status']
+
+
 class CourseModuleForm(forms.ModelForm):
     class Meta:
         model = CourseModule
-        fields = ['course', 'title', 'description', 'order', 'status']
+        fields = ['unit', 'title', 'description', 'order', 'status']
 
 
 class CourseInstructorForm(forms.ModelForm):

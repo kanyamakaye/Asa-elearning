@@ -15,11 +15,13 @@ export default function EnrollmentsList() {
   const { accessToken } = useAuth()
   const [enrollments, setEnrollments] = useState([])
   const [count, setCount] = useState(0)
+  const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     let cancelled = false
-    listEnrollments(accessToken)
+    setLoading(true)
+    listEnrollments(accessToken, { page })
       .then((data) => {
         if (cancelled) return
         setEnrollments(data.results ?? data)
@@ -30,7 +32,7 @@ export default function EnrollmentsList() {
     return () => {
       cancelled = true
     }
-  }, [accessToken])
+  }, [accessToken, page])
 
   return (
     <div className="space-y-4">
@@ -42,6 +44,9 @@ export default function EnrollmentsList() {
       <DataTable
         loading={loading}
         rows={enrollments}
+        page={page}
+        total={count}
+        onPageChange={setPage}
         columns={[
           { key: 'student', label: 'Student', render: (e) => e.student?.full_name ?? '—' },
           { key: 'course', label: 'Course', render: (e) => e.course_detail?.title ?? '—' },

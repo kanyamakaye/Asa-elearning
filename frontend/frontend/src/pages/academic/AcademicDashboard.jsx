@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { getDashboard } from '../../lib/dashboardApi'
 import ChartCard from '../../components/dashboard/ChartCard'
+import DashboardHero from '../../components/dashboard/DashboardHero'
 import QuickActions from '../../components/dashboard/QuickActions'
 import RecentActivity from '../../components/dashboard/RecentActivity'
 import StatCard from '../../components/dashboard/StatCard'
@@ -10,23 +11,29 @@ import { IconAward, IconBook, IconClipboard, IconTrendingUp, IconUsers } from '.
 export default function AcademicDashboard() {
   const { accessToken } = useAuth()
   const [data, setData] = useState(null)
+  const [refreshing, setRefreshing] = useState(false)
 
-  useEffect(() => {
-    let cancelled = false
-    getDashboard('academic_manager', accessToken).then((d) => !cancelled && setData(d)).catch(() => {})
-    return () => {
-      cancelled = true
-    }
-  }, [accessToken])
+  function load(isRefresh) {
+    if (isRefresh) setRefreshing(true)
+    return getDashboard('academic_manager', accessToken)
+      .then((d) => setData(d))
+      .catch(() => {})
+      .finally(() => setRefreshing(false))
+  }
+
+  useEffect(() => { load(false) }, [accessToken]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const stats = data?.statistics ?? {}
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">Academic Overview</h1>
-        <p className="mt-1 text-sm text-navy-700/55">Monitor courses, instructors, students, and academic performance.</p>
-      </div>
+      <DashboardHero
+        icon={IconUsers}
+        title="Academic Overview"
+        subtitle="Monitor courses, instructors, students, and academic performance."
+        onRefresh={() => load(true)}
+        refreshing={refreshing}
+      />
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <StatCard icon={IconBook} label="Total Courses" value={stats.total_courses} />

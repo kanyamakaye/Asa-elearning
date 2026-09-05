@@ -1,16 +1,59 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { apiFetch } from '../../lib/api'
-import { IconPlus } from '../../components/icons'
+import Alert from '../../components/ui/Alert'
+import Button from '../../components/ui/Button'
+import FormField from '../../components/ui/FormField'
+import Input from '../../components/ui/Input'
+import LoadingSpinner from '../../components/ui/LoadingSpinner'
+import Modal from '../../components/ui/Modal'
+import PageHeader from '../../components/ui/PageHeader'
+import Textarea from '../../components/ui/Textarea'
+import { IconEdit, IconPlus, IconTrash } from '../../components/icons'
+
+const EMPTY_FORM = { question: '', answer: '', category: '' }
+
+function FAQForm({ initial, onSave, onCancel, saving }) {
+  const [form, setForm] = useState(initial)
+  const [error, setError] = useState('')
+
+  async function submit() {
+    if (!form.question.trim() || !form.answer.trim()) return setError('Question and answer are required.')
+    setError('')
+    try {
+      await onSave(form)
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      {error && <Alert tone="error">{error}</Alert>}
+      <FormField label="Question" required>
+        <Input value={form.question} onChange={(e) => setForm((f) => ({ ...f, question: e.target.value }))} autoFocus />
+      </FormField>
+      <FormField label="Answer" required>
+        <Textarea rows={4} value={form.answer} onChange={(e) => setForm((f) => ({ ...f, answer: e.target.value }))} />
+      </FormField>
+      <FormField label="Category" hint="Optional, groups related FAQs.">
+        <Input value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))} />
+      </FormField>
+      <div className="flex justify-end gap-3 pt-2">
+        <Button variant="ghost" onClick={onCancel}>Cancel</Button>
+        <Button loading={saving} disabled={saving} onClick={submit}>{saving ? 'Saving…' : 'Save FAQ'}</Button>
+      </div>
+    </div>
+  )
+}
 
 export default function FAQsList() {
-  const { accessToken } = useAuth()
+  const { accessToken, user } = useAuth()
+  const canManage = user?.user_type === 'admin'
   const [faqs, setFaqs] = useState([])
   const [loading, setLoading] = useState(true)
-  const [question, setQuestion] = useState('')
-  const [answer, setAnswer] = useState('')
-  const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState('')
+  const [modal, setModal] = useState(null) // { mode: 'create'|'edit', faq? }
+  const [saving, setSaving] = useState(false)
 
   function load() {
     setLoading(true)
@@ -22,20 +65,25 @@ export default function FAQsList() {
 
   useEffect(load, [accessToken])
 
-  async function handleSubmit(e) {
-    e.preventDefault()
-    setError('')
-    setSubmitting(true)
+  async function save(form) {
+    setSaving(true)
     try {
-      await apiFetch('/support/faqs/', { method: 'POST', body: { question, answer }, token: accessToken })
-      setQuestion('')
-      setAnswer('')
+      if (modal.mode === 'create') {
+        await apiFetch('/support/faqs/', { method: 'POST', body: form, token: accessToken })
+      } else {
+        await apiFetch(`/support/faqs/${modal.faq.id}/`, { method: 'PATCH', body: form, token: accessToken })
+      }
+      setModal(null)
       load()
-    } catch (err) {
-      setError(err.message)
     } finally {
-      setSubmitting(false)
+      setSaving(false)
     }
+  }
+
+  async function remove(faq) {
+    if (!window.confirm(`Delete FAQ "${faq.question}"?`)) return
+    await apiFetch(`/support/faqs/${faq.id}/`, { method: 'DELETE', token: accessToken })
+    load()
   }
 
   async function toggleActive(faq) {
@@ -47,38 +95,14 @@ export default function FAQsList() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">FAQs</h1>
-        <p className="mt-1 text-sm text-navy-700/55">{faqs.length} question{faqs.length === 1 ? '' : 's'}</p>
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-3 rounded-2xl bg-white p-5 ring-1 ring-navy-900/8">
-        <label className="block">
-          <span className="text-xs font-semibold text-navy-900">Question</span>
-          <input
-            type="text" required value={question} onChange={(e) => setQuestion(e.target.value)}
-            className="mt-1.5 w-full rounded-lg border border-navy-900/10 px-3 py-2 text-sm focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
-          />
-        </label>
-        <label className="block">
-          <span className="text-xs font-semibold text-navy-900">Answer</span>
-          <textarea
-            required rows={3} value={answer} onChange={(e) => setAnswer(e.target.value)}
-            className="mt-1.5 w-full rounded-lg border border-navy-900/10 px-3 py-2 text-sm focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
-          />
-        </label>
-        <button
-          type="submit" disabled={submitting}
-          className="inline-flex items-center gap-1.5 rounded-full bg-navy-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-500 disabled:opacity-60"
-        >
-          <IconPlus className="h-4 w-4" />
-          Add FAQ
-        </button>
-        {error && <p className="text-xs font-medium text-red-600">{error}</p>}
-      </form>
+      <PageHeader
+        title="FAQs"
+        description={`${faqs.length} question${faqs.length === 1 ? '' : 's'}`}
+        actions={canManage ? <Button onClick={() => setModal({ mode: 'create' })}><IconPlus className="h-4 w-4" /> Add FAQ</Button> : null}
+      />
 
       {loading ? (
-        <div className="h-40 animate-pulse rounded-2xl bg-white ring-1 ring-navy-900/8" />
+        <LoadingSpinner label="Loading FAQs…" />
       ) : (
         <div className="divide-y divide-navy-900/6 rounded-2xl bg-white ring-1 ring-navy-900/8">
           {faqs.map((faq) => (
@@ -87,19 +111,42 @@ export default function FAQsList() {
                 <p className="text-sm font-bold text-navy-900">{faq.question}</p>
                 <p className="mt-1 text-sm text-navy-700/60">{faq.answer}</p>
               </div>
-              <button
-                type="button"
-                onClick={() => toggleActive(faq)}
-                className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${
-                  faq.is_active ? 'bg-emerald-50 text-emerald-700' : 'bg-navy-100 text-navy-700'
-                }`}
-              >
-                {faq.is_active ? 'Active' : 'Inactive'}
-              </button>
+              <div className="flex shrink-0 items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => toggleActive(faq)}
+                  className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                    faq.is_active ? 'bg-emerald-50 text-emerald-700' : 'bg-navy-100 text-navy-700'
+                  }`}
+                >
+                  {faq.is_active ? 'Active' : 'Inactive'}
+                </button>
+                {canManage && (
+                  <>
+                    <button type="button" onClick={() => setModal({ mode: 'edit', faq })} className="rounded-lg p-1.5 text-navy-700/50 hover:bg-navy-50" aria-label="Edit FAQ">
+                      <IconEdit className="h-4 w-4" />
+                    </button>
+                    <button type="button" onClick={() => remove(faq)} className="rounded-lg p-1.5 text-red-500 hover:bg-red-50" aria-label="Delete FAQ">
+                      <IconTrash className="h-4 w-4" />
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           ))}
         </div>
       )}
+
+      <Modal open={!!modal} onClose={() => setModal(null)} title={modal?.mode === 'create' ? 'Add FAQ' : 'Edit FAQ'}>
+        {modal && (
+          <FAQForm
+            initial={modal.mode === 'edit' ? { question: modal.faq.question, answer: modal.faq.answer, category: modal.faq.category ?? '' } : EMPTY_FORM}
+            onSave={save}
+            onCancel={() => setModal(null)}
+            saving={saving}
+          />
+        )}
+      </Modal>
     </div>
   )
 }

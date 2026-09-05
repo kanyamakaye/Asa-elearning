@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext'
 import { getDashboard } from '../../lib/dashboardApi'
 import AssessmentTable from '../../components/dashboard/AssessmentTable'
 import CertificateCard from '../../components/dashboard/CertificateCard'
+import DashboardHero from '../../components/dashboard/DashboardHero'
 import ProgressCard from '../../components/dashboard/ProgressCard'
 import QuickActions from '../../components/dashboard/QuickActions'
 import StatCard from '../../components/dashboard/StatCard'
@@ -12,25 +13,29 @@ import { IconAward, IconBook, IconClipboard, IconFileText, IconSearch, IconTrend
 export default function StudentDashboard() {
   const { accessToken } = useAuth()
   const [data, setData] = useState(null)
+  const [refreshing, setRefreshing] = useState(false)
 
-  useEffect(() => {
-    let cancelled = false
-    getDashboard('student', accessToken).then((d) => !cancelled && setData(d)).catch(() => {})
-    return () => {
-      cancelled = true
-    }
-  }, [accessToken])
+  function load(isRefresh) {
+    if (isRefresh) setRefreshing(true)
+    return getDashboard('student', accessToken)
+      .then((d) => setData(d))
+      .catch(() => {})
+      .finally(() => setRefreshing(false))
+  }
+
+  useEffect(() => { load(false) }, [accessToken]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const stats = data?.statistics ?? {}
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">
-          Welcome back{data?.user?.name ? `, ${data.user.name.split(' ')[0]}` : ''}
-        </h1>
-        <p className="mt-1 text-sm text-navy-700/55">Pick up where you left off.</p>
-      </div>
+      <DashboardHero
+        icon={IconBook}
+        title={`Welcome back${data?.user?.name ? `, ${data.user.name.split(' ')[0]}` : ''}`}
+        subtitle="Pick up where you left off."
+        onRefresh={() => load(true)}
+        refreshing={refreshing}
+      />
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <StatCard icon={IconBook} label="Enrolled Courses" value={stats.enrolled_courses} />

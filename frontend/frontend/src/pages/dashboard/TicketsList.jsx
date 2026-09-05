@@ -14,17 +14,22 @@ const priorityStyles = {
 export default function TicketsList() {
   const { accessToken } = useAuth()
   const [tickets, setTickets] = useState([])
+  const [count, setCount] = useState(0)
+  const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(true)
 
   function load() {
     setLoading(true)
-    listSupportTickets(accessToken)
-      .then((data) => setTickets(data.results ?? data))
+    listSupportTickets(accessToken, { page })
+      .then((data) => {
+        setTickets(data.results ?? data)
+        setCount(data.count ?? (data.results ?? data).length)
+      })
       .catch(() => {})
       .finally(() => setLoading(false))
   }
 
-  useEffect(load, [accessToken])
+  useEffect(load, [accessToken, page]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleStatusChange(ticket, status) {
     setTickets((prev) => prev.map((t) => (t.id === ticket.id ? { ...t, status } : t)))
@@ -39,12 +44,15 @@ export default function TicketsList() {
     <div className="space-y-4">
       <div>
         <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">Support Tickets</h1>
-        <p className="mt-1 text-sm text-navy-700/55">{tickets.length} ticket{tickets.length === 1 ? '' : 's'}</p>
+        <p className="mt-1 text-sm text-navy-700/55">{count} ticket{count === 1 ? '' : 's'}</p>
       </div>
 
       <DataTable
         loading={loading}
         rows={tickets}
+        page={page}
+        total={count}
+        onPageChange={setPage}
         columns={[
           { key: 'subject', label: 'Subject' },
           { key: 'user', label: 'User', render: (t) => t.user?.full_name ?? '—' },

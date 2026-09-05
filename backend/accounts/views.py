@@ -13,6 +13,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from .models import EmailVerificationToken, InstructorProfile, LoginHistory, PasswordResetToken, StudentProfile
 from .permissions import IsAdmin
 from .serializers import (
+    AdminUserSerializer,
     ChangePasswordSerializer,
     CustomTokenObtainPairSerializer,
     EmailVerificationConfirmSerializer,
@@ -219,6 +220,8 @@ class UserViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action in ('list', 'retrieve') and not (self.request.user.is_staff or self.request.user.user_type == 'admin'):
             return UserPublicSerializer
+        if self.action in ('create', 'update', 'partial_update'):
+            return AdminUserSerializer
         return UserSerializer
 
     def get_queryset(self):

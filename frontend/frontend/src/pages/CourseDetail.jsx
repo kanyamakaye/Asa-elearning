@@ -124,17 +124,24 @@ export default function CourseDetail() {
               {course.description || 'No description provided yet.'}
             </p>
 
-            {course.modules?.length > 0 && (
+            {course.units?.length > 0 && (
               <div className="mt-10">
                 <h2 className="text-xl font-bold text-navy-900">Course content</h2>
-                <div className="mt-4 divide-y divide-navy-900/8 rounded-2xl ring-1 ring-navy-900/8">
-                  {course.modules.map((module) => (
-                    <div key={module.id} className="flex items-center justify-between p-5">
-                      <span className="text-sm font-semibold text-navy-900">{module.title}</span>
-                      <span className="inline-flex items-center gap-1.5 text-xs text-navy-700/55">
-                        <IconClipboard className="h-3.5 w-3.5" />
-                        {module.lesson_count} lessons
-                      </span>
+                <div className="mt-4 space-y-4">
+                  {course.units.map((unit) => (
+                    <div key={unit.id} className="rounded-2xl ring-1 ring-navy-900/8">
+                      <div className="border-b border-navy-900/8 px-5 py-3 text-sm font-bold text-navy-900">{unit.title}</div>
+                      <div className="divide-y divide-navy-900/8">
+                        {unit.modules.map((module) => (
+                          <div key={module.id} className="flex items-center justify-between p-5">
+                            <span className="text-sm font-semibold text-navy-900">{module.title}</span>
+                            <span className="inline-flex items-center gap-1.5 text-xs text-navy-700/55">
+                              <IconClipboard className="h-3.5 w-3.5" />
+                              {module.lesson_count} lessons
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   ))}
                 </div>

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { createAssignment, getAssignment, publishAssignment, updateAssignment } from '../../../services/assignmentService'
+import { getModulesForCourse } from '../../../services/moduleService'
 import useCourseOptions from '../../../hooks/useCourseOptions'
 import useUnsavedChanges from '../../../hooks/useUnsavedChanges'
 import Alert from '../../../components/ui/Alert'
@@ -18,6 +19,7 @@ import Textarea from '../../../components/ui/Textarea'
 
 const INITIAL_FORM = {
   course: '',
+  module: '',
   title: '',
   description: '',
   instructions: '',
@@ -34,6 +36,7 @@ const INITIAL_FORM = {
 function toFormShape(a) {
   return {
     course: a.course,
+    module: a.module ?? '',
     title: a.title,
     description: a.description,
     instructions: a.instructions ?? '',
@@ -54,6 +57,7 @@ export default function CreateAssignment() {
   const isEdit = Boolean(id)
   const { courses } = useCourseOptions()
   const [form, setForm] = useState(INITIAL_FORM)
+  const [modules, setModules] = useState([])
   const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(false)
   const [initialLoading, setInitialLoading] = useState(isEdit)
@@ -69,12 +73,27 @@ export default function CreateAssignment() {
     return () => { cancelled = true }
   }, [id, isEdit])
 
+  useEffect(() => {
+    if (!form.course) {
+      setModules([])
+      return
+    }
+    let cancelled = false
+    getModulesForCourse(form.course).then((data) => !cancelled && setModules(data.results ?? data)).catch(() => {})
+    return () => { cancelled = true }
+  }, [form.course])
+
   const dirty = useMemo(() => JSON.stringify(form) !== JSON.stringify(INITIAL_FORM), [form])
   useUnsavedChanges(dirty && !success)
 
   function update(field, value) {
     setForm((f) => ({ ...f, [field]: value }))
     setErrors((e) => ({ ...e, [field]: undefined }))
+  }
+
+  function updateCourse(value) {
+    setForm((f) => ({ ...f, course: value, module: '' }))
+    setErrors((e) => ({ ...e, course: undefined }))
   }
 
   function validate() {
@@ -97,6 +116,7 @@ export default function CreateAssignment() {
     try {
       const payload = {
         ...form,
+        module: form.module || null,
         max_file_size: form.max_file_size || undefined,
         late_penalty: form.late_penalty || undefined,
         due_date: new Date(form.due_date).toISOString(),
@@ -140,10 +160,18 @@ export default function CreateAssignment() {
             <Input value={form.title} onChange={(e) => update('title', e.target.value)} error={errors.title} />
           </FormField>
           <FormField label="Course" required error={errors.course}>
-            <Select value={form.course} onChange={(e) => update('course', e.target.value)} error={errors.course}>
+            <Select value={form.course} onChange={(e) => updateCourse(e.target.value)} error={errors.course}>
               <option value="">Select a course</option>
               {courses.map((c) => (
                 <option key={c.id} value={c.id}>{c.title}</option>
+              ))}
+            </Select>
+          </FormField>
+          <FormField label="Module" hint="Optional — attach this assignment to a specific module">
+            <Select value={form.module} onChange={(e) => update('module', e.target.value)} disabled={!form.course}>
+              <option value="">Whole course</option>
+              {modules.map((m) => (
+                <option key={m.id} value={m.id}>{m.title}</option>
               ))}
             </Select>
           </FormField>

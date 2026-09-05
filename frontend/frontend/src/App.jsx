@@ -88,6 +88,10 @@ function App() {
             element={<RequireRole roles={MANAGER_ROLES}><CreateCourse /></RequireRole>}
           />
           <Route
+            path="courses/:slug/edit"
+            element={<RequireRole roles={MANAGER_ROLES}><CreateCourse /></RequireRole>}
+          />
+          <Route
             path="courses/:slug/content"
             element={<RequireRole roles={CONTENT_ROLES}><ManageContent /></RequireRole>}
           />
@@ -119,6 +123,10 @@ function App() {
           <Route path="live-classes" element={<LiveClassesList />} />
           <Route
             path="live-classes/create"
+            element={<RequireRole roles={MANAGER_ROLES}><ScheduleLiveClass /></RequireRole>}
+          />
+          <Route
+            path="live-classes/:id/edit"
             element={<RequireRole roles={MANAGER_ROLES}><ScheduleLiveClass /></RequireRole>}
           />
 

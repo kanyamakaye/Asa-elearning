@@ -6,18 +6,25 @@ import DataTable from '../../components/dashboard/DataTable'
 export default function Grades() {
   const { accessToken } = useAuth()
   const [grades, setGrades] = useState([])
+  const [count, setCount] = useState(0)
+  const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     let cancelled = false
-    apiFetch('/assessments/grades/', { token: accessToken })
-      .then((data) => !cancelled && setGrades(data.results ?? data))
+    setLoading(true)
+    apiFetch(`/assessments/grades/?page=${page}`, { token: accessToken })
+      .then((data) => {
+        if (cancelled) return
+        setGrades(data.results ?? data)
+        setCount(data.count ?? (data.results ?? data).length)
+      })
       .catch(() => {})
       .finally(() => !cancelled && setLoading(false))
     return () => {
       cancelled = true
     }
-  }, [accessToken])
+  }, [accessToken, page])
 
   const avg = grades.length
     ? Math.round(grades.reduce((sum, g) => sum + Number(g.percentage), 0) / grades.length)
@@ -28,7 +35,7 @@ export default function Grades() {
       <div>
         <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">My Grades</h1>
         <p className="mt-1 text-sm text-navy-700/55">
-          {grades.length} graded assessment{grades.length === 1 ? '' : 's'}
+          {count} graded assessment{count === 1 ? '' : 's'}
           {avg != null && ` · ${avg}% average`}
         </p>
       </div>
@@ -36,6 +43,9 @@ export default function Grades() {
       <DataTable
         loading={loading}
         rows={grades}
+        page={page}
+        total={count}
+        onPageChange={setPage}
         rowKey="graded_at"
         columns={[
           { key: 'course', label: 'Course', render: (g) => g.course_title ?? '—' },

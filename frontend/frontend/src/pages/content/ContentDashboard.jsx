@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { getDashboard } from '../../lib/dashboardApi'
+import DashboardHero from '../../components/dashboard/DashboardHero'
 import DataTable from '../../components/dashboard/DataTable'
 import QuickActions from '../../components/dashboard/QuickActions'
 import StatCard from '../../components/dashboard/StatCard'
@@ -10,26 +11,32 @@ export default function ContentDashboard() {
   const { accessToken } = useAuth()
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
 
-  useEffect(() => {
-    let cancelled = false
-    getDashboard('content_manager', accessToken)
-      .then((d) => !cancelled && setData(d))
+  function load(isRefresh) {
+    if (isRefresh) setRefreshing(true)
+    return getDashboard('content_manager', accessToken)
+      .then((d) => setData(d))
       .catch(() => {})
-      .finally(() => !cancelled && setLoading(false))
-    return () => {
-      cancelled = true
-    }
-  }, [accessToken])
+      .finally(() => {
+        setLoading(false)
+        setRefreshing(false)
+      })
+  }
+
+  useEffect(() => { load(false) }, [accessToken]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const stats = data?.statistics ?? {}
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">Content Overview</h1>
-        <p className="mt-1 text-sm text-navy-700/55">Manage courses, lessons, and learning resources.</p>
-      </div>
+      <DashboardHero
+        icon={IconClipboard}
+        title="Content Overview"
+        subtitle="Manage courses, lessons, and learning resources."
+        onRefresh={() => load(true)}
+        refreshing={refreshing}
+      />
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
         <StatCard icon={IconBook} label="Total Courses" value={stats.total_courses} />

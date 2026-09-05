@@ -8,7 +8,7 @@ from .serializers import LearningResourceSerializer, LessonSerializer
 
 
 class LessonViewSet(StandardResponseMixin, viewsets.ModelViewSet):
-    queryset = Lesson.objects.select_related('module', 'module__course').all()
+    queryset = Lesson.objects.select_related('module', 'module__unit', 'module__unit__course').all()
     serializer_class = LessonSerializer
     permission_classes = [CanManageCourseContent]
     search_fields = ['title', 'description']
@@ -23,14 +23,14 @@ class LessonViewSet(StandardResponseMixin, viewsets.ModelViewSet):
         if module_id:
             qs = qs.filter(module_id=module_id)
         if course_id:
-            qs = qs.filter(module__course_id=course_id)
+            qs = qs.filter(module__unit__course_id=course_id)
         if self.request.query_params.get('preview_only') == 'true':
             qs = qs.filter(is_preview=True)
         return qs
 
 
 class LearningResourceViewSet(viewsets.ModelViewSet):
-    queryset = LearningResource.objects.select_related('course', 'lesson__module__course').all()
+    queryset = LearningResource.objects.select_related('course', 'lesson__module__unit', 'lesson__module__unit__course').all()
     serializer_class = LearningResourceSerializer
     permission_classes = [CanManageCourseContent]
 

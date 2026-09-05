@@ -4,7 +4,7 @@ from rest_framework import serializers
 
 from accounts.serializers import UserPublicSerializer
 
-from .models import Course, CourseCategory, CourseInstructor, CourseModule
+from .models import Course, CourseCategory, CourseInstructor, CourseModule, CourseUnit
 
 User = get_user_model()
 
@@ -20,10 +20,33 @@ class CourseCategorySerializer(serializers.ModelSerializer):
 
 class CourseModuleSerializer(serializers.ModelSerializer):
     lesson_count = serializers.IntegerField(source='lessons.count', read_only=True)
+    course_id = serializers.IntegerField(source='unit.course_id', read_only=True)
 
     class Meta:
         model = CourseModule
-        fields = ['id', 'course', 'title', 'description', 'order', 'status', 'lesson_count', 'created_at']
+        fields = ['id', 'unit', 'course_id', 'title', 'description', 'order', 'status', 'lesson_count', 'created_at']
+        read_only_fields = ['id', 'created_at']
+
+    def validate_unit(self, value):
+        request = self.context.get('request')
+        user = request.user if request else None
+        if user and not (user.is_staff or user.user_type in ('admin', 'academic_manager', 'content_manager')):
+            if value.course.instructor_id != user.id:
+                raise serializers.ValidationError('You can only manage content for your own courses.')
+        return value
+
+    def validate_title(self, value):
+        if not value.strip():
+            raise serializers.ValidationError('This field is required.')
+        return value
+
+
+class CourseUnitSerializer(serializers.ModelSerializer):
+    module_count = serializers.IntegerField(source='modules.count', read_only=True)
+
+    class Meta:
+        model = CourseUnit
+        fields = ['id', 'course', 'title', 'description', 'order', 'status', 'module_count', 'created_at']
         read_only_fields = ['id', 'created_at']
 
     def validate_course(self, value):
@@ -38,6 +61,13 @@ class CourseModuleSerializer(serializers.ModelSerializer):
         if not value.strip():
             raise serializers.ValidationError('This field is required.')
         return value
+
+
+class CourseUnitDetailSerializer(CourseUnitSerializer):
+    modules = CourseModuleSerializer(many=True, read_only=True)
+
+    class Meta(CourseUnitSerializer.Meta):
+        fields = CourseUnitSerializer.Meta.fields + ['modules']
 
 
 class CourseInstructorSerializer(serializers.ModelSerializer):
@@ -75,7 +105,7 @@ class CourseListSerializer(serializers.ModelSerializer):
 
 
 class CourseDetailSerializer(CourseListSerializer):
-    modules = CourseModuleSerializer(many=True, read_only=True)
+    units = CourseUnitDetailSerializer(many=True, read_only=True)
     co_instructors = CourseInstructorSerializer(source='course_instructors', many=True, read_only=True)
     category_id = serializers.PrimaryKeyRelatedField(
         source='category', queryset=CourseCategory.objects.all(), write_only=True, required=False
@@ -84,7 +114,7 @@ class CourseDetailSerializer(CourseListSerializer):
     class Meta(CourseListSerializer.Meta):
         fields = CourseListSerializer.Meta.fields + [
             'description', 'video_url', 'enrollment_limit', 'start_date', 'end_date',
-            'requirements', 'learning_objectives', 'modules', 'co_instructors', 'category_id',
+            'requirements', 'learning_objectives', 'units', 'co_instructors', 'category_id',
             'published_at', 'updated_at',
         ]
 

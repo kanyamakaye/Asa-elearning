@@ -14,18 +14,25 @@ const statusStyles = {
 export default function PaymentsList() {
   const { accessToken } = useAuth()
   const [payments, setPayments] = useState([])
+  const [count, setCount] = useState(0)
+  const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     let cancelled = false
-    listPayments(accessToken)
-      .then((data) => !cancelled && setPayments(data.results ?? data))
+    setLoading(true)
+    listPayments(accessToken, { page })
+      .then((data) => {
+        if (cancelled) return
+        setPayments(data.results ?? data)
+        setCount(data.count ?? (data.results ?? data).length)
+      })
       .catch(() => {})
       .finally(() => !cancelled && setLoading(false))
     return () => {
       cancelled = true
     }
-  }, [accessToken])
+  }, [accessToken, page])
 
   const total = payments
     .filter((p) => p.payment_status === 'successful')
@@ -36,13 +43,16 @@ export default function PaymentsList() {
       <div>
         <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">Transactions</h1>
         <p className="mt-1 text-sm text-navy-700/55">
-          {payments.length} transactions &middot; ${total.toFixed(2)} collected
+          {count} transactions &middot; ${total.toFixed(2)} collected
         </p>
       </div>
 
       <DataTable
         loading={loading}
         rows={payments}
+        page={page}
+        total={count}
+        onPageChange={setPage}
         columns={[
           { key: 'transaction_reference', label: 'Reference' },
           { key: 'course', label: 'Course', render: (p) => p.course_detail?.title ?? '—' },

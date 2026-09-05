@@ -34,6 +34,7 @@ export const NAV_BY_ROLE = {
       title: 'Courses',
       items: [
         { label: 'All Courses', to: '/dashboard/courses', icon: IconBook },
+        { label: 'Create Course', to: '/dashboard/courses/create', icon: IconBook },
         { label: 'Categories', to: '/dashboard/categories', icon: IconClipboard },
         { label: 'Modules & Lessons', to: '/dashboard/courses', icon: IconClipboard },
       ],
@@ -43,7 +44,9 @@ export const NAV_BY_ROLE = {
       title: 'Assessments',
       items: [
         { label: 'Quizzes', to: '/dashboard/quizzes', icon: IconFileText },
+        { label: 'Create Quiz', to: '/dashboard/quizzes/create', icon: IconFileText },
         { label: 'Assignments', to: '/dashboard/assignments', icon: IconFileText },
+        { label: 'Create Assignment', to: '/dashboard/assignments/create', icon: IconFileText },
         { label: 'Exams', to: '/dashboard/exams', icon: IconFileText },
       ],
     },
@@ -61,6 +64,14 @@ export const NAV_BY_ROLE = {
         { label: 'Announcements', to: '/dashboard/announcements', icon: IconBell },
         { label: 'Notifications', to: '/dashboard/notifications', icon: IconBell },
         { label: 'Messages', to: '/dashboard/messages', icon: IconChat },
+        { label: 'Discussions', to: '/dashboard/discussions', icon: IconChat },
+      ],
+    },
+    {
+      title: 'Live Classes',
+      items: [
+        { label: 'All Live Classes', to: '/dashboard/live-classes', icon: IconTrendingUp },
+        { label: 'Schedule Live Class', to: '/dashboard/live-classes/create', icon: IconTrendingUp },
       ],
     },
     {

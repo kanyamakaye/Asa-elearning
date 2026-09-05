@@ -44,6 +44,41 @@ class UserSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'user_type', 'status', 'email_verified', 'date_joined', 'last_login']
 
 
+class AdminUserSerializer(UserSerializer):
+    """Used by UserViewSet for admin-driven create/update. Unlike the base
+    UserSerializer (self-service profile editing), this lets an admin set
+    role, status, and an initial/replacement password directly."""
+
+    password = serializers.CharField(write_only=True, required=False, allow_blank=True)
+
+    class Meta(UserSerializer.Meta):
+        fields = UserSerializer.Meta.fields + ['password']
+        read_only_fields = ['id', 'email_verified', 'date_joined', 'last_login']
+
+    def validate_password(self, value):
+        if value:
+            validate_password(value)
+        return value
+
+    def create(self, validated_data):
+        password = validated_data.pop('password', None)
+        user = User(**validated_data)
+        if password:
+            user.set_password(password)
+        else:
+            user.set_unusable_password()
+        user.save()
+        return user
+
+    def update(self, instance, validated_data):
+        password = validated_data.pop('password', None)
+        user = super().update(instance, validated_data)
+        if password:
+            user.set_password(password)
+            user.save(update_fields=['password'])
+        return user
+
+
 class InstructorPublicSerializer(serializers.ModelSerializer):
     """Public, marketing-site representation of an instructor with aggregate stats."""
 

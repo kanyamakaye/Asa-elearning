@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { IconChevronDown, IconLogout, IconSettings, IconUsers } from '../icons'
 
@@ -14,8 +14,14 @@ const ROLE_LABELS = {
 
 export default function UserMenu() {
   const { user, logout } = useAuth()
+  const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
+
+  function handleLogout() {
+    logout()
+    navigate('/')
+  }
 
   useEffect(() => {
     function onClickOutside(e) {
@@ -69,7 +75,7 @@ export default function UserMenu() {
           <div className="my-1 border-t border-navy-900/8" />
           <button
             type="button"
-            onClick={logout}
+            onClick={handleLogout}
             className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm font-medium text-red-600 hover:bg-red-50"
           >
             <IconLogout className="h-4 w-4" />

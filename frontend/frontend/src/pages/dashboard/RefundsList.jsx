@@ -11,14 +11,17 @@ const statusTone = { pending: 'warning', approved: 'brand', rejected: 'danger', 
 export default function RefundsList() {
   const { accessToken } = useAuth()
   const [refunds, setRefunds] = useState([])
+  const [count, setCount] = useState(0)
+  const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState(null)
 
   async function load() {
     setLoading(true)
     try {
-      const data = await listRefunds(accessToken)
+      const data = await listRefunds(accessToken, { page })
       setRefunds(data.results ?? data)
+      setCount(data.count ?? (data.results ?? data).length)
     } catch {
       // handled by empty state
     } finally {
@@ -26,7 +29,7 @@ export default function RefundsList() {
     }
   }
 
-  useEffect(() => { load() }, [accessToken]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { load() }, [accessToken, page]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleProcess(id, status) {
     setBusyId(id)
@@ -42,11 +45,14 @@ export default function RefundsList() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Refunds" description={`${refunds.length} refund request${refunds.length === 1 ? '' : 's'}`} />
+      <PageHeader title="Refunds" description={`${count} refund request${count === 1 ? '' : 's'}`} />
 
       <DataTable
         loading={loading}
         rows={refunds}
+        page={page}
+        total={count}
+        onPageChange={setPage}
         emptyMessage="No refund requests."
         columns={[
           { key: 'id', label: 'Ref', render: (r) => `#${r.id}` },

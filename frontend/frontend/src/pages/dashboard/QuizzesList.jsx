@@ -9,10 +9,12 @@ import PageHeader from '../../components/ui/PageHeader'
 import { IconEdit, IconPlus, IconTrash } from '../../components/icons'
 
 const statusTone = { draft: 'warning', published: 'success', closed: 'neutral' }
+const PAGE_SIZE = 20
 
 export default function QuizzesList() {
   const { user } = useAuth()
-  const [quizzes, setQuizzes] = useState([])
+  const [allQuizzes, setAllQuizzes] = useState([])
+  const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState(null)
   const isManager = user?.user_type === 'admin' || user?.user_type === 'academic_manager'
@@ -20,10 +22,11 @@ export default function QuizzesList() {
   async function load() {
     setLoading(true)
     try {
-      const data = await getQuizzes({ page_size: 100 })
+      const data = await getQuizzes({ page_size: 200 })
       let rows = data.results ?? data
       if (!isManager) rows = rows.filter((q) => q.created_by === user?.id)
-      setQuizzes(rows)
+      setAllQuizzes(rows)
+      setPage(1)
     } catch {
       // handled by empty state
     } finally {
@@ -32,6 +35,8 @@ export default function QuizzesList() {
   }
 
   useEffect(() => { load() }, [user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const quizzes = allQuizzes.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   async function handlePublish(id) {
     setBusyId(id)
@@ -60,13 +65,16 @@ export default function QuizzesList() {
     <div className="space-y-4">
       <PageHeader
         title="Quizzes"
-        description={`${quizzes.length} quiz${quizzes.length === 1 ? '' : 'zes'}`}
+        description={`${allQuizzes.length} quiz${allQuizzes.length === 1 ? '' : 'zes'}`}
         actions={<Button as={Link} to="/dashboard/quizzes/create"><IconPlus className="h-4 w-4" /> Create Quiz</Button>}
       />
 
       <DataTable
         loading={loading}
         rows={quizzes}
+        page={page}
+        total={allQuizzes.length}
+        onPageChange={setPage}
         emptyMessage="No quizzes yet. Create your first one."
         columns={[
           { key: 'title', label: 'Title', render: (q) => <span className="font-semibold text-navy-900">{q.title}</span> },

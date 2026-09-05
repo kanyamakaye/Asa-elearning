@@ -1,20 +1,39 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import Sidebar from './Sidebar'
 import Topbar from './Topbar'
 import { IconClose } from '../icons'
 
+function readCollapsed() {
+  try {
+    return localStorage.getItem('asa_sidebar_collapsed') === 'true'
+  } catch {
+    return false
+  }
+}
+
 export default function DashboardLayout() {
   const { user } = useAuth()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [collapsed, setCollapsed] = useState(readCollapsed)
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('asa_sidebar_collapsed', String(collapsed))
+    } catch {
+      // ignore (private browsing / storage disabled)
+    }
+  }, [collapsed])
+
+  const sidebarWidth = collapsed ? 'w-20' : 'w-64'
 
   return (
     <div className="flex min-h-screen bg-navy-50/40">
       {/* Desktop sidebar */}
-      <aside className="hidden w-64 shrink-0 lg:block">
-        <div className="fixed h-screen w-64">
-          <Sidebar role={user?.user_type} />
+      <aside className={`hidden shrink-0 lg:block ${sidebarWidth}`}>
+        <div className={`fixed h-screen ${sidebarWidth} transition-[width]`}>
+          <Sidebar role={user?.user_type} collapsed={collapsed} onToggleCollapse={() => setCollapsed((c) => !c)} />
         </div>
       </aside>
 

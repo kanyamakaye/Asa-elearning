@@ -9,17 +9,19 @@ export default function AuditLogsList() {
   const { accessToken } = useAuth()
   const [logs, setLogs] = useState([])
   const [count, setCount] = useState(0)
+  const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     let cancelled = false
-    listAuditLogs(accessToken).then((data) => {
+    setLoading(true)
+    listAuditLogs(accessToken, { page }).then((data) => {
       if (cancelled) return
       setLogs(data.results ?? data)
       setCount(data.count ?? (data.results ?? data).length)
     }).catch(() => {}).finally(() => !cancelled && setLoading(false))
     return () => { cancelled = true }
-  }, [accessToken])
+  }, [accessToken, page])
 
   return (
     <div className="space-y-4">
@@ -28,6 +30,9 @@ export default function AuditLogsList() {
       <DataTable
         loading={loading}
         rows={logs}
+        page={page}
+        total={count}
+        onPageChange={setPage}
         emptyMessage="No login activity recorded yet."
         columns={[
           { key: 'user', label: 'User', render: (l) => l.user?.full_name ?? l.user?.username ?? 'Unknown' },

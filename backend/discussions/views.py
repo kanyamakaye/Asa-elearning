@@ -2,12 +2,13 @@ from rest_framework import permissions, viewsets
 from rest_framework.exceptions import ValidationError
 
 from .models import DiscussionReply, DiscussionTopic
+from .permissions import IsReplyOwnerOrModerator, IsTopicOwnerOrModerator
 from .serializers import DiscussionReplySerializer, DiscussionTopicDetailSerializer, DiscussionTopicSerializer
 
 
 class DiscussionTopicViewSet(viewsets.ModelViewSet):
     queryset = DiscussionTopic.objects.select_related('created_by').all()
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsTopicOwnerOrModerator]
     search_fields = ['title', 'description']
 
     def get_serializer_class(self):
@@ -24,7 +25,7 @@ class DiscussionTopicViewSet(viewsets.ModelViewSet):
 
 class DiscussionReplyViewSet(viewsets.ModelViewSet):
     serializer_class = DiscussionReplySerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsReplyOwnerOrModerator]
 
     def get_queryset(self):
         qs = DiscussionReply.objects.select_related('user')

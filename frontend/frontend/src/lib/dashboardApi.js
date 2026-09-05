@@ -21,6 +21,18 @@ export function listUsers(token, params = {}) {
   return apiFetch(`/users/?${new URLSearchParams(params)}`, { token })
 }
 
+export function createUser(body, token) {
+  return apiFetch('/users/', { method: 'POST', body, token })
+}
+
+export function updateUser(id, body, token) {
+  return apiFetch(`/users/${id}/`, { method: 'PATCH', body, token })
+}
+
+export function deleteUser(id, token) {
+  return apiFetch(`/users/${id}/`, { method: 'DELETE', token })
+}
+
 export function listEnrollments(token, params = {}) {
   return apiFetch(`/enrollments/?${new URLSearchParams(params)}`, { token })
 }
@@ -97,6 +109,10 @@ export function createDiscussionTopic(body, token) {
   return apiFetch('/discussions/', { method: 'POST', body, token })
 }
 
+export function deleteDiscussionTopic(id, token) {
+  return apiFetch(`/discussions/${id}/`, { method: 'DELETE', token })
+}
+
 export function getDiscussionTopic(id, token) {
   return apiFetch(`/discussions/${id}/`, { token })
 }
@@ -111,6 +127,14 @@ export function createDiscussionReply(body, token) {
 
 export function listExams(token, params = {}) {
   return apiFetch(`/exams/?${new URLSearchParams(params)}`, { token })
+}
+
+export function createExam(body, token) {
+  return apiFetch('/exams/', { method: 'POST', body, token })
+}
+
+export function updateExam(id, body, token) {
+  return apiFetch(`/exams/${id}/`, { method: 'PATCH', body, token })
 }
 
 export function deleteExam(id, token) {

@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { createLiveClass } from '../../../services/liveClassService'
+import { useEffect, useMemo, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { createLiveClass, getLiveClass, updateLiveClass } from '../../../services/liveClassService'
 import useCourseOptions from '../../../hooks/useCourseOptions'
 import useUnsavedChanges from '../../../hooks/useUnsavedChanges'
 import { useAuth } from '../../../context/AuthContext'
@@ -10,6 +10,7 @@ import Button from '../../../components/ui/Button'
 import Card from '../../../components/ui/Card'
 import FormField from '../../../components/ui/FormField'
 import Input from '../../../components/ui/Input'
+import LoadingSpinner from '../../../components/ui/LoadingSpinner'
 import PageHeader from '../../../components/ui/PageHeader'
 import Select from '../../../components/ui/Select'
 import Textarea from '../../../components/ui/Textarea'
@@ -32,15 +33,45 @@ const INITIAL_FORM = {
   recording_url: '',
 }
 
+function toFormShape(session) {
+  return {
+    course: session.course,
+    title: session.title,
+    description: session.description ?? '',
+    scheduled_date: session.scheduled_date ?? '',
+    start_time: session.start_time?.slice(0, 5) ?? '',
+    end_time: session.end_time?.slice(0, 5) ?? '',
+    timezone: session.timezone,
+    meeting_platform: session.meeting_platform,
+    meeting_url: session.meeting_url ?? '',
+    meeting_id: session.meeting_id ?? '',
+    meeting_password: session.meeting_password ?? '',
+    capacity: session.capacity ?? '',
+    recording_url: session.recording_url ?? '',
+  }
+}
+
 export default function ScheduleLiveClass() {
   const navigate = useNavigate()
+  const { id } = useParams()
+  const isEdit = Boolean(id)
   const { user } = useAuth()
   const { courses } = useCourseOptions()
   const [form, setForm] = useState(INITIAL_FORM)
   const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(false)
+  const [initialLoading, setInitialLoading] = useState(isEdit)
   const [submitError, setSubmitError] = useState('')
   const [success, setSuccess] = useState(false)
+
+  useEffect(() => {
+    if (!isEdit) return
+    let cancelled = false
+    getLiveClass(id).then((session) => !cancelled && setForm(toFormShape(session)))
+      .catch((err) => !cancelled && setSubmitError(err.message))
+      .finally(() => !cancelled && setInitialLoading(false))
+    return () => { cancelled = true }
+  }, [id, isEdit])
 
   const dirty = useMemo(() => JSON.stringify(form) !== JSON.stringify(INITIAL_FORM), [form])
   useUnsavedChanges(dirty && !success)
@@ -75,13 +106,15 @@ export default function ScheduleLiveClass() {
     setLoading(true)
     setSubmitError('')
     try {
-      await createLiveClass({
+      const payload = {
         ...form,
         capacity: form.capacity || undefined,
         recording_url: form.recording_url || undefined,
-      })
+      }
+      if (isEdit) await updateLiveClass(id, payload)
+      else await createLiveClass(payload)
       setSuccess(true)
-      setTimeout(() => navigate('/dashboard'), 1200)
+      setTimeout(() => navigate('/dashboard/live-classes'), 1200)
     } catch (err) {
       setSubmitError(err.message)
       if (err.errors) setErrors((e) => ({ ...e, ...err.errors }))
@@ -90,11 +123,13 @@ export default function ScheduleLiveClass() {
     }
   }
 
+  if (initialLoading) return <LoadingSpinner label="Loading live class…" />
+
   if (success) {
     return (
       <div className="mx-auto max-w-xl py-16">
-        <Alert tone="success" title="Live class scheduled successfully.">
-          Enrolled students have been notified. Redirecting…
+        <Alert tone="success" title={`Live class ${isEdit ? 'updated' : 'scheduled'} successfully.`}>
+          {isEdit ? 'Redirecting…' : 'Enrolled students have been notified. Redirecting…'}
         </Alert>
       </div>
     )
@@ -103,8 +138,8 @@ export default function ScheduleLiveClass() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <PageHeader
-        breadcrumb={<Breadcrumb items={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Schedule Live Class' }]} />}
-        title="Schedule a Live Class"
+        breadcrumb={<Breadcrumb items={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Live Classes', to: '/dashboard/live-classes' }, { label: isEdit ? 'Edit Live Class' : 'Schedule Live Class' }]} />}
+        title={isEdit ? 'Edit Live Class' : 'Schedule a Live Class'}
         description="Set up a live session for your students. A meeting link is entered manually — no Zoom/Meet integration is required."
       />
 
@@ -187,7 +222,7 @@ export default function ScheduleLiveClass() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Button type="button" variant="ghost" onClick={() => navigate('/dashboard')}>Cancel</Button>
         <Button type="button" loading={loading} disabled={loading} onClick={handleSubmit}>
-          {loading ? 'Scheduling Class…' : 'Schedule Class'}
+          {loading ? (isEdit ? 'Saving…' : 'Scheduling Class…') : isEdit ? 'Save Changes' : 'Schedule Class'}
         </Button>
       </div>
     </div>

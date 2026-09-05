@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { getDashboard } from '../../lib/dashboardApi'
 import ChartCard from '../../components/dashboard/ChartCard'
+import DashboardHero from '../../components/dashboard/DashboardHero'
 import QuickActions from '../../components/dashboard/QuickActions'
 import RecentActivity from '../../components/dashboard/RecentActivity'
 import StatCard from '../../components/dashboard/StatCard'
@@ -11,6 +12,7 @@ import {
   IconCreditCard,
   IconLifeBuoy,
   IconPlus,
+  IconShield,
   IconTrendingUp,
   IconUsers,
 } from '../../components/icons'
@@ -19,28 +21,32 @@ export default function AdminDashboard() {
   const { accessToken } = useAuth()
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
 
-  useEffect(() => {
-    let cancelled = false
-    getDashboard('admin', accessToken)
-      .then((d) => !cancelled && setData(d))
+  function load(isRefresh) {
+    if (isRefresh) setRefreshing(true)
+    return getDashboard('admin', accessToken)
+      .then((d) => setData(d))
       .catch(() => {})
-      .finally(() => !cancelled && setLoading(false))
-    return () => {
-      cancelled = true
-    }
-  }, [accessToken])
+      .finally(() => {
+        setLoading(false)
+        setRefreshing(false)
+      })
+  }
+
+  useEffect(() => { load(false) }, [accessToken]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const stats = data?.statistics ?? {}
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">
-          Welcome back{data?.user?.name ? `, ${data.user.name.split(' ')[0]}` : ''}
-        </h1>
-        <p className="mt-1 text-sm text-navy-700/55">Here's what's happening across Asa Academy.</p>
-      </div>
+      <DashboardHero
+        icon={IconShield}
+        title={`Welcome back${data?.user?.name ? `, ${data.user.name.split(' ')[0]}` : ''}`}
+        subtitle="Here's what's happening across Asa Academy."
+        onRefresh={() => load(true)}
+        refreshing={refreshing}
+      />
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-5">
         <StatCard icon={IconUsers} label="Total Users" value={stats.total_users} hint={`${stats.active_users ?? 0} active`} />

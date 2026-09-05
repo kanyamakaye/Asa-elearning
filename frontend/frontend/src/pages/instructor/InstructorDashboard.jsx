@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext'
 import { getDashboard } from '../../lib/dashboardApi'
 import { timeAgo } from '../../components/dashboard/RecentActivity'
 import CourseCard from '../../components/dashboard/CourseCard'
+import DashboardHero from '../../components/dashboard/DashboardHero'
 import QuickActions from '../../components/dashboard/QuickActions'
 import StatCard from '../../components/dashboard/StatCard'
 import {
@@ -37,26 +38,30 @@ function PendingList({ title, items, renderItem, emptyMessage }) {
 export default function InstructorDashboard() {
   const { accessToken } = useAuth()
   const [data, setData] = useState(null)
+  const [refreshing, setRefreshing] = useState(false)
 
-  useEffect(() => {
-    let cancelled = false
-    getDashboard('instructor', accessToken).then((d) => !cancelled && setData(d)).catch(() => {})
-    return () => {
-      cancelled = true
-    }
-  }, [accessToken])
+  function load(isRefresh) {
+    if (isRefresh) setRefreshing(true)
+    return getDashboard('instructor', accessToken)
+      .then((d) => setData(d))
+      .catch(() => {})
+      .finally(() => setRefreshing(false))
+  }
+
+  useEffect(() => { load(false) }, [accessToken]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const stats = data?.statistics ?? {}
   const pending = data?.pending_activities ?? {}
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">
-          Welcome back{data?.user?.name ? `, ${data.user.name.split(' ')[0]}` : ''}
-        </h1>
-        <p className="mt-1 text-sm text-navy-700/55">Here's an overview of your courses and students.</p>
-      </div>
+      <DashboardHero
+        icon={IconBook}
+        title={`Welcome back${data?.user?.name ? `, ${data.user.name.split(' ')[0]}` : ''}`}
+        subtitle="Here's an overview of your courses and students."
+        onRefresh={() => load(true)}
+        refreshing={refreshing}
+      />
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-5">
         <StatCard icon={IconBook} label="My Courses" value={stats.my_courses} hint={`${stats.published_courses ?? 0} published`} />

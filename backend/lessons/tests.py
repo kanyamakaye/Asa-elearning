@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from courses.models import Course, CourseCategory, CourseModule
+from courses.models import Course, CourseCategory, CourseModule, CourseUnit
 
 from .models import Lesson
 
@@ -25,7 +25,8 @@ class LessonManagementTests(APITestCase):
             username='lncontent', email='lncontent@test.com', password='Pass1234!', user_type='content_manager'
         )
         self.course = Course.objects.create(title='UI Design', category=category, instructor=self.instructor)
-        self.module = CourseModule.objects.create(course=self.course, title='Getting Started', order=1)
+        self.unit = CourseUnit.objects.create(course=self.course, title='Lesson 1', order=1)
+        self.module = CourseModule.objects.create(unit=self.unit, title='Getting Started', order=1)
         self.payload = {
             'module': self.module.id,
             'title': 'Welcome Lesson',

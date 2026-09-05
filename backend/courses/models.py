@@ -116,13 +116,15 @@ class CourseInstructor(models.Model):
         return f'{self.instructor} on {self.course} ({self.instructor_role})'
 
 
-class CourseModule(models.Model):
+class CourseUnit(models.Model):
+    """Top-level grouping of modules within a course (e.g. "Lesson 1: HTML & CSS")."""
+
     class Status(models.TextChoices):
         ACTIVE = 'active', 'Active'
         INACTIVE = 'inactive', 'Inactive'
         HIDDEN = 'hidden', 'Hidden'
 
-    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='modules')
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='units')
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     order = models.PositiveIntegerField(default=0)
@@ -135,3 +137,28 @@ class CourseModule(models.Model):
 
     def __str__(self):
         return f'{self.course} - {self.title}'
+
+
+class CourseModule(models.Model):
+    class Status(models.TextChoices):
+        ACTIVE = 'active', 'Active'
+        INACTIVE = 'inactive', 'Inactive'
+        HIDDEN = 'hidden', 'Hidden'
+
+    unit = models.ForeignKey(CourseUnit, on_delete=models.CASCADE, related_name='modules')
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    order = models.PositiveIntegerField(default=0)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.ACTIVE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['order', 'id']
+
+    @property
+    def course(self):
+        return self.unit.course
+
+    def __str__(self):
+        return f'{self.unit} - {self.title}'

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { getDashboard } from '../../lib/dashboardApi'
+import DashboardHero from '../../components/dashboard/DashboardHero'
 import DataTable from '../../components/dashboard/DataTable'
 import StatCard from '../../components/dashboard/StatCard'
 import { IconClock, IconLifeBuoy } from '../../components/icons'
@@ -17,26 +18,32 @@ export default function SupportDashboard() {
   const { accessToken } = useAuth()
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
 
-  useEffect(() => {
-    let cancelled = false
-    getDashboard('support_staff', accessToken)
-      .then((d) => !cancelled && setData(d))
+  function load(isRefresh) {
+    if (isRefresh) setRefreshing(true)
+    return getDashboard('support_staff', accessToken)
+      .then((d) => setData(d))
       .catch(() => {})
-      .finally(() => !cancelled && setLoading(false))
-    return () => {
-      cancelled = true
-    }
-  }, [accessToken])
+      .finally(() => {
+        setLoading(false)
+        setRefreshing(false)
+      })
+  }
+
+  useEffect(() => { load(false) }, [accessToken]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const stats = data?.statistics ?? {}
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">Support Overview</h1>
-        <p className="mt-1 text-sm text-navy-700/55">Track and resolve user support requests.</p>
-      </div>
+      <DashboardHero
+        icon={IconLifeBuoy}
+        title="Support Overview"
+        subtitle="Track and resolve user support requests."
+        onRefresh={() => load(true)}
+        refreshing={refreshing}
+      />
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
         <StatCard icon={IconLifeBuoy} label="Open Tickets" value={stats.open_tickets} accent="red" />

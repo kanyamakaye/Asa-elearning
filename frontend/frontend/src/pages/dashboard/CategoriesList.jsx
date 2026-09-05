@@ -1,16 +1,57 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { apiFetch } from '../../lib/api'
-import { IconPlus } from '../../components/icons'
+import Alert from '../../components/ui/Alert'
+import Button from '../../components/ui/Button'
+import FormField from '../../components/ui/FormField'
+import Input from '../../components/ui/Input'
+import LoadingSpinner from '../../components/ui/LoadingSpinner'
+import Modal from '../../components/ui/Modal'
+import PageHeader from '../../components/ui/PageHeader'
+import Textarea from '../../components/ui/Textarea'
+import { IconEdit, IconPlus, IconTrash } from '../../components/icons'
+
+const MANAGER_ROLES = ['admin', 'academic_manager', 'instructor']
+const EMPTY_FORM = { name: '', description: '' }
+
+function CategoryForm({ initial, onSave, onCancel, saving }) {
+  const [form, setForm] = useState(initial)
+  const [error, setError] = useState('')
+
+  async function submit() {
+    if (!form.name.trim()) return setError('Name is required.')
+    setError('')
+    try {
+      await onSave(form)
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      {error && <Alert tone="error">{error}</Alert>}
+      <FormField label="Name" required>
+        <Input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} autoFocus />
+      </FormField>
+      <FormField label="Description">
+        <Textarea rows={3} value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
+      </FormField>
+      <div className="flex justify-end gap-3 pt-2">
+        <Button variant="ghost" onClick={onCancel}>Cancel</Button>
+        <Button loading={saving} disabled={saving} onClick={submit}>{saving ? 'Saving…' : 'Save Category'}</Button>
+      </div>
+    </div>
+  )
+}
 
 export default function CategoriesList() {
-  const { accessToken } = useAuth()
+  const { accessToken, user } = useAuth()
+  const canManage = MANAGER_ROLES.includes(user?.user_type)
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
-  const [name, setName] = useState('')
-  const [description, setDescription] = useState('')
-  const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState('')
+  const [modal, setModal] = useState(null) // { mode: 'create'|'edit', category? }
+  const [saving, setSaving] = useState(false)
 
   function load() {
     setLoading(true)
@@ -22,67 +63,71 @@ export default function CategoriesList() {
 
   useEffect(load, [accessToken])
 
-  async function handleSubmit(e) {
-    e.preventDefault()
-    setError('')
-    setSubmitting(true)
+  async function save(form) {
+    setSaving(true)
     try {
-      await apiFetch('/courses/categories/', { method: 'POST', body: { name, description }, token: accessToken })
-      setName('')
-      setDescription('')
+      if (modal.mode === 'create') {
+        await apiFetch('/courses/categories/', { method: 'POST', body: form, token: accessToken })
+      } else {
+        await apiFetch(`/courses/categories/${modal.category.slug}/`, { method: 'PATCH', body: form, token: accessToken })
+      }
+      setModal(null)
       load()
-    } catch (err) {
-      setError(err.message)
     } finally {
-      setSubmitting(false)
+      setSaving(false)
     }
+  }
+
+  async function remove(cat) {
+    if (!window.confirm(`Delete category "${cat.name}"? Courses in this category will be uncategorized.`)) return
+    await apiFetch(`/courses/categories/${cat.slug}/`, { method: 'DELETE', token: accessToken })
+    load()
   }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">Course Categories</h1>
-        <p className="mt-1 text-sm text-navy-700/55">{categories.length} categories</p>
-      </div>
-
-      <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-3 rounded-2xl bg-white p-5 ring-1 ring-navy-900/8">
-        <label className="flex-1 basis-48">
-          <span className="text-xs font-semibold text-navy-900">Name</span>
-          <input
-            type="text" required value={name} onChange={(e) => setName(e.target.value)}
-            className="mt-1.5 w-full rounded-lg border border-navy-900/10 px-3 py-2 text-sm focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
-          />
-        </label>
-        <label className="flex-1 basis-64">
-          <span className="text-xs font-semibold text-navy-900">Description</span>
-          <input
-            type="text" value={description} onChange={(e) => setDescription(e.target.value)}
-            className="mt-1.5 w-full rounded-lg border border-navy-900/10 px-3 py-2 text-sm focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
-          />
-        </label>
-        <button
-          type="submit" disabled={submitting}
-          className="inline-flex items-center gap-1.5 rounded-full bg-navy-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-500 disabled:opacity-60"
-        >
-          <IconPlus className="h-4 w-4" />
-          Add Category
-        </button>
-        {error && <p className="w-full text-xs font-medium text-red-600">{error}</p>}
-      </form>
+      <PageHeader
+        title="Course Categories"
+        description={`${categories.length} categor${categories.length === 1 ? 'y' : 'ies'}`}
+        actions={canManage ? <Button onClick={() => setModal({ mode: 'create' })}><IconPlus className="h-4 w-4" /> Add Category</Button> : null}
+      />
 
       {loading ? (
-        <div className="h-40 animate-pulse rounded-2xl bg-white ring-1 ring-navy-900/8" />
+        <LoadingSpinner label="Loading categories…" />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {categories.map((cat) => (
             <div key={cat.id} className="rounded-2xl bg-white p-5 ring-1 ring-navy-900/8">
-              <h3 className="text-sm font-bold text-navy-900">{cat.name}</h3>
+              <div className="flex items-start justify-between gap-2">
+                <h3 className="text-sm font-bold text-navy-900">{cat.name}</h3>
+                {canManage && (
+                  <div className="flex shrink-0 items-center gap-1">
+                    <button type="button" onClick={() => setModal({ mode: 'edit', category: cat })} className="rounded-lg p-1 text-navy-700/50 hover:bg-navy-50" aria-label="Edit category">
+                      <IconEdit className="h-3.5 w-3.5" />
+                    </button>
+                    <button type="button" onClick={() => remove(cat)} className="rounded-lg p-1 text-red-500 hover:bg-red-50" aria-label="Delete category">
+                      <IconTrash className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                )}
+              </div>
               <p className="mt-1 line-clamp-2 text-xs text-navy-700/55">{cat.description || 'No description.'}</p>
               <p className="mt-3 text-xs font-semibold text-brand-500">{cat.course_count} courses</p>
             </div>
           ))}
         </div>
       )}
+
+      <Modal open={!!modal} onClose={() => setModal(null)} title={modal?.mode === 'create' ? 'Add Category' : 'Edit Category'}>
+        {modal && (
+          <CategoryForm
+            initial={modal.mode === 'edit' ? { name: modal.category.name, description: modal.category.description } : EMPTY_FORM}
+            onSave={save}
+            onCancel={() => setModal(null)}
+            saving={saving}
+          />
+        )}
+      </Modal>
     </div>
   )
 }

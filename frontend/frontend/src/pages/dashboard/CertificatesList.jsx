@@ -1,23 +1,38 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
+import { apiFetch } from '../../lib/api'
 import { listCertificates } from '../../lib/dashboardApi'
 import CertificateCard from '../../components/dashboard/CertificateCard'
+import Button from '../../components/ui/Button'
+
+const MANAGER_ROLES = ['admin', 'instructor']
 
 export default function CertificatesList() {
-  const { accessToken } = useAuth()
+  const { accessToken, user } = useAuth()
+  const canManage = MANAGER_ROLES.includes(user?.user_type)
   const [certificates, setCertificates] = useState([])
   const [loading, setLoading] = useState(true)
+  const [busyId, setBusyId] = useState(null)
 
-  useEffect(() => {
-    let cancelled = false
+  function load() {
+    setLoading(true)
     listCertificates(accessToken)
-      .then((data) => !cancelled && setCertificates(data.results ?? data))
+      .then((data) => setCertificates(data.results ?? data))
       .catch(() => {})
-      .finally(() => !cancelled && setLoading(false))
-    return () => {
-      cancelled = true
+      .finally(() => setLoading(false))
+  }
+
+  useEffect(load, [accessToken]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function setStatus(cert, status) {
+    setBusyId(cert.id)
+    try {
+      await apiFetch(`/certificates/${cert.id}/`, { method: 'PATCH', body: { status }, token: accessToken })
+      load()
+    } finally {
+      setBusyId(null)
     }
-  }, [accessToken])
+  }
 
   return (
     <div className="space-y-4">
@@ -39,7 +54,22 @@ export default function CertificatesList() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
           {certificates.map((cert) => (
-            <CertificateCard key={cert.id} certificate={{ ...cert, course_title: cert.course_detail?.title }} />
+            <div key={cert.id} className="space-y-2">
+              <CertificateCard certificate={{ ...cert, course_title: cert.course_detail?.title }} />
+              {canManage && (
+                <div className="flex justify-end gap-2 px-1">
+                  {cert.status === 'revoked' ? (
+                    <Button size="sm" variant="secondary" disabled={busyId === cert.id} onClick={() => setStatus(cert, 'active')}>
+                      Reactivate
+                    </Button>
+                  ) : (
+                    <Button size="sm" variant="danger" disabled={busyId === cert.id} onClick={() => setStatus(cert, 'revoked')}>
+                      Revoke
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
           ))}
         </div>
       )}

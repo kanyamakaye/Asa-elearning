@@ -1,11 +1,16 @@
 from django.contrib import admin
 
 from .forms import CourseInstructorForm
-from .models import Course, CourseCategory, CourseInstructor, CourseModule
+from .models import Course, CourseCategory, CourseInstructor, CourseModule, CourseUnit
 
 
 class CourseModuleInline(admin.TabularInline):
     model = CourseModule
+    extra = 0
+
+
+class CourseUnitInline(admin.TabularInline):
+    model = CourseUnit
     extra = 0
 
 
@@ -18,6 +23,13 @@ class CourseAdmin(admin.ModelAdmin):
     list_display = ('title', 'course_code', 'instructor', 'category', 'status', 'visibility', 'price', 'created_at')
     list_filter = ('status', 'visibility', 'level', 'is_free', 'category')
     search_fields = ('title', 'course_code')
+    inlines = [CourseUnitInline]
+
+
+@admin.register(CourseUnit)
+class CourseUnitAdmin(admin.ModelAdmin):
+    list_display = ('title', 'course', 'order', 'status')
+    list_filter = ('status',)
     inlines = [CourseModuleInline]
 
 
