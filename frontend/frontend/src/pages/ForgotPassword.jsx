@@ -29,7 +29,7 @@ export default function ForgotPassword() {
       <div className="w-full max-w-md">
         <Link to="/" className="mb-8 flex items-center justify-center gap-2.5">
           <img src={logo} alt="Asa Academy" className="h-10 w-10 object-contain" />
-          <span className="text-lg font-bold tracking-tight text-navy-900">Asa Academy</span>
+          <span className="font-display text-lg font-bold tracking-tight text-navy-900">Asa Academy</span>
         </Link>
 
         <div className="rounded-3xl bg-white p-8 shadow-sm ring-1 ring-navy-900/8">

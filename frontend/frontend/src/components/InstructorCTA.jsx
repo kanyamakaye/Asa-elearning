@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { IconArrowRight, IconCheck } from './icons'
 
 const points = [
@@ -24,13 +25,13 @@ export default function InstructorCTA() {
               and grow a course &mdash; from content creation to grading and
               analytics.
             </p>
-            <a
-              href="#signup"
+            <Link
+              to="/signup"
               className="mt-8 inline-flex items-center gap-2 rounded-full bg-white px-6 py-3.5 text-sm font-semibold text-navy-900 shadow-lg shadow-black/20 transition-transform hover:-translate-y-0.5"
             >
               Start Teaching Today
               <IconArrowRight className="h-4 w-4" />
-            </a>
+            </Link>
           </div>
 
           <ul className="grid gap-4">

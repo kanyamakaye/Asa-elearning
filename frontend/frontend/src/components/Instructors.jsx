@@ -10,7 +10,9 @@ export default function Instructors() {
     let cancelled = false
     getInstructors()
       .then((data) => {
-        if (!cancelled) setInstructors(data)
+        // Already ordered by student_count on the backend — keep only the
+        // top instructors so the homepage doesn't turn into a full directory.
+        if (!cancelled) setInstructors(data.slice(0, 4))
       })
       .catch(() => {})
       .finally(() => {
@@ -49,10 +51,11 @@ export default function Instructors() {
             ? Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className="h-52 animate-pulse rounded-2xl bg-navy-50" />
               ))
-            : instructors.map((person) => (
+            : instructors.map((person, i) => (
                 <div
                   key={person.id}
-                  className="group rounded-2xl p-6 text-center ring-1 ring-navy-900/8 transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-navy-900/5"
+                  className="group animate-fade-up rounded-2xl p-6 text-center ring-1 ring-navy-900/8 transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-navy-900/5"
+                  style={{ animationDelay: `${i * 80}ms` }}
                 >
                   {person.profile_picture ? (
                     <img

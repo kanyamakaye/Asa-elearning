@@ -17,12 +17,17 @@ export function getCourse(slug) {
   return apiFetch(`/courses/${slug}/`)
 }
 
+export function getCourseReviews(courseId) {
+  return apiFetch(`/reviews/?course=${courseId}&page_size=6`)
+}
+
 export function getInstructors() {
   return apiFetch('/instructors/')
 }
 
-export function getFaqs() {
-  return apiFetch('/support/faqs/')
+export function getFaqs(params = {}) {
+  const qs = new URLSearchParams(params).toString()
+  return apiFetch(`/support/faqs/${qs ? `?${qs}` : ''}`)
 }
 
 export function enrollInCourse(courseId, token) {

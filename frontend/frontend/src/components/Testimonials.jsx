@@ -15,10 +15,11 @@ export default function Testimonials() {
         </div>
 
         <div className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {testimonials.map((t) => (
+          {testimonials.map((t, i) => (
             <figure
               key={t.name}
-              className="flex flex-col rounded-2xl bg-white p-7 ring-1 ring-navy-900/8"
+              className="animate-fade-up flex flex-col rounded-2xl bg-white p-7 ring-1 ring-navy-900/8 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-navy-900/5"
+              style={{ animationDelay: `${i * 80}ms` }}
             >
               <div className="flex gap-1 text-amber-400">
                 {Array.from({ length: 5 }).map((_, i) => (

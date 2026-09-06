@@ -64,10 +64,11 @@ export default function Features() {
         </div>
 
         <div className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {features.map((f) => (
+          {features.map((f, i) => (
             <div
               key={f.title}
-              className="group rounded-2xl border border-navy-900/8 p-7 transition-shadow hover:shadow-xl hover:shadow-navy-900/5"
+              className="group animate-fade-up rounded-2xl border border-navy-900/8 p-7 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-navy-900/5"
+              style={{ animationDelay: `${i * 80}ms` }}
             >
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-50 text-brand-500 transition-colors group-hover:bg-navy-900 group-hover:text-white">
                 <f.icon className="h-6 w-6" />

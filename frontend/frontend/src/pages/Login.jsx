@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { IconAward, IconEye, IconEyeOff, IconLock, IconMail, IconStar } from '../components/icons'
+import { IconAward, IconChevronLeft, IconEye, IconEyeOff, IconLock, IconMail, IconStar } from '../components/icons'
 import logo from '../assets/logo.png'
 
 const stats = [
@@ -50,19 +50,28 @@ export default function Login() {
           }}
         />
 
-        <Link to="/" className="relative flex items-center gap-2.5">
-          <img src={logo} alt="Asa Academy" className="h-10 w-10 object-contain" />
-          <span className="text-lg font-bold tracking-tight text-white">Asa Academy</span>
-        </Link>
+        <div className="relative flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-2.5">
+            <img src={logo} alt="Asa Academy" className="h-10 w-10 object-contain" />
+            <span className="font-display text-lg font-bold tracking-tight text-white">Asa Academy</span>
+          </Link>
+          <Link
+            to="/"
+            className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3.5 py-2 text-xs font-semibold text-white ring-1 ring-white/15 transition-colors hover:bg-white/20"
+          >
+            <IconChevronLeft className="h-3.5 w-3.5" />
+            Home
+          </Link>
+        </div>
 
         <div className="relative max-w-md">
-          <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-sm font-medium text-brand-100 ring-1 ring-white/15">
+          <div className="animate-fade-up inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-sm font-medium text-brand-100 ring-1 ring-white/15">
             <IconStar className="h-4 w-4 text-brand-300" />
             Trusted by 50,000+ learners worldwide
           </div>
-          <h2 className="mt-6 text-3xl font-extrabold leading-[1.15] tracking-tight text-white">
+          <h2 className="animate-fade-up mt-6 text-3xl font-extrabold leading-[1.15] tracking-tight text-white [animation-delay:100ms]">
             Learn without limits,{' '}
-            <span className="bg-gradient-to-r from-brand-300 to-brand-500 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-brand-300 via-violet-300 to-brand-500 bg-clip-text text-transparent">
               grow with Asa Academy
             </span>
           </h2>
@@ -85,12 +94,28 @@ export default function Login() {
 
       {/* Sign-in panel */}
       <div className="flex min-h-screen items-center justify-center bg-brand-50/40 px-6 py-12 lg:bg-white">
-        <div className="w-full max-w-md">
+        <div className="animate-fade-up w-full max-w-md">
+          <Link
+            to="/"
+            className="mb-6 inline-flex items-center gap-1.5 text-xs font-semibold text-navy-700/55 hover:text-brand-500 lg:hidden"
+          >
+            <IconChevronLeft className="h-3.5 w-3.5" />
+            Back to home
+          </Link>
+
           <Link to="/" className="mb-8 flex items-center justify-center gap-2.5 lg:hidden">
             <img src={logo} alt="Asa Academy" className="h-10 w-10 object-contain" />
-            <span className="text-lg font-bold tracking-tight text-navy-900">
+            <span className="font-display text-lg font-bold tracking-tight text-navy-900">
               Asa Academy
             </span>
+          </Link>
+
+          <Link
+            to="/"
+            className="mb-6 hidden items-center gap-1.5 text-xs font-semibold text-navy-700/55 hover:text-brand-500 lg:inline-flex"
+          >
+            <IconChevronLeft className="h-3.5 w-3.5" />
+            Back to home
           </Link>
 
           <div className="flex items-center gap-2 text-xs font-semibold text-navy-700/45">

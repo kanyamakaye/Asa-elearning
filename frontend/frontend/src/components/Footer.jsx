@@ -46,7 +46,7 @@ export default function Footer() {
           <div>
             <Link to="/" className="flex items-center gap-2.5">
               <img src={logo} alt="Asa Academy" className="h-10 w-10 object-contain" />
-              <span className="text-lg font-bold text-white">Asa Academy</span>
+              <span className="font-display text-lg font-bold text-white">Asa Academy</span>
             </Link>
             <p className="mt-4 max-w-xs text-sm leading-relaxed">
               An integrated e-learning platform for courses, live classes,

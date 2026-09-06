@@ -3,6 +3,7 @@ from django.db.models import Avg
 from rest_framework import serializers
 
 from accounts.serializers import UserPublicSerializer
+from lessons.serializers import LessonCurriculumSerializer
 
 from .models import Course, CourseCategory, CourseInstructor, CourseModule, CourseUnit
 
@@ -63,8 +64,23 @@ class CourseUnitSerializer(serializers.ModelSerializer):
         return value
 
 
+class CourseModuleCurriculumSerializer(CourseModuleSerializer):
+    """Adds a public, curriculum-safe lesson outline — used only when nesting
+    modules into the course detail response (see CourseUnitDetailSerializer),
+    not for the module CRUD endpoints. Only published lessons are listed."""
+
+    lessons = serializers.SerializerMethodField()
+
+    class Meta(CourseModuleSerializer.Meta):
+        fields = CourseModuleSerializer.Meta.fields + ['lessons']
+
+    def get_lessons(self, obj):
+        qs = obj.lessons.filter(status='published').order_by('order', 'id')
+        return LessonCurriculumSerializer(qs, many=True).data
+
+
 class CourseUnitDetailSerializer(CourseUnitSerializer):
-    modules = CourseModuleSerializer(many=True, read_only=True)
+    modules = CourseModuleCurriculumSerializer(many=True, read_only=True)
 
     class Meta(CourseUnitSerializer.Meta):
         fields = CourseUnitSerializer.Meta.fields + ['modules']

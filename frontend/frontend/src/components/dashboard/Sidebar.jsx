@@ -20,7 +20,7 @@ export default function Sidebar({ role, onNavigate, collapsed = false, onToggleC
       <div className="flex items-center gap-2.5 px-4 py-5">
         <Link to="/" className="flex min-w-0 flex-1 items-center gap-2.5">
           <img src={logo} alt="Asa Academy" className="h-8 w-8 shrink-0 object-contain" />
-          {!collapsed && <span className="truncate text-sm font-bold tracking-tight">Asa Academy</span>}
+          {!collapsed && <span className="font-display truncate text-sm font-bold tracking-tight">Asa Academy</span>}
         </Link>
         {onToggleCollapse && (
           <button

@@ -15,7 +15,7 @@ class LearningResourceSerializer(serializers.ModelSerializer):
 
 class LessonSerializer(serializers.ModelSerializer):
     resources = LearningResourceSerializer(many=True, read_only=True)
-    course_id = serializers.IntegerField(source='module.course_id', read_only=True)
+    course_id = serializers.IntegerField(source='module.course.id', read_only=True)
 
     class Meta:
         model = Lesson
@@ -45,3 +45,16 @@ class LessonSerializer(serializers.ModelSerializer):
         if lesson_type == Lesson.LessonType.VIDEO and not video_url:
             raise serializers.ValidationError({'video_url': 'A video URL is required for video lessons.'})
         return attrs
+
+
+class LessonCurriculumSerializer(serializers.ModelSerializer):
+    """Public, pre-enrollment-safe view of a lesson for the course detail
+    page's curriculum outline — metadata only. Deliberately excludes
+    content/video_url/content_url so non-enrolled visitors can see what a
+    course covers without being able to consume it (LessonViewSet itself is
+    locked to course managers, so this is the only lesson data the public
+    course page can see)."""
+
+    class Meta:
+        model = Lesson
+        fields = ['id', 'title', 'lesson_type', 'duration_minutes', 'order', 'is_preview']

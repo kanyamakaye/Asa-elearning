@@ -8,6 +8,7 @@ const links = [
   { label: 'Home', to: '/#home' },
   { label: 'Courses', to: '/#courses' },
   { label: 'Instructors', to: '/#instructors' },
+  { label: 'Pricing', to: '/#pricing' },
   { label: 'About', to: '/#about' },
   { label: 'FAQ', to: '/#faq' },
   { label: 'Contact', to: '/contact' },
@@ -28,7 +29,7 @@ export default function Navbar() {
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3 lg:px-8">
         <Link to="/" className="flex items-center gap-2.5">
           <img src={logo} alt="Asa Academy" className="h-10 w-10 object-contain" />
-          <span className="text-lg font-bold tracking-tight text-navy-900">
+          <span className="font-display text-lg font-bold tracking-tight text-navy-900">
             Asa Academy
           </span>
         </Link>

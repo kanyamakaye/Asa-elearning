@@ -36,11 +36,11 @@ export default function HowItWorks() {
 
         <div className="mt-16 grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
           {steps.map((step, i) => (
-            <div key={step.number} className="relative">
+            <div key={step.number} className="animate-fade-up relative" style={{ animationDelay: `${i * 100}ms` }}>
               {i < steps.length - 1 && (
                 <div className="absolute left-6 top-6 hidden h-px w-full -translate-x-0 bg-white/10 lg:block" />
               )}
-              <div className="relative flex h-12 w-12 items-center justify-center rounded-full bg-brand-500 text-sm font-bold text-white">
+              <div className="relative flex h-12 w-12 items-center justify-center rounded-full bg-brand-500 text-sm font-bold text-white transition-transform duration-300 hover:scale-110">
                 {step.number}
               </div>
               <h3 className="mt-5 text-lg font-bold text-white">{step.title}</h3>

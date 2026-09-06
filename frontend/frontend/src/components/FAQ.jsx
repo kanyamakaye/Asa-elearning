@@ -7,7 +7,7 @@ export default function FAQ() {
 
   useEffect(() => {
     let cancelled = false
-    getFaqs()
+    getFaqs({ page_size: 8 })
       .then((data) => {
         if (!cancelled) setFaqs(data.results ?? data)
       })
@@ -40,14 +40,14 @@ export default function FAQ() {
                 <div key={i} className="h-16 animate-pulse bg-navy-50/50" />
               ))
             : faqs.map((item) => (
-                <details key={item.id} className="group p-6">
+                <details key={item.id} className="group p-6 transition-colors open:bg-brand-50/30">
                   <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-sm font-bold text-navy-900 marker:content-none">
                     {item.question}
-                    <span className="shrink-0 text-lg text-brand-500 transition-transform group-open:rotate-45">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-navy-50 text-lg text-brand-500 transition-transform duration-300 group-open:rotate-45 group-open:bg-brand-100">
                       +
                     </span>
                   </summary>
-                  <p className="mt-3 text-sm leading-relaxed text-navy-700/70">
+                  <p className="mt-3 animate-fade-up text-sm leading-relaxed text-navy-700/70">
                     {item.answer}
                   </p>
                 </details>

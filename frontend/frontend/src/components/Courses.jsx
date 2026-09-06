@@ -82,7 +82,7 @@ export default function Courses() {
   }
 
   return (
-    <section id="courses" className="bg-white py-24">
+    <section id="courses" className="bg-brand-50/50 py-24">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div>
@@ -174,15 +174,16 @@ export default function Courses() {
         ) : (
           <>
             <div className="mt-10 grid gap-7 sm:grid-cols-2 lg:grid-cols-3">
-              {courses.map((c) => (
+              {courses.map((c, i) => (
                 <Link
                   key={c.id}
                   to={`/courses/${c.slug}`}
-                  className="group flex flex-col overflow-hidden rounded-2xl ring-1 ring-navy-900/8 transition-shadow hover:shadow-xl hover:shadow-navy-900/10"
+                  className="group animate-fade-up flex flex-col overflow-hidden rounded-2xl bg-white ring-1 ring-navy-900/8 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:shadow-navy-900/10"
+                  style={{ animationDelay: `${(i % 6) * 70}ms` }}
                 >
                   <div className="relative h-36 overflow-hidden bg-navy-900">
                     {c.image ? (
-                      <img src={c.image} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                      <img src={c.image} alt="" className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
                     ) : (
                       <div className="absolute inset-0 flex items-center justify-center">
                         <IconBook className="h-10 w-10 text-white/15" />
