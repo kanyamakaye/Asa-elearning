@@ -10,7 +10,7 @@ const points = [
 
 export default function InstructorCTA() {
   return (
-    <section className="bg-white py-24">
+    <section className="bg-white py-16">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="grid items-center gap-12 rounded-3xl bg-gradient-to-br from-navy-800 to-navy-900 px-8 py-14 lg:grid-cols-2 lg:px-16">
           <div>

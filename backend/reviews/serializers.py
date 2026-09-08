@@ -8,10 +8,15 @@ from .models import CourseReview, Wishlist
 
 class CourseReviewSerializer(serializers.ModelSerializer):
     student = UserPublicSerializer(read_only=True)
+    course_title = serializers.CharField(source='course.title', read_only=True)
+    category_name = serializers.CharField(source='course.category.name', read_only=True, default=None)
 
     class Meta:
         model = CourseReview
-        fields = ['id', 'course', 'student', 'rating', 'review_text', 'status', 'created_at', 'updated_at']
+        fields = [
+            'id', 'course', 'course_title', 'category_name', 'student', 'rating',
+            'review_text', 'status', 'created_at', 'updated_at',
+        ]
         read_only_fields = ['id', 'student', 'status', 'created_at', 'updated_at']
 
 

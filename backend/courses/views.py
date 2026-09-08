@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from django.utils import timezone
 from rest_framework import permissions, viewsets
 from rest_framework.decorators import action
@@ -5,6 +6,7 @@ from rest_framework.response import Response
 
 from accounts.permissions import CanManageCourse, CanManageCourseContent, IsInstructorOrReadOnly
 from common.responses import StandardResponseMixin, success_response
+from enrollments.models import Enrollment
 
 from .models import Course, CourseCategory, CourseInstructor, CourseModule, CourseUnit
 from .serializers import (
@@ -82,6 +84,24 @@ class CourseViewSet(StandardResponseMixin, viewsets.ModelViewSet):
         qs = self.get_queryset().filter(instructor=request.user)
         serializer = CourseListSerializer(qs, many=True)
         return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], permission_classes=[permissions.AllowAny])
+    def stats(self, request):
+        """Public platform-wide counters for the marketing homepage's hero
+        stat strip (course/student/instructor counts, completion rate) —
+        previously hardcoded copy on the frontend."""
+        User = get_user_model()
+        published = Course.objects.filter(status=Course.Status.PUBLISHED)
+        total_enrollments = Enrollment.objects.count()
+        completed_enrollments = Enrollment.objects.filter(status=Enrollment.Status.COMPLETED).count()
+        return Response({
+            'course_count': published.count(),
+            'student_count': Enrollment.objects.values('student').distinct().count(),
+            'instructor_count': User.objects.filter(
+                user_type=User.UserType.INSTRUCTOR, courses_taught__status=Course.Status.PUBLISHED,
+            ).distinct().count(),
+            'completion_rate': round((completed_enrollments / total_enrollments) * 100) if total_enrollments else 0,
+        })
 
     @action(detail=True, methods=['post'])
     def publish(self, request, slug=None):

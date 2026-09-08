@@ -23,7 +23,7 @@ const steps = [
 
 export default function HowItWorks() {
   return (
-    <section id="about" className="bg-navy-900 py-24">
+    <section id="about" className="bg-navy-900 py-16">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
           <p className="text-sm font-semibold uppercase tracking-wide text-brand-300">
@@ -34,7 +34,7 @@ export default function HowItWorks() {
           </h2>
         </div>
 
-        <div className="mt-16 grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-12 grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
           {steps.map((step, i) => (
             <div key={step.number} className="animate-fade-up relative" style={{ animationDelay: `${i * 100}ms` }}>
               {i < steps.length - 1 && (

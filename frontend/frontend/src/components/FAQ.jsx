@@ -23,7 +23,7 @@ export default function FAQ() {
   if (!loading && faqs.length === 0) return null
 
   return (
-    <section id="faq" className="bg-white py-24">
+    <section id="faq" className="bg-white py-16">
       <div className="mx-auto max-w-3xl px-6 lg:px-8">
         <div className="text-center">
           <p className="text-sm font-semibold uppercase tracking-wide text-brand-500">

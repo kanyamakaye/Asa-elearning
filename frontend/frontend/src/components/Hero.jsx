@@ -1,13 +1,21 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { getPlatformStats } from '../lib/queries'
 import { IconArrowRight, IconAward, IconBook, IconCheck, IconSearch, IconStar, IconTrendingUp, IconUsers } from './icons'
 
-const stats = [
-  { value: '500+', label: 'Courses' },
-  { value: '50k+', label: 'Students' },
-  { value: '200+', label: 'Instructors' },
-  { value: '98%', label: 'Completion rate' },
+// Shown immediately, before the real numbers load — never negative-of-truth
+// (rounded down, "+"-suffixed) so a flash of stale copy never overstates.
+const fallbackStats = [
+  { value: '100+', label: 'Courses' },
+  { value: '100+', label: 'Students' },
+  { value: '50+', label: 'Instructors' },
+  { value: '—', label: 'Completion rate' },
 ]
+
+function formatCount(n) {
+  if (n >= 1000) return `${Math.floor(n / 100) / 10}k+`
+  return `${Math.floor(n / 10) * 10}+`
+}
 
 const popularSearches = [
   'Web Development',
@@ -21,7 +29,26 @@ const activity = [30, 55, 40, 70, 50, 85, 60]
 
 export default function Hero() {
   const [query, setQuery] = useState('')
+  const [stats, setStats] = useState(fallbackStats)
   const navigate = useNavigate()
+
+  useEffect(() => {
+    let cancelled = false
+    getPlatformStats()
+      .then((data) => {
+        if (cancelled) return
+        setStats([
+          { value: formatCount(data.course_count), label: 'Courses' },
+          { value: formatCount(data.student_count), label: 'Students' },
+          { value: formatCount(data.instructor_count), label: 'Instructors' },
+          { value: `${data.completion_rate}%`, label: 'Completion rate' },
+        ])
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   function runSearch(term) {
     const q = term.trim()
@@ -48,7 +75,7 @@ export default function Hero() {
         }}
       />
 
-      <div className="relative mx-auto grid max-w-7xl gap-16 px-6 py-20 lg:grid-cols-2 lg:items-center lg:px-8 lg:py-28">
+      <div className="relative mx-auto grid max-w-7xl gap-16 px-6 pt-20 lg:grid-cols-2 lg:items-center lg:px-8 lg:pt-28">
         {/* Left: message + conversion */}
         <div className="text-center lg:text-left">
           <div className="animate-fade-up inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-sm font-medium text-brand-100 ring-1 ring-white/15">
@@ -201,7 +228,7 @@ export default function Hero() {
       </div>
 
       <div className="relative mx-auto max-w-7xl px-6 pb-16 lg:px-8">
-        <dl className="animate-fade-up mx-auto grid max-w-3xl grid-cols-2 gap-x-6 gap-y-8 border-t border-white/10 pt-12 text-center [animation-delay:360ms] sm:grid-cols-4">
+        <dl className="animate-fade-up mx-auto grid max-w-3xl grid-cols-2 gap-x-6 gap-y-8 border-t border-white/10 pt-8 text-center [animation-delay:360ms] sm:grid-cols-4">
           {stats.map((s) => (
             <div key={s.label}>
               <dt className="sr-only">{s.label}</dt>

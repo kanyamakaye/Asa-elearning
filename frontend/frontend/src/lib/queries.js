@@ -21,6 +21,16 @@ export function getCourseReviews(courseId) {
   return apiFetch(`/reviews/?course=${courseId}&page_size=6`)
 }
 
+// Site-wide (no course filter) — the backend excludes blank-quote reviews
+// in that mode, so this is safe to use directly as homepage testimonials.
+export function getTestimonials(pageSize = 6) {
+  return apiFetch(`/reviews/?page_size=${pageSize}&ordering=-rating`)
+}
+
+export function getPlatformStats() {
+  return apiFetch('/courses/stats/')
+}
+
 export function getInstructors() {
   return apiFetch('/instructors/')
 }

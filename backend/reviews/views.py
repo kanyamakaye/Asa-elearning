@@ -12,12 +12,16 @@ class CourseReviewViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def get_queryset(self):
-        qs = CourseReview.objects.select_related('student', 'course')
+        qs = CourseReview.objects.select_related('student', 'course', 'course__category')
         course_id = self.request.query_params.get('course')
         if course_id:
             qs = qs.filter(course_id=course_id)
         if self.action == 'list':
             qs = qs.filter(status=CourseReview.Status.APPROVED)
+            if not course_id:
+                # Unfiltered list = homepage "testimonials" use case — only
+                # reviews with an actual quote are worth surfacing there.
+                qs = qs.exclude(review_text='')
         return qs
 
     def perform_create(self, serializer):

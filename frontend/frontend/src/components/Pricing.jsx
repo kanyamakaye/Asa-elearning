@@ -17,7 +17,7 @@ const paid = [
 
 export default function Pricing() {
   return (
-    <section id="pricing" className="bg-brand-50/50 py-24">
+    <section id="pricing" className="bg-brand-50/50 py-16">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
           <p className="text-sm font-semibold uppercase tracking-wide text-brand-500">

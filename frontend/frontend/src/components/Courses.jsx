@@ -82,7 +82,7 @@ export default function Courses() {
   }
 
   return (
-    <section id="courses" className="bg-brand-50/50 py-24">
+    <section id="courses" className="bg-brand-50/50 py-16">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div>

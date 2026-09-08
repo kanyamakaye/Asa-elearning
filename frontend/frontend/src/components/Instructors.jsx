@@ -26,7 +26,7 @@ export default function Instructors() {
   if (!loading && instructors.length === 0) return null
 
   return (
-    <section id="instructors" className="bg-white py-24">
+    <section id="instructors" className="bg-white py-16">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div>

@@ -3,7 +3,7 @@ import { IconArrowRight } from './icons'
 
 export default function CTA() {
   return (
-    <section id="contact" className="bg-navy-900 py-20">
+    <section id="contact" className="bg-navy-900 py-16">
       <div className="mx-auto max-w-4xl px-6 text-center lg:px-8">
         <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
           Ready to start learning today?
