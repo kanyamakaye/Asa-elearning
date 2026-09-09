@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { listEnrollments } from '../../lib/dashboardApi'
-import { IconBook } from '../../components/icons'
+import { IconAward, IconBook } from '../../components/icons'
 
 const statusStyles = {
   active: 'bg-emerald-50 text-emerald-700',
@@ -82,6 +82,15 @@ export default function MyCourses() {
                 >
                   {e.status === 'completed' ? 'Review Course' : 'Continue Learning'}
                 </Link>
+                {e.certificate_issued && (
+                  <Link
+                    to="/dashboard/certificates"
+                    className="mt-2 inline-flex items-center justify-center gap-1.5 rounded-full py-2 text-center text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200 hover:bg-emerald-50"
+                  >
+                    <IconAward className="h-3.5 w-3.5" />
+                    Certificate earned — Download
+                  </Link>
+                )}
               </div>
             </div>
           ))}

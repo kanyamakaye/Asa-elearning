@@ -13,12 +13,19 @@ from lessons.models import Lesson
 from .models import LessonProgress
 from .serializers import LessonProgressSerializer
 
+# A student can download their certificate once they've cleared this much of
+# the course, without needing to finish every last lesson — the enrollment
+# itself still only flips to "completed" at 100%.
+CERTIFICATE_THRESHOLD_PERCENT = 80
+
 
 def _sync_enrollment_progress(student, course):
     """Recompute an Enrollment's completion_percentage from LessonProgress,
-    and complete + auto-issue a certificate once every published lesson is
-    done. Returns the up-to-date EnrollmentSerializer data, or None if the
-    student isn't (or is no longer) enrolled."""
+    mark it completed once every published lesson is done, and auto-issue a
+    certificate as soon as the student crosses CERTIFICATE_THRESHOLD_PERCENT
+    (independent of full completion). Returns the up-to-date
+    EnrollmentSerializer data, or None if the student isn't (or is no longer)
+    enrolled."""
     enrollment = Enrollment.objects.filter(student=student, course=course).first()
     if not enrollment:
         return None
@@ -36,15 +43,21 @@ def _sync_enrollment_progress(student, course):
         enrollment.status = Enrollment.Status.COMPLETED
         enrollment.completed_at = timezone.now()
         update_fields += ['status', 'completed_at']
-        if course.certificate_enabled and not enrollment.certificate_issued:
-            certificate, issued = Certificate.objects.get_or_create(
-                student=student, course=course, defaults={'enrollment': enrollment},
-            )
-            if issued:
-                generate_certificate_file(certificate)
-                certificate.save(update_fields=['certificate_file'])
-            enrollment.certificate_issued = True
-            update_fields.append('certificate_issued')
+
+    if (
+        course.certificate_enabled
+        and not enrollment.certificate_issued
+        and total
+        and percentage >= CERTIFICATE_THRESHOLD_PERCENT
+    ):
+        certificate, issued = Certificate.objects.get_or_create(
+            student=student, course=course, defaults={'enrollment': enrollment},
+        )
+        if issued:
+            generate_certificate_file(certificate)
+            certificate.save(update_fields=['certificate_file'])
+        enrollment.certificate_issued = True
+        update_fields.append('certificate_issued')
 
     if update_fields:
         enrollment.save(update_fields=update_fields)
