@@ -42,6 +42,27 @@ class Lesson(models.Model):
         return f'{self.module} - {self.title}'
 
 
+class LessonSection(models.Model):
+    """An ordered sub-part of a lesson (a "page" within it) — lets a single
+    submodule be broken into several short, focused steps instead of one
+    long scroll, e.g. a text lesson split into "Overview" / "Deep Dive" /
+    "Recap" sections the student pages through in order."""
+
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name='sections')
+    title = models.CharField(max_length=255)
+    content = models.TextField(blank=True)
+    video_url = models.URLField(blank=True)
+    order = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['order', 'id']
+
+    def __str__(self):
+        return f'{self.lesson} - {self.title}'
+
+
 class LearningResource(models.Model):
     class ResourceType(models.TextChoices):
         PDF = 'pdf', 'PDF'

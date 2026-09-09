@@ -15,12 +15,16 @@ class EnrollmentViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         qs = Enrollment.objects.select_related('student', 'course')
+        course_id = self.request.query_params.get('course')
         if user.user_type == 'admin' or user.is_staff:
-            course_id = self.request.query_params.get('course')
             return qs.filter(course_id=course_id) if course_id else qs
         if user.user_type == 'instructor':
-            return qs.filter(course__instructor=user)
-        return qs.filter(student=user)
+            qs = qs.filter(course__instructor=user)
+        else:
+            qs = qs.filter(student=user)
+        # Lets a student/instructor check "am I already enrolled in course X"
+        # with one filtered request instead of paging through their whole list.
+        return qs.filter(course_id=course_id) if course_id else qs
 
     def create(self, request, *args, **kwargs):
         course_id = request.data.get('course')

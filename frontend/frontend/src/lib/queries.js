@@ -47,3 +47,56 @@ export function enrollInCourse(courseId, token) {
 export function getMyEnrollments(token) {
   return apiFetch('/enrollments/', { token })
 }
+
+// Used by CourseDetail to check "is the current user already enrolled in
+// this course" so the page reflects real state on reload instead of always
+// showing "Enroll Now" (and then erroring on the duplicate-enrollment check).
+export function getMyEnrollmentForCourse(courseId, token) {
+  return apiFetch(`/enrollments/?course=${courseId}`, { token })
+}
+
+// Full lesson content (video/text/pdf) for the Learn page — the backend
+// 403s this unless the current user is enrolled (or manages the course).
+export function getCourseLearn(slug, token) {
+  return apiFetch(`/courses/${slug}/learn/`, { token })
+}
+
+export function getLessonProgress(courseId, token) {
+  return apiFetch(`/progress/?course=${courseId}`, { token })
+}
+
+// Idempotent: get-or-creates the LessonProgress row and rolls the result up
+// into the enrollment's overall completion_percentage server-side.
+export function markLessonComplete(lessonId, token) {
+  return apiFetch('/progress/complete/', { method: 'POST', body: { lesson: lessonId }, token })
+}
+
+// Published quizzes for a course (one course-wide "Knowledge Check" plus one
+// per module) — the backend already filters out drafts for non-managers.
+export function getCourseQuizzes(courseId, token) {
+  return apiFetch(`/quizzes/?course=${courseId}`, { token })
+}
+
+// Full quiz detail with questions — options never include is_correct for a
+// student, so this is safe to fetch before/during an attempt.
+export function getQuiz(quizId, token) {
+  return apiFetch(`/quizzes/${quizId}/`, { token })
+}
+
+export function getMyQuizAttempts(quizId, token) {
+  return apiFetch(`/quizzes/attempts/?quiz=${quizId}`, { token })
+}
+
+export function startQuizAttempt(quizId, token) {
+  return apiFetch(`/quizzes/${quizId}/start/`, { method: 'POST', token })
+}
+
+// Upserts one answer on an in-progress attempt — safe to call again if the
+// student changes their selection before submitting.
+export function answerQuizQuestion(attemptId, payload, token) {
+  return apiFetch(`/quizzes/attempts/${attemptId}/answer/`, { method: 'POST', body: payload, token })
+}
+
+export function submitQuizAttempt(attemptId, token) {
+  return apiFetch(`/quizzes/attempts/${attemptId}/submit/`, { method: 'POST', token })
+}

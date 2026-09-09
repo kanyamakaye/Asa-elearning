@@ -1,10 +1,15 @@
+from io import BytesIO
+
 from django.contrib.auth import get_user_model
+from django.http import Http404, HttpResponse
 from django.utils import timezone
 from rest_framework import permissions, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 
 from accounts.permissions import CanManageCourse, CanManageCourseContent, IsInstructorOrReadOnly
+from certificates.rendering import render_sample_certificate_image
 from common.responses import StandardResponseMixin, success_response
 from enrollments.models import Enrollment
 
@@ -13,6 +18,7 @@ from .serializers import (
     CourseCategorySerializer,
     CourseDetailSerializer,
     CourseInstructorSerializer,
+    CourseLearnSerializer,
     CourseListSerializer,
     CourseModuleSerializer,
     CourseUnitDetailSerializer,
@@ -79,6 +85,23 @@ class CourseViewSet(StandardResponseMixin, viewsets.ModelViewSet):
         serializer = CourseUnitDetailSerializer(course.units.prefetch_related('modules'), many=True)
         return Response(serializer.data)
 
+    @action(detail=True, methods=['get'], permission_classes=[permissions.IsAuthenticated])
+    def learn(self, request, slug=None):
+        """Full lesson content for the student learning view — gated to
+        enrolled students (or the owning/co-instructor and course managers,
+        so they can preview what students see)."""
+        course = self.get_object()
+        user = request.user
+        is_manager = user.is_staff or user.user_type in ('admin', 'academic_manager', 'content_manager')
+        is_instructor = course.instructor_id == user.id or CourseInstructor.objects.filter(
+            course=course, instructor=user,
+        ).exists()
+        is_enrolled = Enrollment.objects.filter(student=user, course=course).exists()
+        if not (is_manager or is_instructor or is_enrolled):
+            raise PermissionDenied('Enroll in this course to access its lessons.')
+        serializer = CourseLearnSerializer(course, context=self.get_serializer_context())
+        return Response(serializer.data)
+
     @action(detail=False, methods=['get'], url_path='my-courses', permission_classes=[permissions.IsAuthenticated])
     def my_courses(self, request):
         qs = self.get_queryset().filter(instructor=request.user)
@@ -102,6 +125,20 @@ class CourseViewSet(StandardResponseMixin, viewsets.ModelViewSet):
             ).distinct().count(),
             'completion_rate': round((completed_enrollments / total_enrollments) * 100) if total_enrollments else 0,
         })
+
+    @action(detail=True, methods=['get'], url_path='certificate-sample', permission_classes=[permissions.AllowAny])
+    def certificate_sample(self, request, slug=None):
+        """A watermarked preview of the certificate this course awards, so a
+        prospective student can see what they'll earn before enrolling."""
+        course = self.get_object()
+        if not course.certificate_enabled:
+            raise Http404('This course does not award a certificate.')
+        img = render_sample_certificate_image(course)
+        buffer = BytesIO()
+        img.save(buffer, format='PNG', optimize=True)
+        response = HttpResponse(buffer.getvalue(), content_type='image/png')
+        response['Cache-Control'] = 'public, max-age=86400'
+        return response
 
     @action(detail=True, methods=['post'])
     def publish(self, request, slug=None):

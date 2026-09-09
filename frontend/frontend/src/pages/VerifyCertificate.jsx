@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { apiFetch } from '../lib/api'
-import { IconAward, IconCheck, IconSearch } from '../components/icons'
+import { IconAward, IconCheck, IconClose, IconSearch } from '../components/icons'
 
 export default function VerifyCertificate() {
   const [params] = useSearchParams()
@@ -10,15 +10,14 @@ export default function VerifyCertificate() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  async function handleSubmit(e) {
-    e.preventDefault()
+  async function verify(verificationCode) {
     setError('')
     setResult(null)
     setLoading(true)
     try {
       const data = await apiFetch('/certificates/verify/', {
         method: 'POST',
-        body: { verification_code: code },
+        body: { verification_code: verificationCode },
       })
       setResult(data)
     } catch (err) {
@@ -26,6 +25,18 @@ export default function VerifyCertificate() {
     } finally {
       setLoading(false)
     }
+  }
+
+  // A shared verify link (e.g. from a printed certificate's QR code) should
+  // check itself immediately instead of making the visitor click Verify again.
+  useEffect(() => {
+    const initial = params.get('code')
+    if (initial) verify(initial)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  function handleSubmit(e) {
+    e.preventDefault()
+    verify(code)
   }
 
   return (
@@ -72,6 +83,34 @@ export default function VerifyCertificate() {
               </span>
               <div>
                 <p className="text-sm font-bold text-emerald-700">Certificate verified</p>
+                <p className="mt-2 text-sm text-navy-800">
+                  Issued to <span className="font-semibold">{result.certificate.student.full_name}</span> for{' '}
+                  <span className="font-semibold">{result.certificate.course_detail.title}</span>
+                </p>
+                <p className="mt-1 text-xs text-navy-700/50">
+                  Certificate #{result.certificate.certificate_number} &middot; Issued{' '}
+                  {new Date(result.certificate.issue_date).toLocaleDateString()}
+                </p>
+                {result.certificate.certificate_file && (
+                  <a
+                    href={result.certificate.certificate_file}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-brand-500 hover:text-navy-900"
+                  >
+                    View certificate PDF
+                    <IconAward className="h-3.5 w-3.5" />
+                  </a>
+                )}
+              </div>
+            </div>
+          ) : result.certificate ? (
+            <div className="flex items-start gap-3">
+              <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-400 text-white">
+                <IconClose className="h-4.5 w-4.5" />
+              </span>
+              <div>
+                <p className="text-sm font-bold text-amber-700">{result.detail}</p>
                 <p className="mt-2 text-sm text-navy-800">
                   Issued to <span className="font-semibold">{result.certificate.student.full_name}</span> for{' '}
                   <span className="font-semibold">{result.certificate.course_detail.title}</span>

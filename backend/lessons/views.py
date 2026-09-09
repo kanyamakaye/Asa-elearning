@@ -3,8 +3,8 @@ from rest_framework import viewsets
 from accounts.permissions import CanManageCourseContent
 from common.responses import StandardResponseMixin
 
-from .models import LearningResource, Lesson
-from .serializers import LearningResourceSerializer, LessonSerializer
+from .models import LearningResource, Lesson, LessonSection
+from .serializers import LearningResourceSerializer, LessonSectionSerializer, LessonSerializer
 
 
 class LessonViewSet(StandardResponseMixin, viewsets.ModelViewSet):
@@ -27,6 +27,20 @@ class LessonViewSet(StandardResponseMixin, viewsets.ModelViewSet):
         if self.request.query_params.get('preview_only') == 'true':
             qs = qs.filter(is_preview=True)
         return qs
+
+
+class LessonSectionViewSet(StandardResponseMixin, viewsets.ModelViewSet):
+    queryset = LessonSection.objects.select_related('lesson__module__unit__course').all()
+    serializer_class = LessonSectionSerializer
+    permission_classes = [CanManageCourseContent]
+    create_message = 'Section created successfully.'
+    update_message = 'Section updated successfully.'
+    delete_message = 'Section deleted successfully.'
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        lesson_id = self.request.query_params.get('lesson')
+        return qs.filter(lesson_id=lesson_id) if lesson_id else qs
 
 
 class LearningResourceViewSet(viewsets.ModelViewSet):

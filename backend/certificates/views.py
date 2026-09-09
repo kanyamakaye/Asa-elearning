@@ -7,6 +7,7 @@ from rest_framework.views import APIView
 from enrollments.models import Enrollment
 
 from .models import Certificate
+from .rendering import generate_certificate_file
 from .serializers import CertificateSerializer, CertificateVerifySerializer
 
 
@@ -38,9 +39,11 @@ class CertificateViewSet(viewsets.ModelViewSet):
         certificate = Certificate.objects.create(
             student=enrollment.student, course=enrollment.course, enrollment=enrollment
         )
+        generate_certificate_file(certificate)
+        certificate.save(update_fields=['certificate_file'])
         enrollment.certificate_issued = True
         enrollment.save(update_fields=['certificate_issued'])
-        return Response(CertificateSerializer(certificate).data, status=status.HTTP_201_CREATED)
+        return Response(self.get_serializer(certificate).data, status=status.HTTP_201_CREATED)
 
 
 class VerifyCertificateView(APIView):
@@ -56,4 +59,13 @@ class VerifyCertificateView(APIView):
         ).select_related('student', 'course').first()
         if not certificate:
             return Response({'valid': False, 'detail': 'No certificate found for this code.'}, status=404)
-        return Response({'valid': True, 'certificate': CertificateSerializer(certificate).data})
+
+        certificate_data = CertificateSerializer(certificate, context={'request': request}).data
+        if certificate.status != Certificate.Status.ACTIVE:
+            return Response({
+                'valid': False,
+                'status': certificate.status,
+                'detail': f'This certificate has been {certificate.get_status_display().lower()} and is no longer valid.',
+                'certificate': certificate_data,
+            })
+        return Response({'valid': True, 'status': certificate.status, 'certificate': certificate_data})

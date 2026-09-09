@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { enrollInCourse, getCourse, getCourseReviews } from '../lib/queries'
+import { API_BASE_URL } from '../lib/api'
+import { enrollInCourse, getCourse, getCourseReviews, getMyEnrollmentForCourse } from '../lib/queries'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
 import {
   IconArrowRight,
@@ -64,6 +65,7 @@ function ModuleAccordion({ unit }) {
                 <span className="inline-flex shrink-0 items-center gap-1.5 text-xs text-navy-700/55">
                   <IconClipboard className="h-3.5 w-3.5" />
                   {module.lesson_count} lesson{module.lesson_count === 1 ? '' : 's'}
+                  {module.quiz_count > 0 && ` · ${module.quiz_count} quiz${module.quiz_count === 1 ? '' : 'zes'}`}
                 </span>
               </button>
 
@@ -117,6 +119,7 @@ export default function CourseDetail() {
   const [enrolling, setEnrolling] = useState(false)
   const [enrollError, setEnrollError] = useState('')
   const [enrolled, setEnrolled] = useState(false)
+  const [checkingEnrollment, setCheckingEnrollment] = useState(true)
 
   useEffect(() => {
     let cancelled = false
@@ -143,6 +146,31 @@ export default function CourseDetail() {
     }
   }, [slug])
 
+  // Reflect real enrollment state on load/reload — without this, a student
+  // revisiting a course they're already enrolled in always saw "Enroll Now"
+  // again, and clicking it just errored on the backend's duplicate check.
+  useEffect(() => {
+    if (!course || !isAuthenticated) {
+      setCheckingEnrollment(false)
+      return
+    }
+    let cancelled = false
+    setCheckingEnrollment(true)
+    getMyEnrollmentForCourse(course.id, accessToken)
+      .then((data) => {
+        if (cancelled) return
+        const results = data.results ?? data
+        setEnrolled(results.length > 0)
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setCheckingEnrollment(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [course, isAuthenticated, accessToken])
+
   async function handleEnroll() {
     if (!isAuthenticated) {
       navigate('/login', { state: { from: location } })
@@ -154,7 +182,14 @@ export default function CourseDetail() {
       await enrollInCourse(course.id, accessToken)
       setEnrolled(true)
     } catch (err) {
-      setEnrollError(err.message || 'Unable to enroll right now.')
+      // Stale local state (e.g. enrolled in another tab) still lands here as
+      // a "safe" outcome — the student is enrolled either way, so reflect
+      // that instead of showing a scary error for something that isn't one.
+      if (err.message?.toLowerCase().includes('already enrolled')) {
+        setEnrolled(true)
+      } else {
+        setEnrollError(err.message || 'Unable to enroll right now.')
+      }
     } finally {
       setEnrolling(false)
     }
@@ -324,6 +359,24 @@ export default function CourseDetail() {
               </div>
             )}
 
+            {course.certificate_enabled && (
+              <div>
+                <h2 className="text-xl font-bold text-navy-900">Certificate</h2>
+                <p className="mt-1 text-sm text-navy-700/60">
+                  Complete this course to earn a verifiable Asa Academy certificate. Here&rsquo;s a sample of what
+                  it looks like.
+                </p>
+                <div className="mt-4 overflow-hidden rounded-2xl ring-1 ring-navy-900/8">
+                  <img
+                    src={`${API_BASE_URL}/courses/${course.slug}/certificate-sample/`}
+                    alt={`Sample certificate for ${course.title}`}
+                    loading="lazy"
+                    className="w-full"
+                  />
+                </div>
+              </div>
+            )}
+
             {course.co_instructors?.length > 0 && (
               <div>
                 <h2 className="text-xl font-bold text-navy-900">Teaching team</h2>
@@ -408,10 +461,21 @@ export default function CourseDetail() {
               )}
             </div>
 
-            {enrolled ? (
-              <div className="flex items-center gap-2 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
-                <IconCheck className="h-4 w-4" />
-                You're enrolled!
+            {checkingEnrollment ? (
+              <div className="h-[50px] w-full animate-pulse rounded-full bg-navy-50" />
+            ) : enrolled ? (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
+                  <IconCheck className="h-4 w-4" />
+                  You're enrolled!
+                </div>
+                <Link
+                  to={`/learn/${course.slug}`}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-navy-900 px-6 py-3.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-brand-500 hover:shadow-lg hover:shadow-brand-500/30"
+                >
+                  Start Learning
+                  <IconArrowRight className="h-4 w-4" />
+                </Link>
               </div>
             ) : (
               <button

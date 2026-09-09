@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import LearningResource, Lesson
+from .models import LearningResource, Lesson, LessonSection
 
 
 class LearningResourceSerializer(serializers.ModelSerializer):
@@ -13,8 +13,29 @@ class LearningResourceSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'uploaded_by', 'created_at']
 
 
+class LessonSectionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LessonSection
+        fields = ['id', 'lesson', 'title', 'content', 'video_url', 'order', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def validate_lesson(self, value):
+        request = self.context.get('request')
+        user = request.user if request else None
+        if user and not (user.is_staff or user.user_type in ('admin', 'academic_manager', 'content_manager')):
+            if value.course.instructor_id != user.id:
+                raise serializers.ValidationError('You can only manage content for your own courses.')
+        return value
+
+    def validate_title(self, value):
+        if not value.strip():
+            raise serializers.ValidationError('This field is required.')
+        return value
+
+
 class LessonSerializer(serializers.ModelSerializer):
     resources = LearningResourceSerializer(many=True, read_only=True)
+    sections = LessonSectionSerializer(many=True, read_only=True)
     course_id = serializers.IntegerField(source='module.course.id', read_only=True)
 
     class Meta:
@@ -22,7 +43,7 @@ class LessonSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'module', 'course_id', 'title', 'description', 'lesson_type', 'content',
             'content_url', 'video_url', 'duration_minutes', 'order', 'is_preview', 'status',
-            'resources', 'created_at', 'updated_at',
+            'resources', 'sections', 'created_at', 'updated_at',
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
 
@@ -58,3 +79,25 @@ class LessonCurriculumSerializer(serializers.ModelSerializer):
     class Meta:
         model = Lesson
         fields = ['id', 'title', 'lesson_type', 'duration_minutes', 'order', 'is_preview']
+
+
+class LessonSectionLearnSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LessonSection
+        fields = ['id', 'title', 'content', 'video_url', 'order']
+
+
+class LessonLearnSerializer(serializers.ModelSerializer):
+    """Full lesson content (video/text/pdf + resources + sections) for an
+    enrolled student's learning view. Access is gated at CourseViewSet.learn()
+    — this serializer itself has no permission check, so only use it there."""
+
+    resources = LearningResourceSerializer(many=True, read_only=True)
+    sections = LessonSectionLearnSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Lesson
+        fields = [
+            'id', 'title', 'description', 'lesson_type', 'content', 'content_url',
+            'video_url', 'duration_minutes', 'order', 'is_preview', 'resources', 'sections',
+        ]

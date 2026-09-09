@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
-import { listEnrollments } from '../../lib/dashboardApi'
+import { issueCertificate, listEnrollments } from '../../lib/dashboardApi'
 import DataTable from '../../components/dashboard/DataTable'
 
 const statusStyles = {
@@ -11,12 +11,16 @@ const statusStyles = {
   suspended: 'bg-navy-100 text-navy-700',
 }
 
+const MANAGER_ROLES = ['admin', 'instructor']
+
 export default function EnrollmentsList() {
-  const { accessToken } = useAuth()
+  const { accessToken, user } = useAuth()
+  const canIssue = MANAGER_ROLES.includes(user?.user_type)
   const [enrollments, setEnrollments] = useState([])
   const [count, setCount] = useState(0)
   const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(true)
+  const [issuingId, setIssuingId] = useState(null)
 
   useEffect(() => {
     let cancelled = false
@@ -33,6 +37,20 @@ export default function EnrollmentsList() {
       cancelled = true
     }
   }, [accessToken, page])
+
+  async function handleIssue(enrollment) {
+    setIssuingId(enrollment.id)
+    try {
+      await issueCertificate(enrollment.id, accessToken)
+      setEnrollments((prev) =>
+        prev.map((e) => (e.id === enrollment.id ? { ...e, certificate_issued: true } : e)),
+      )
+    } catch {
+      // Non-fatal — the button just stays clickable so the manager can retry.
+    } finally {
+      setIssuingId(null)
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -60,7 +78,26 @@ export default function EnrollmentsList() {
             ),
           },
           { key: 'completion_percentage', label: 'Progress', render: (e) => `${Math.round(e.completion_percentage)}%` },
-          { key: 'certificate_issued', label: 'Certificate', render: (e) => (e.certificate_issued ? 'Issued' : '—') },
+          {
+            key: 'certificate_issued',
+            label: 'Certificate',
+            render: (e) => {
+              if (e.certificate_issued) return 'Issued'
+              if (canIssue && e.status === 'completed' && e.course_detail?.certificate_enabled) {
+                return (
+                  <button
+                    type="button"
+                    onClick={() => handleIssue(e)}
+                    disabled={issuingId === e.id}
+                    className="rounded-full bg-navy-900 px-3 py-1 text-xs font-semibold text-white hover:bg-brand-500 disabled:opacity-60"
+                  >
+                    {issuingId === e.id ? 'Issuing…' : 'Issue'}
+                  </button>
+                )
+              }
+              return '—'
+            },
+          },
           { key: 'created_at', label: 'Enrolled', render: (e) => new Date(e.created_at).toLocaleDateString() },
         ]}
       />

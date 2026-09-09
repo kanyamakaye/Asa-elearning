@@ -4,6 +4,7 @@ import { getCourse } from '../../../services/courseService'
 import { getUnits, createUnit, updateUnit, deleteUnit } from '../../../services/unitService'
 import { getModules, createModule, updateModule, deleteModule } from '../../../services/moduleService'
 import { getLessons, createLesson, updateLesson, deleteLesson } from '../../../services/lessonService'
+import { getSections, createSection, updateSection, deleteSection } from '../../../services/sectionService'
 import Alert from '../../../components/ui/Alert'
 import Badge from '../../../components/ui/Badge'
 import Breadcrumb from '../../../components/ui/Breadcrumb'
@@ -34,6 +35,7 @@ const EMPTY_LESSON = {
   title: '', description: '', lesson_type: 'video', content: '', content_url: '',
   video_url: '', duration_minutes: '', is_preview: false, status: 'draft',
 }
+const EMPTY_SECTION = { title: '', content: '', video_url: '' }
 
 function UnitForm({ initial, onSave, onCancel, saving }) {
   const [form, setForm] = useState(initial)
@@ -174,12 +176,47 @@ function LessonForm({ initial, onSave, onCancel, saving }) {
   )
 }
 
+function SectionForm({ initial, onSave, onCancel, saving }) {
+  const [form, setForm] = useState(initial)
+  const [error, setError] = useState('')
+
+  async function submit() {
+    if (!form.title.trim()) return setError('Section title is required.')
+    setError('')
+    try {
+      await onSave(form)
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      {error && <Alert tone="error">{error}</Alert>}
+      <FormField label="Section Title" required>
+        <Input value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} placeholder="e.g. Overview" autoFocus />
+      </FormField>
+      <FormField label="Content">
+        <Textarea rows={5} value={form.content} onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))} />
+      </FormField>
+      <FormField label="Video URL (optional)">
+        <Input value={form.video_url} onChange={(e) => setForm((f) => ({ ...f, video_url: e.target.value }))} placeholder="https://" />
+      </FormField>
+      <div className="flex justify-end gap-3 pt-2">
+        <Button variant="ghost" onClick={onCancel}>Cancel</Button>
+        <Button loading={saving} disabled={saving} onClick={submit}>{saving ? 'Saving…' : 'Save Section'}</Button>
+      </div>
+    </div>
+  )
+}
+
 export default function ManageContent() {
   const { slug } = useParams()
   const [course, setCourse] = useState(null)
   const [units, setUnits] = useState([])
   const [expandedUnits, setExpandedUnits] = useState({})
   const [expandedModules, setExpandedModules] = useState({})
+  const [expandedLessons, setExpandedLessons] = useState({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
@@ -187,6 +224,7 @@ export default function ManageContent() {
   const [unitModal, setUnitModal] = useState(null) // { mode: 'create'|'edit', unit? }
   const [moduleModal, setModuleModal] = useState(null) // { mode, unitId, module? }
   const [lessonModal, setLessonModal] = useState(null) // { mode, moduleId, lesson? }
+  const [sectionModal, setSectionModal] = useState(null) // { mode, lessonId, section? }
 
   async function loadAll() {
     setLoading(true)
@@ -203,7 +241,14 @@ export default function ManageContent() {
           const withLessons = await Promise.all(
             moduleList.map(async (m) => {
               const lessonData = await getLessons(m.id)
-              return { ...m, lessons: lessonData.results ?? lessonData }
+              const lessonList = lessonData.results ?? lessonData
+              const withSections = await Promise.all(
+                lessonList.map(async (l) => {
+                  const sectionData = await getSections(l.id)
+                  return { ...l, sections: sectionData.results ?? sectionData }
+                })
+              )
+              return { ...m, lessons: withSections }
             })
           )
           return { ...u, modules: withLessons }
@@ -235,6 +280,10 @@ export default function ManageContent() {
 
   function toggleModule(moduleId) {
     setExpandedModules((e) => ({ ...e, [moduleId]: !e[moduleId] }))
+  }
+
+  function toggleLesson(lessonId) {
+    setExpandedLessons((e) => ({ ...e, [lessonId]: !e[lessonId] }))
   }
 
   async function saveUnit(form) {
@@ -335,6 +384,38 @@ export default function ManageContent() {
     await loadAll()
   }
 
+  async function saveSection(form) {
+    setSaving(true)
+    try {
+      if (sectionModal.mode === 'create') {
+        const lesson = units.flatMap((u) => u.modules).flatMap((m) => m.lessons).find((l) => l.id === sectionModal.lessonId)
+        await createSection({ ...form, lesson: sectionModal.lessonId, order: (lesson?.sections.length ?? 0) + 1 })
+      } else {
+        await updateSection(sectionModal.section.id, form)
+      }
+      setSectionModal(null)
+      await loadAll()
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function removeSection(section) {
+    if (!window.confirm(`Delete section "${section.title}"?`)) return
+    await deleteSection(section.id)
+    await loadAll()
+  }
+
+  async function moveSection(lesson, section, delta) {
+    const sorted = [...lesson.sections].sort((a, b) => a.order - b.order)
+    const idx = sorted.findIndex((x) => x.id === section.id)
+    const j = idx + delta
+    if (j < 0 || j >= sorted.length) return
+    const other = sorted[j]
+    await Promise.all([updateSection(section.id, { order: other.order }), updateSection(other.id, { order: section.order })])
+    await loadAll()
+  }
+
   if (loading) return <LoadingSpinner label="Loading course content…" />
 
   if (error) return <Alert tone="error">{error}</Alert>
@@ -405,19 +486,54 @@ export default function ManageContent() {
                             ) : (
                               <ul className="space-y-2">
                                 {[...m.lessons].sort((a, b) => a.order - b.order).map((l, li, larr) => (
-                                  <li key={l.id} className="flex items-center gap-3 rounded-xl bg-white px-4 py-2.5 ring-1 ring-navy-900/6">
-                                    <IconPlay className="h-3.5 w-3.5 shrink-0 text-brand-500" />
-                                    <div className="min-w-0 flex-1">
-                                      <p className="truncate text-sm font-semibold text-navy-900">{li + 1}. {l.title}</p>
-                                      <p className="text-[11px] uppercase tracking-wide text-navy-700/40">{l.lesson_type.replace('_', ' ')} · {l.duration_minutes || 0} min{l.is_preview ? ' · Preview' : ''}</p>
+                                  <li key={l.id} className="overflow-hidden rounded-xl bg-white ring-1 ring-navy-900/6">
+                                    <div className="flex items-center gap-3 px-4 py-2.5">
+                                      <button type="button" onClick={() => toggleLesson(l.id)} className="flex flex-1 items-center gap-3 text-left">
+                                        <IconChevronDown className={`h-3 w-3 shrink-0 text-navy-700/40 transition-transform ${expandedLessons[l.id] ? '' : '-rotate-90'}`} />
+                                        <IconPlay className="h-3.5 w-3.5 shrink-0 text-brand-500" />
+                                        <div className="min-w-0">
+                                          <p className="truncate text-sm font-semibold text-navy-900">{li + 1}. {l.title}</p>
+                                          <p className="text-[11px] uppercase tracking-wide text-navy-700/40">
+                                            {l.lesson_type.replace('_', ' ')} · {l.duration_minutes || 0} min{l.is_preview ? ' · Preview' : ''}
+                                            {l.sections?.length > 0 && ` · ${l.sections.length} section${l.sections.length === 1 ? '' : 's'}`}
+                                          </p>
+                                        </div>
+                                      </button>
+                                      <Badge tone={l.status === 'published' ? 'success' : l.status === 'hidden' ? 'danger' : 'neutral'}>{l.status}</Badge>
+                                      <div className="flex items-center gap-0.5">
+                                        <button type="button" disabled={li === 0} onClick={() => moveLesson(m, l, -1)} className="rounded-lg p-1.5 text-navy-700/40 hover:bg-navy-50 disabled:opacity-30" aria-label="Move up"><IconArrowUp className="h-3.5 w-3.5" /></button>
+                                        <button type="button" disabled={li === larr.length - 1} onClick={() => moveLesson(m, l, 1)} className="rounded-lg p-1.5 text-navy-700/40 hover:bg-navy-50 disabled:opacity-30" aria-label="Move down"><IconArrowDown className="h-3.5 w-3.5" /></button>
+                                        <button type="button" onClick={() => setLessonModal({ mode: 'edit', moduleId: m.id, lesson: l })} className="rounded-lg p-1.5 text-navy-700/40 hover:bg-navy-50" aria-label="Edit submodule"><IconEdit className="h-3.5 w-3.5" /></button>
+                                        <button type="button" onClick={() => removeLesson(l)} className="rounded-lg p-1.5 text-red-500 hover:bg-red-50" aria-label="Delete submodule"><IconTrash className="h-3.5 w-3.5" /></button>
+                                      </div>
                                     </div>
-                                    <Badge tone={l.status === 'published' ? 'success' : l.status === 'hidden' ? 'danger' : 'neutral'}>{l.status}</Badge>
-                                    <div className="flex items-center gap-0.5">
-                                      <button type="button" disabled={li === 0} onClick={() => moveLesson(m, l, -1)} className="rounded-lg p-1.5 text-navy-700/40 hover:bg-navy-50 disabled:opacity-30" aria-label="Move up"><IconArrowUp className="h-3.5 w-3.5" /></button>
-                                      <button type="button" disabled={li === larr.length - 1} onClick={() => moveLesson(m, l, 1)} className="rounded-lg p-1.5 text-navy-700/40 hover:bg-navy-50 disabled:opacity-30" aria-label="Move down"><IconArrowDown className="h-3.5 w-3.5" /></button>
-                                      <button type="button" onClick={() => setLessonModal({ mode: 'edit', moduleId: m.id, lesson: l })} className="rounded-lg p-1.5 text-navy-700/40 hover:bg-navy-50" aria-label="Edit submodule"><IconEdit className="h-3.5 w-3.5" /></button>
-                                      <button type="button" onClick={() => removeLesson(l)} className="rounded-lg p-1.5 text-red-500 hover:bg-red-50" aria-label="Delete submodule"><IconTrash className="h-3.5 w-3.5" /></button>
-                                    </div>
+
+                                    {expandedLessons[l.id] && (
+                                      <div className="border-t border-navy-900/6 bg-navy-50/50 px-4 py-3">
+                                        {l.sections?.length > 0 ? (
+                                          <ul className="space-y-1.5">
+                                            {[...l.sections].sort((a, b) => a.order - b.order).map((s, si, sarr) => (
+                                              <li key={s.id} className="flex items-center gap-2.5 rounded-lg bg-white px-3 py-2 ring-1 ring-navy-900/5">
+                                                <span className="min-w-0 flex-1 truncate text-xs font-medium text-navy-800">{si + 1}. {s.title}</span>
+                                                <div className="flex items-center gap-0.5">
+                                                  <button type="button" disabled={si === 0} onClick={() => moveSection(l, s, -1)} className="rounded-md p-1 text-navy-700/40 hover:bg-navy-50 disabled:opacity-30" aria-label="Move up"><IconArrowUp className="h-3 w-3" /></button>
+                                                  <button type="button" disabled={si === sarr.length - 1} onClick={() => moveSection(l, s, 1)} className="rounded-md p-1 text-navy-700/40 hover:bg-navy-50 disabled:opacity-30" aria-label="Move down"><IconArrowDown className="h-3 w-3" /></button>
+                                                  <button type="button" onClick={() => setSectionModal({ mode: 'edit', lessonId: l.id, section: s })} className="rounded-md p-1 text-navy-700/40 hover:bg-navy-50" aria-label="Edit section"><IconEdit className="h-3 w-3" /></button>
+                                                  <button type="button" onClick={() => removeSection(s)} className="rounded-md p-1 text-red-500 hover:bg-red-50" aria-label="Delete section"><IconTrash className="h-3 w-3" /></button>
+                                                </div>
+                                              </li>
+                                            ))}
+                                          </ul>
+                                        ) : (
+                                          <p className="text-[11px] text-navy-700/45">
+                                            No sections yet — optional, for breaking this submodule into pages the student steps through.
+                                          </p>
+                                        )}
+                                        <Button variant="secondary" size="sm" className="mt-2.5" onClick={() => setSectionModal({ mode: 'create', lessonId: l.id })}>
+                                          <IconPlus className="h-3 w-3" /> Add Section
+                                        </Button>
+                                      </div>
+                                    )}
                                   </li>
                                 ))}
                               </ul>
@@ -478,6 +594,21 @@ export default function ManageContent() {
             }
             onSave={saveLesson}
             onCancel={() => setLessonModal(null)}
+            saving={saving}
+          />
+        )}
+      </Modal>
+
+      <Modal open={!!sectionModal} onClose={() => setSectionModal(null)} title={sectionModal?.mode === 'create' ? 'Add Section' : 'Edit Section'}>
+        {sectionModal && (
+          <SectionForm
+            initial={
+              sectionModal.mode === 'edit'
+                ? { title: sectionModal.section.title, content: sectionModal.section.content, video_url: sectionModal.section.video_url }
+                : EMPTY_SECTION
+            }
+            onSave={saveSection}
+            onCancel={() => setSectionModal(null)}
             saving={saving}
           />
         )}

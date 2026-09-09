@@ -7,6 +7,7 @@ import Contact from './pages/Contact'
 import CourseDetail from './pages/CourseDetail'
 import ForgotPassword from './pages/ForgotPassword'
 import Home from './pages/Home'
+import Learn from './pages/Learn'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import VerifyCertificate from './pages/VerifyCertificate'
@@ -65,6 +66,10 @@ function App() {
       <Route path="/forgot-password" element={<ForgotPassword />} />
 
       <Route element={<RequireAuth />}>
+        {/* Full-screen, distraction-free lesson player — deliberately outside
+            DashboardLayout's sidebar chrome. */}
+        <Route path="/learn/:slug" element={<Learn />} />
+
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<DashboardIndex />} />
           <Route path="users" element={<UsersList />} />

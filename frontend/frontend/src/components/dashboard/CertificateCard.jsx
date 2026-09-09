@@ -13,15 +13,28 @@ export default function CertificateCard({ certificate }) {
           {certificate.issue_date ? new Date(certificate.issue_date).toLocaleDateString() : '—'}
         </p>
       </div>
-      <a
-        href={`/verify-certificate?code=${certificate.verification_code}`}
-        target="_blank"
-        rel="noreferrer"
-        className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-brand-500 hover:text-navy-900"
-      >
-        Verify
-        <IconArrowRight className="h-3.5 w-3.5" />
-      </a>
+      <div className="flex shrink-0 items-center gap-4">
+        {certificate.certificate_file && (
+          <a
+            href={certificate.certificate_file}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1 text-xs font-semibold text-navy-900 hover:text-brand-500"
+          >
+            View PDF
+            <IconArrowRight className="h-3.5 w-3.5" />
+          </a>
+        )}
+        <a
+          href={`/verify-certificate?code=${certificate.verification_code}`}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-1 text-xs font-semibold text-brand-500 hover:text-navy-900"
+        >
+          Verify
+          <IconArrowRight className="h-3.5 w-3.5" />
+        </a>
+      </div>
     </div>
   )
 }

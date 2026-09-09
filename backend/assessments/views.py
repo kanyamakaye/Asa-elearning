@@ -37,6 +37,17 @@ class QuizViewSet(StandardResponseMixin, viewsets.ModelViewSet):
         course_id = self.request.query_params.get('course')
         if course_id:
             qs = qs.filter(course_id=course_id)
+        module_id = self.request.query_params.get('module')
+        if module_id:
+            qs = qs.filter(module_id=module_id)
+        user = self.request.user
+        is_manager = user.is_authenticated and (
+            user.is_staff or user.user_type in ('admin', 'academic_manager', 'instructor')
+        )
+        # Students (and anonymous requests, which SAFE_METHODS otherwise
+        # allow through CanManageAssessment) only ever see published quizzes.
+        if not is_manager:
+            qs = qs.filter(status=Quiz.Status.PUBLISHED)
         return qs
 
     def perform_create(self, serializer):
@@ -100,10 +111,10 @@ class QuizAttemptViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         user = self.request.user
         qs = QuizAttempt.objects.select_related('quiz', 'student').prefetch_related('answers')
-        if user.user_type in ('admin', 'instructor') or user.is_staff:
-            quiz_id = self.request.query_params.get('quiz')
-            return qs.filter(quiz_id=quiz_id) if quiz_id else qs
-        return qs.filter(student=user)
+        if not (user.user_type in ('admin', 'instructor') or user.is_staff):
+            qs = qs.filter(student=user)
+        quiz_id = self.request.query_params.get('quiz')
+        return qs.filter(quiz_id=quiz_id) if quiz_id else qs
 
     @action(detail=True, methods=['post'])
     def answer(self, request, pk=None):

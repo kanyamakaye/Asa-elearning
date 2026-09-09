@@ -3,7 +3,7 @@ from django.db.models import Avg
 from rest_framework import serializers
 
 from accounts.serializers import UserPublicSerializer
-from lessons.serializers import LessonCurriculumSerializer
+from lessons.serializers import LessonCurriculumSerializer, LessonLearnSerializer
 
 from .models import Course, CourseCategory, CourseInstructor, CourseModule, CourseUnit
 
@@ -22,11 +22,18 @@ class CourseCategorySerializer(serializers.ModelSerializer):
 class CourseModuleSerializer(serializers.ModelSerializer):
     lesson_count = serializers.IntegerField(source='lessons.count', read_only=True)
     course_id = serializers.IntegerField(source='unit.course_id', read_only=True)
+    quiz_count = serializers.SerializerMethodField()
 
     class Meta:
         model = CourseModule
-        fields = ['id', 'unit', 'course_id', 'title', 'description', 'order', 'status', 'lesson_count', 'created_at']
+        fields = [
+            'id', 'unit', 'course_id', 'title', 'description', 'order', 'status',
+            'lesson_count', 'quiz_count', 'created_at',
+        ]
         read_only_fields = ['id', 'created_at']
+
+    def get_quiz_count(self, obj):
+        return obj.quizzes.filter(status='published').count()
 
     def validate_unit(self, value):
         request = self.context.get('request')
@@ -84,6 +91,40 @@ class CourseUnitDetailSerializer(CourseUnitSerializer):
 
     class Meta(CourseUnitSerializer.Meta):
         fields = CourseUnitSerializer.Meta.fields + ['modules']
+
+
+class CourseModuleLearnSerializer(CourseModuleSerializer):
+    """Same shape as CourseModuleCurriculumSerializer but with full lesson
+    content — only ever reached through CourseViewSet.learn(), which checks
+    enrollment before serializing."""
+
+    lessons = serializers.SerializerMethodField()
+
+    class Meta(CourseModuleSerializer.Meta):
+        fields = CourseModuleSerializer.Meta.fields + ['lessons']
+
+    def get_lessons(self, obj):
+        qs = obj.lessons.filter(status='published').order_by('order', 'id')
+        return LessonLearnSerializer(qs, many=True).data
+
+
+class CourseUnitLearnSerializer(CourseUnitSerializer):
+    modules = CourseModuleLearnSerializer(many=True, read_only=True)
+
+    class Meta(CourseUnitSerializer.Meta):
+        fields = CourseUnitSerializer.Meta.fields + ['modules']
+
+
+class CourseLearnSerializer(serializers.ModelSerializer):
+    """The gated "learn" view of a course: full lesson content instead of
+    the public curriculum outline. See CourseViewSet.learn()."""
+
+    instructor = UserPublicSerializer(read_only=True)
+    units = CourseUnitLearnSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Course
+        fields = ['id', 'title', 'slug', 'certificate_enabled', 'instructor', 'units']
 
 
 class CourseInstructorSerializer(serializers.ModelSerializer):

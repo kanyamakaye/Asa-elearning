@@ -77,10 +77,10 @@ export default function MyCourses() {
                   </div>
                 </div>
                 <Link
-                  to={`/courses/${e.course_detail?.slug}`}
+                  to={`/learn/${e.course_detail?.slug}`}
                   className="mt-4 rounded-full bg-navy-900 py-2 text-center text-xs font-semibold text-white hover:bg-brand-500"
                 >
-                  {e.status === 'completed' ? 'Review Course' : 'Continue'}
+                  {e.status === 'completed' ? 'Review Course' : 'Continue Learning'}
                 </Link>
               </div>
             </div>

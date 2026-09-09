@@ -41,6 +41,10 @@ export function listCertificates(token, params = {}) {
   return apiFetch(`/certificates/?${new URLSearchParams(params)}`, { token })
 }
 
+export function issueCertificate(enrollmentId, token) {
+  return apiFetch('/certificates/', { method: 'POST', body: { enrollment: enrollmentId }, token })
+}
+
 export function listPayments(token, params = {}) {
   return apiFetch(`/payments/?${new URLSearchParams(params)}`, { token })
 }

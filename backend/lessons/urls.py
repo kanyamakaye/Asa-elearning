@@ -5,6 +5,7 @@ from . import views
 
 router = DefaultRouter()
 router.register('resources', views.LearningResourceViewSet, basename='learning-resource')
+router.register('sections', views.LessonSectionViewSet, basename='lesson-section')
 router.register('', views.LessonViewSet, basename='lesson')
 
 urlpatterns = [
