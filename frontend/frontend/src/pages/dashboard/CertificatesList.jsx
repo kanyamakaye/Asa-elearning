@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { apiFetch } from '../../lib/api'
-import { listCertificates } from '../../lib/dashboardApi'
+import { listCertificates, renewCertificate } from '../../lib/dashboardApi'
 import CertificateCard from '../../components/dashboard/CertificateCard'
 import Button from '../../components/ui/Button'
 
@@ -34,6 +34,16 @@ export default function CertificatesList() {
     }
   }
 
+  async function renew(cert) {
+    setBusyId(cert.id)
+    try {
+      await renewCertificate(cert.id, accessToken)
+      load()
+    } finally {
+      setBusyId(null)
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div>
@@ -58,6 +68,11 @@ export default function CertificatesList() {
               <CertificateCard certificate={{ ...cert, course_title: cert.course_detail?.title }} />
               {canManage && (
                 <div className="flex justify-end gap-2 px-1">
+                  {cert.is_expired && (
+                    <Button size="sm" variant="secondary" disabled={busyId === cert.id} onClick={() => renew(cert)}>
+                      Renew
+                    </Button>
+                  )}
                   {cert.status === 'revoked' ? (
                     <Button size="sm" variant="secondary" disabled={busyId === cert.id} onClick={() => setStatus(cert, 'active')}>
                       Reactivate

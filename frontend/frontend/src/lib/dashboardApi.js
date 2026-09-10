@@ -45,6 +45,10 @@ export function issueCertificate(enrollmentId, token) {
   return apiFetch('/certificates/', { method: 'POST', body: { enrollment: enrollmentId }, token })
 }
 
+export function renewCertificate(id, token) {
+  return apiFetch(`/certificates/${id}/renew/`, { method: 'POST', token })
+}
+
 export function listPayments(token, params = {}) {
   return apiFetch(`/payments/?${new URLSearchParams(params)}`, { token })
 }
@@ -158,6 +162,10 @@ export function listExams(token, params = {}) {
   return apiFetch(`/exams/?${new URLSearchParams(params)}`, { token })
 }
 
+export function getExam(id, token) {
+  return apiFetch(`/exams/${id}/`, { token })
+}
+
 export function createExam(body, token) {
   return apiFetch('/exams/', { method: 'POST', body, token })
 }
@@ -168,4 +176,39 @@ export function updateExam(id, body, token) {
 
 export function deleteExam(id, token) {
   return apiFetch(`/exams/${id}/`, { method: 'DELETE', token })
+}
+
+export function getExamQuestions(examId, token) {
+  return apiFetch(`/exams/${examId}/questions/`, { token })
+}
+
+export function addExamQuestion(examId, body, token) {
+  return apiFetch(`/exams/${examId}/questions/`, { method: 'POST', body, token })
+}
+
+export function updateExamQuestion(id, body, token) {
+  return apiFetch(`/exams/questions/${id}/`, { method: 'PUT', body, token })
+}
+
+export function deleteExamQuestion(id, token) {
+  return apiFetch(`/exams/questions/${id}/`, { method: 'DELETE', token })
+}
+
+export function activateExam(id, token) {
+  return apiFetch(`/exams/${id}/activate/`, { method: 'POST', token })
+}
+
+// -- manual grading queue (essay/short-answer quiz & exam questions) --------
+
+export function listAttemptsNeedingGrading(kind, token) {
+  const prefix = kind === 'exam' ? '/exams/attempts/' : '/quizzes/attempts/'
+  return apiFetch(`${prefix}?status=submitted`, { token })
+}
+
+export function gradeQuizAnswer(attemptId, body, token) {
+  return apiFetch(`/quizzes/attempts/${attemptId}/grade-answer/`, { method: 'POST', body, token })
+}
+
+export function gradeExamAnswer(attemptId, body, token) {
+  return apiFetch(`/exams/attempts/${attemptId}/grade-answer/`, { method: 'POST', body, token })
 }

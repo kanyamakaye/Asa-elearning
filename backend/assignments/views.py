@@ -8,8 +8,8 @@ from accounts.permissions import CanManageAssessment
 from common.responses import StandardResponseMixin, success_response
 from notifications.services import notify_enrolled_students
 
-from .models import Assignment, AssignmentSubmission
-from .serializers import AssignmentSerializer, AssignmentSubmissionSerializer, GradeSubmissionSerializer
+from .models import Assignment, AssignmentSubmission, Rubric
+from .serializers import AssignmentSerializer, AssignmentSubmissionSerializer, GradeSubmissionSerializer, RubricSerializer
 
 
 class AssignmentViewSet(StandardResponseMixin, viewsets.ModelViewSet):
@@ -77,6 +77,18 @@ class AssignmentViewSet(StandardResponseMixin, viewsets.ModelViewSet):
         return success_response(AssignmentSubmissionSerializer(submission).data, 'Assignment submitted successfully.', 201)
 
 
+class RubricViewSet(StandardResponseMixin, viewsets.ModelViewSet):
+    queryset = Rubric.objects.prefetch_related('criteria').all()
+    serializer_class = RubricSerializer
+    permission_classes = [CanManageAssessment]
+    create_message = 'Rubric created successfully.'
+    update_message = 'Rubric updated successfully.'
+    delete_message = 'Rubric deleted successfully.'
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+
+
 class AssignmentSubmissionViewSet(viewsets.ModelViewSet):
     serializer_class = AssignmentSubmissionSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -116,6 +128,7 @@ class AssignmentSubmissionViewSet(viewsets.ModelViewSet):
 
         submission.marks_awarded = serializer.validated_data['marks_awarded']
         submission.feedback = serializer.validated_data.get('feedback', '')
+        submission.rubric_scores = serializer.validated_data.get('rubric_scores', {})
         submission.graded_by = request.user
         submission.graded_at = timezone.now()
         submission.status = AssignmentSubmission.Status.GRADED

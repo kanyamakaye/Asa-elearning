@@ -170,6 +170,33 @@ class CanManageCourseContent(BasePermission):
         return bool(course and course.instructor_id == user.id)
 
 
+class CanManageGroups(BasePermission):
+    """Student groups/classes: same role gate as CanScheduleLiveClass;
+    object-level ownership via ``instructor``. Read access is intentionally
+    NOT opened to everyone here — group membership is scoped per-role in
+    each view's get_queryset instead, since a student should only ever see
+    groups they belong to, not browse every cohort on the platform."""
+
+    MANAGER_ROLES = ('admin', 'academic_manager')
+    WRITE_ROLES = ('admin', 'academic_manager', 'instructor')
+
+    def has_permission(self, request, view):
+        user = request.user
+        if not (user and user.is_authenticated):
+            return False
+        if request.method in SAFE_METHODS:
+            return True
+        return bool(user.is_staff or user.user_type in self.WRITE_ROLES)
+
+    def has_object_permission(self, request, view, obj):
+        if request.method in SAFE_METHODS:
+            return True
+        user = request.user
+        if user.is_staff or user.user_type in self.MANAGER_ROLES:
+            return True
+        return getattr(obj, 'instructor_id', None) == user.id
+
+
 class CanScheduleLiveClass(BasePermission):
     """Live classes: same role gate; object-level ownership via ``instructor``."""
 

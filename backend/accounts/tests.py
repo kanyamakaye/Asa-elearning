@@ -380,3 +380,52 @@ class SecurityInvariantTests(TestCase):
         invitation, raw_token = generate_invitation(instructor, created_by=admin)
         self.assertNotEqual(invitation.token_hash, raw_token)
         self.assertNotIn(raw_token, invitation.token_hash)
+
+
+class ProfilePictureUrlTests(TestCase):
+    """A pasted profile_picture_url takes priority over any uploaded file in
+    every serializer that exposes `profile_picture` (UserSerializer for the
+    Profile page, InstructorPublicSerializer for the homepage instructors
+    list) — same pattern as Course.thumbnail_url."""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(
+            username='picuser', email='picuser@example.com', password=VALID_PASSWORD,
+        )
+
+    def test_me_endpoint_accepts_profile_picture_url(self):
+        self.client.force_authenticate(self.user)
+        response = self.client.patch(
+            '/api/v1/users/me/', {'profile_picture_url': 'https://example.com/me.jpg'}, format='json'
+        )
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertEqual(response.data['profile_picture_url'], 'https://example.com/me.jpg')
+        self.assertEqual(response.data['profile_picture'], 'https://example.com/me.jpg')
+
+    def test_invalid_profile_picture_url_rejected(self):
+        self.client.force_authenticate(self.user)
+        response = self.client.patch('/api/v1/users/me/', {'profile_picture_url': 'not-a-url'}, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('profile_picture_url', response.data)
+
+    def test_instructor_list_shows_pasted_url_as_profile_picture(self):
+        from .serializers import InstructorPublicSerializer
+
+        instructor = User.objects.create_user(
+            username='picinstructor', email='picinstructor@example.com', password=VALID_PASSWORD,
+            user_type='instructor', profile_picture_url='https://example.com/instructor.jpg',
+        )
+        # InstructorListView normally annotates these onto the queryset —
+        # stand in with plain attributes since this test serializes directly.
+        instructor.course_count = 0
+        instructor.student_count = 0
+        instructor.average_rating = None
+        data = InstructorPublicSerializer(instructor).data
+        self.assertEqual(data['profile_picture'], 'https://example.com/instructor.jpg')
+
+    def test_no_url_falls_back_to_null_profile_picture(self):
+        from .serializers import UserPublicSerializer
+
+        data = UserPublicSerializer(self.user).data
+        self.assertIsNone(data['profile_picture'])

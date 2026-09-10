@@ -71,9 +71,20 @@ class Course(models.Model):
     requirements = models.JSONField(default=list, blank=True)
     learning_objectives = models.JSONField(default=list, blank=True)
     enrollment_limit = models.PositiveIntegerField(null=True, blank=True)
+    prerequisite = models.ForeignKey(
+        'self', on_delete=models.SET_NULL, null=True, blank=True, related_name='unlocks',
+        help_text='A student must complete this course before they can enroll.',
+    )
+    sequential_progression = models.BooleanField(
+        default=False,
+        help_text='When enabled, a lesson stays locked until the previous one in the course is completed.',
+    )
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
     certificate_enabled = models.BooleanField(default=True)
+    certificate_validity_months = models.PositiveIntegerField(
+        null=True, blank=True, help_text='Months before an issued certificate expires. Leave blank for no expiry.',
+    )
     published_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

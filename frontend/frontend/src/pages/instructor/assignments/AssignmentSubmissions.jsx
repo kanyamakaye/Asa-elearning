@@ -12,11 +12,19 @@ import Textarea from '../../../components/ui/Textarea'
 
 const statusTone = { submitted: 'neutral', late: 'warning', graded: 'success', returned: 'brand', draft: 'neutral' }
 
-function GradeRow({ submission, maxMarks, onGraded }) {
+function GradeRow({ submission, maxMarks, rubric, onGraded }) {
   const [marks, setMarks] = useState(submission.marks_awarded ?? '')
   const [feedback, setFeedback] = useState(submission.feedback ?? '')
+  const [rubricScores, setRubricScores] = useState(submission.rubric_scores ?? {})
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+
+  function updateCriterionScore(criterionId, points, maxPoints) {
+    const clamped = Math.max(0, Math.min(Number(points) || 0, maxPoints))
+    const next = { ...rubricScores, [criterionId]: clamped }
+    setRubricScores(next)
+    setMarks(Object.values(next).reduce((sum, v) => sum + (Number(v) || 0), 0))
+  }
 
   async function submit() {
     if (marks === '' || Number(marks) < 0 || Number(marks) > maxMarks) {
@@ -26,7 +34,7 @@ function GradeRow({ submission, maxMarks, onGraded }) {
     setSaving(true)
     setError('')
     try {
-      const res = await gradeSubmission(submission.id, { marks_awarded: marks, feedback })
+      const res = await gradeSubmission(submission.id, { marks_awarded: marks, feedback, rubric_scores: rubricScores })
       onGraded(res.data)
     } catch (err) {
       setError(err.message)
@@ -56,10 +64,27 @@ function GradeRow({ submission, maxMarks, onGraded }) {
 
       {error && <Alert tone="error" className="mt-3">{error}</Alert>}
 
+      {rubric && (
+        <div className="mt-4 space-y-2 rounded-xl bg-navy-50/60 p-3.5">
+          <p className="text-xs font-semibold text-navy-700/60">{rubric.title} — score each criterion</p>
+          {rubric.criteria.map((c) => (
+            <div key={c.id} className="flex items-center gap-3">
+              <span className="min-w-0 flex-1 truncate text-sm text-navy-800">{c.title}</span>
+              <Input
+                type="number" min="0" max={c.max_points} className="w-20"
+                value={rubricScores[c.id] ?? ''}
+                onChange={(e) => updateCriterionScore(c.id, e.target.value, c.max_points)}
+              />
+              <span className="w-12 shrink-0 text-xs text-navy-700/45">/ {c.max_points}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="mt-4 grid gap-3 sm:grid-cols-[120px_1fr_auto] sm:items-end">
         <div>
           <span className="text-xs font-semibold text-navy-700/60">Score / {maxMarks}</span>
-          <Input type="number" min="0" max={maxMarks} className="mt-1.5" value={marks} onChange={(e) => setMarks(e.target.value)} />
+          <Input type="number" min="0" max={maxMarks} className="mt-1.5" value={marks} onChange={(e) => setMarks(e.target.value)} disabled={!!rubric} />
         </div>
         <div>
           <span className="text-xs font-semibold text-navy-700/60">Feedback</span>
@@ -113,7 +138,7 @@ export default function AssignmentSubmissions() {
       ) : (
         <div className="space-y-4">
           {submissions.map((s) => (
-            <GradeRow key={s.id} submission={s} maxMarks={assignment.maximum_marks} onGraded={handleGraded} />
+            <GradeRow key={s.id} submission={s} maxMarks={assignment.maximum_marks} rubric={assignment.rubric_detail} onGraded={handleGraded} />
           ))}
         </div>
       )}

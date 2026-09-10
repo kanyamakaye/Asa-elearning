@@ -137,3 +137,44 @@ class CourseCreationTests(APITestCase):
         response = self.client.get(f'/api/v1/courses/{course.slug}/')
         self.assertIsNone(response.data['image'])
         self.assertIsNone(response.data['thumbnail'])
+
+
+class CoursePrerequisiteTests(APITestCase):
+    def setUp(self):
+        self.category = CourseCategory.objects.create(name='Design')
+        self.instructor = User.objects.create_user(
+            username='preqcinstructor', email='preqcinstructor@test.com', password='Pass1234!', user_type='instructor'
+        )
+        self.course_a = Course.objects.create(
+            title='Design Basics', course_code='DES-101', instructor=self.instructor, duration_hours=10,
+        )
+        self.course_b = Course.objects.create(
+            title='Design Intermediate', course_code='DES-102', instructor=self.instructor,
+            prerequisite=self.course_a, duration_hours=10,
+        )
+
+    def test_course_cannot_be_its_own_prerequisite(self):
+        self.client.force_authenticate(self.instructor)
+        response = self.client.patch(
+            f'/api/v1/courses/{self.course_a.slug}/', {'prerequisite': self.course_a.id}, format='json'
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_two_course_prerequisite_cycle_rejected(self):
+        self.client.force_authenticate(self.instructor)
+        # B already requires A — making A require B would be a 2-cycle.
+        response = self.client.patch(
+            f'/api/v1/courses/{self.course_a.slug}/', {'prerequisite': self.course_b.id}, format='json'
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('prerequisite', response.data['errors'])
+
+    def test_valid_prerequisite_chain_allowed(self):
+        course_c = Course.objects.create(
+            title='Design Advanced', course_code='DES-103', instructor=self.instructor, duration_hours=10,
+        )
+        self.client.force_authenticate(self.instructor)
+        response = self.client.patch(
+            f'/api/v1/courses/{course_c.slug}/', {'prerequisite': self.course_b.id}, format='json'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)

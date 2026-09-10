@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { createExam, deleteExam, listExams, updateExam } from '../../lib/dashboardApi'
 import useCourseOptions from '../../hooks/useCourseOptions'
@@ -12,7 +13,7 @@ import Modal from '../../components/ui/Modal'
 import PageHeader from '../../components/ui/PageHeader'
 import Select from '../../components/ui/Select'
 import Textarea from '../../components/ui/Textarea'
-import { IconEdit, IconPlus, IconTrash } from '../../components/icons'
+import { IconClipboard, IconEdit, IconPlay, IconPlus, IconTrash } from '../../components/icons'
 
 const statusTone = { scheduled: 'brand', active: 'success', completed: 'neutral', cancelled: 'danger' }
 const MANAGER_ROLES = ['admin', 'academic_manager', 'instructor']
@@ -157,8 +158,16 @@ export default function ExamsList() {
   async function save(form) {
     setSaving(true)
     try {
-      if (modal.mode === 'create') await createExam(form, accessToken)
-      else await updateExam(modal.exam.id, form, accessToken)
+      // DRF's Date/TimeField reject an empty string outright (unlike a
+      // missing key) — these are all optional, so blank out to null instead.
+      const payload = {
+        ...form,
+        exam_date: form.exam_date || null,
+        start_time: form.start_time || null,
+        end_time: form.end_time || null,
+      }
+      if (modal.mode === 'create') await createExam(payload, accessToken)
+      else await updateExam(modal.exam.id, payload, accessToken)
       setModal(null)
       await load()
     } finally {
@@ -185,21 +194,33 @@ export default function ExamsList() {
           { key: 'title', label: 'Title', render: (e) => <span className="font-semibold text-navy-900">{e.title}</span> },
           { key: 'exam_date', label: 'Date', render: (e) => e.exam_date ? new Date(e.exam_date).toLocaleDateString() : '—' },
           { key: 'passing_marks', label: 'Passing', render: (e) => `${e.passing_marks}/${e.total_marks}` },
+          ...(canManage ? [{ key: 'question_count', label: 'Questions', render: (e) => e.question_count ?? 0 }] : []),
           { key: 'status', label: 'Status', render: (e) => <Badge tone={statusTone[e.status]}>{e.status}</Badge> },
-          ...(canManage ? [{
+          {
             key: 'actions',
             label: '',
             render: (e) => (
               <div className="flex items-center justify-end gap-2">
-                <button type="button" onClick={() => setModal({ mode: 'edit', exam: e })} className="rounded-lg p-1.5 text-navy-700/50 hover:bg-navy-50" aria-label="Edit exam">
-                  <IconEdit className="h-4 w-4" />
-                </button>
-                <button type="button" disabled={busyId === e.id} onClick={() => remove(e)} className="rounded-lg p-1.5 text-red-500 hover:bg-red-50" aria-label="Delete exam">
-                  <IconTrash className="h-4 w-4" />
-                </button>
+                {canManage ? (
+                  <>
+                    <Link to={`/dashboard/exams/${e.id}/questions`} className="rounded-lg p-1.5 text-navy-700/50 hover:bg-navy-50" aria-label="Manage questions">
+                      <IconClipboard className="h-4 w-4" />
+                    </Link>
+                    <button type="button" onClick={() => setModal({ mode: 'edit', exam: e })} className="rounded-lg p-1.5 text-navy-700/50 hover:bg-navy-50" aria-label="Edit exam">
+                      <IconEdit className="h-4 w-4" />
+                    </button>
+                    <button type="button" disabled={busyId === e.id} onClick={() => remove(e)} className="rounded-lg p-1.5 text-red-500 hover:bg-red-50" aria-label="Delete exam">
+                      <IconTrash className="h-4 w-4" />
+                    </button>
+                  </>
+                ) : e.status === 'active' ? (
+                  <Button as={Link} to={`/dashboard/exams/${e.id}/take`} size="sm">
+                    <IconPlay className="h-3.5 w-3.5" /> Take Exam
+                  </Button>
+                ) : null}
               </div>
             ),
-          }] : []),
+          },
         ]}
       />
 

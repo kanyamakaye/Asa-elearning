@@ -5,6 +5,10 @@ from .models import (
     BankQuestion,
     BankQuestionOption,
     Exam,
+    ExamAnswer,
+    ExamAttempt,
+    ExamQuestion,
+    ExamQuestionOption,
     Grade,
     QuestionBank,
     QuestionOption,
@@ -40,10 +44,32 @@ class QuizQuestionAdmin(admin.ModelAdmin):
     inlines = [QuestionOptionInline]
 
 
+class ExamQuestionOptionInline(admin.TabularInline):
+    model = ExamQuestionOption
+    extra = 2
+
+
+class ExamQuestionInline(admin.TabularInline):
+    model = ExamQuestion
+    extra = 0
+
+
 @admin.register(Exam)
 class ExamAdmin(admin.ModelAdmin):
     form = ExamForm
     list_display = ('title', 'course', 'exam_date', 'status')
+    inlines = [ExamQuestionInline]
+
+
+@admin.register(ExamQuestion)
+class ExamQuestionAdmin(admin.ModelAdmin):
+    list_display = ('exam', 'question_type', 'marks', 'order')
+    inlines = [ExamQuestionOptionInline]
+
+
+admin.site.register(ExamQuestionOption)
+admin.site.register(ExamAttempt)
+admin.site.register(ExamAnswer)
 
 
 @admin.register(Grade)

@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { createCourse, getCourse, getCategories, publishCourse, updateCourse } from '../../../services/courseService'
+import { createCourse, getCourse, getCourses, getCategories, publishCourse, updateCourse } from '../../../services/courseService'
 import useUnsavedChanges from '../../../hooks/useUnsavedChanges'
 import Alert from '../../../components/ui/Alert'
 import Badge from '../../../components/ui/Badge'
 import Breadcrumb from '../../../components/ui/Breadcrumb'
 import Button from '../../../components/ui/Button'
+import Checkbox from '../../../components/ui/Checkbox'
 import FileUpload from '../../../components/ui/FileUpload'
 import FormField from '../../../components/ui/FormField'
 import Input from '../../../components/ui/Input'
@@ -33,6 +34,9 @@ const INITIAL_FORM = {
   visibility: 'public',
   learning_objectives: [],
   requirements: [],
+  prerequisite: '',
+  sequential_progression: false,
+  certificate_validity_months: '',
 }
 
 function TagListEditor({ items, onChange, placeholder }) {
@@ -100,6 +104,9 @@ function toFormShape(course) {
     visibility: course.visibility,
     learning_objectives: course.learning_objectives ?? [],
     requirements: course.requirements ?? [],
+    prerequisite: course.prerequisite ?? '',
+    sequential_progression: course.sequential_progression ?? false,
+    certificate_validity_months: course.certificate_validity_months ?? '',
   }
 }
 
@@ -110,6 +117,7 @@ export default function CreateCourse() {
   const [step, setStep] = useState(0)
   const [form, setForm] = useState(INITIAL_FORM)
   const [categories, setCategories] = useState([])
+  const [allCourses, setAllCourses] = useState([])
   const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(false)
   const [initialLoading, setInitialLoading] = useState(isEdit)
@@ -122,6 +130,9 @@ export default function CreateCourse() {
   useEffect(() => {
     getCategories()
       .then((data) => setCategories(data.results ?? data))
+      .catch(() => {})
+    getCourses({ page_size: 200 })
+      .then((data) => setAllCourses(data.results ?? data))
       .catch(() => {})
   }, [])
 
@@ -193,6 +204,9 @@ export default function CreateCourse() {
         visibility: form.visibility,
         learning_objectives: form.learning_objectives,
         requirements: form.requirements,
+        prerequisite: form.prerequisite || null,
+        sequential_progression: form.sequential_progression,
+        certificate_validity_months: form.certificate_validity_months || null,
         thumbnail: form.thumbnail ?? undefined,
         thumbnail_url: form.thumbnail_url.trim(),
       }
@@ -352,6 +366,27 @@ export default function CreateCourse() {
                 <option value="private">Private</option>
               </Select>
             </FormField>
+            <div className="grid gap-5 sm:grid-cols-2">
+              <FormField label="Prerequisite Course" error={errors.prerequisite} hint="Students must complete this course first">
+                <Select value={form.prerequisite} onChange={(e) => update('prerequisite', e.target.value)} error={errors.prerequisite}>
+                  <option value="">None</option>
+                  {allCourses.filter((c) => c.slug !== slug).map((c) => (
+                    <option key={c.id} value={c.id}>{c.title}</option>
+                  ))}
+                </Select>
+              </FormField>
+              <FormField label="Certificate Validity (months)" hint="Leave blank for certificates that never expire">
+                <Input
+                  type="number" min="1" value={form.certificate_validity_months}
+                  onChange={(e) => update('certificate_validity_months', e.target.value)}
+                />
+              </FormField>
+            </div>
+            <Checkbox
+              label="Sequential progression — lock each lesson until the previous one is completed"
+              checked={form.sequential_progression}
+              onChange={(e) => update('sequential_progression', e.target.checked)}
+            />
           </div>
         )}
 

@@ -15,14 +15,16 @@ import {
   IconClock,
   IconClose,
   IconFileText,
+  IconLock,
   IconMenu,
   IconPlay,
   IconVideo,
 } from '../components/icons'
 
-// How long a lesson has to stay open before it auto-completes — long enough
-// that opening a lesson by accident doesn't instantly tick it off.
-const AUTO_COMPLETE_DELAY_MS = 8000
+// How close to the bottom of the lesson content (in px) counts as "finished
+// scrolling" — small enough to require actually reaching the end, but
+// forgiving of sub-pixel rounding and footer padding.
+const SCROLL_COMPLETE_THRESHOLD_PX = 48
 
 const LESSON_ICON = {
   video: IconVideo,
@@ -278,6 +280,9 @@ export default function Learn() {
   // is by the time its timer fires, instead of the stale value it closed over.
   const activeItemRef = useRef(activeItem)
   activeItemRef.current = activeItem
+  // The scrollable lesson-content pane — watched to auto-complete a lesson
+  // once the student scrolls to the end of it.
+  const mainRef = useRef(null)
 
   useEffect(() => {
     let cancelled = false
@@ -393,22 +398,37 @@ export default function Learn() {
   }
 
   // handleMarkComplete closes over quizzesByModule/lessons, which can still
-  // be loading when the timer below is *scheduled* — a ref keeps the timeout
-  // calling whatever the latest version is at the moment it actually fires,
-  // instead of a version frozen back when the lesson first became active.
+  // be loading when the scroll check below fires — a ref keeps it calling
+  // whatever the latest version is at that moment, instead of a version
+  // frozen back when the lesson first became active.
   const handleMarkCompleteRef = useRef(handleMarkComplete)
   handleMarkCompleteRef.current = handleMarkComplete
 
-  // Auto-complete a lesson once the student has had time to actually read or
-  // watch it, instead of requiring the "Mark as complete" click. Resets
-  // whenever the active lesson changes, or the moment it's already done
-  // (e.g. marked manually before the timer fires).
+  // Auto-complete a lesson once the student scrolls to the end of its
+  // content, instead of requiring the "Mark as complete" click. Also fires
+  // once, shortly after the lesson loads, for content short enough to
+  // already fit on screen with nothing to scroll. Resets whenever the
+  // active lesson changes, or the moment it's already done (e.g. marked
+  // manually before the student finishes scrolling).
   useEffect(() => {
-    if (!activeLesson || isActiveDone) return
-    const timer = setTimeout(() => {
-      handleMarkCompleteRef.current()
-    }, AUTO_COMPLETE_DELAY_MS)
-    return () => clearTimeout(timer)
+    const el = mainRef.current
+    if (!el || !activeLesson || activeLesson.locked || isActiveDone) return
+    el.scrollTop = 0
+
+    function checkIfAtBottom() {
+      if (el.scrollHeight - el.scrollTop - el.clientHeight <= SCROLL_COMPLETE_THRESHOLD_PX) {
+        handleMarkCompleteRef.current()
+      }
+    }
+
+    el.addEventListener('scroll', checkIfAtBottom)
+    // A short delay lets the lesson's own layout (images, embeds) settle
+    // before judging whether it needs scrolling at all.
+    const initialCheck = setTimeout(checkIfAtBottom, 400)
+    return () => {
+      el.removeEventListener('scroll', checkIfAtBottom)
+      clearTimeout(initialCheck)
+    }
   }, [activeLesson?.id, isActiveDone])
 
   function toggleModule(moduleId) {
@@ -534,12 +554,17 @@ export default function Learn() {
                         <li key={lesson.id}>
                           <button
                             type="button"
+                            disabled={lesson.locked}
                             onClick={() => goToItem('lesson', lesson.id)}
                             className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm transition-colors ${
-                              active ? 'bg-brand-50 text-brand-700' : 'text-navy-800 hover:bg-navy-50'
+                              lesson.locked
+                                ? 'cursor-not-allowed text-navy-700/35'
+                                : active ? 'bg-brand-50 text-brand-700' : 'text-navy-800 hover:bg-navy-50'
                             }`}
                           >
-                            {done ? (
+                            {lesson.locked ? (
+                              <IconLock className="h-4 w-4 shrink-0 text-navy-700/30" />
+                            ) : done ? (
                               <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white">
                                 <IconCheck className="h-3 w-3" />
                               </span>
@@ -548,7 +573,7 @@ export default function Learn() {
                             )}
                             <span className="min-w-0 flex-1 truncate font-medium">{lesson.title}</span>
                             <span className="shrink-0 text-[11px] text-navy-700/40">
-                              {lesson.sections?.length > 0 ? `${lesson.sections.length} pages` : `${lesson.duration_minutes || 0}m`}
+                              {lesson.locked ? '' : lesson.sections?.length > 0 ? `${lesson.sections.length} pages` : `${lesson.duration_minutes || 0}m`}
                             </span>
                           </button>
                         </li>
@@ -621,7 +646,7 @@ export default function Learn() {
         )}
 
         {/* Main content */}
-        <main className="min-w-0 flex-1 overflow-y-auto">
+        <main ref={mainRef} className="min-w-0 flex-1 overflow-y-auto">
           <div className="mx-auto max-w-3xl px-6 py-10">
             {showCompletion ? (
               <div className="flex flex-col items-center gap-4 rounded-3xl bg-white p-10 text-center ring-1 ring-navy-900/8">
@@ -673,6 +698,16 @@ export default function Learn() {
               </div>
             ) : activeQuiz ? (
               <QuizPlayer quiz={activeQuiz} accessToken={accessToken} />
+            ) : activeLesson?.locked ? (
+              <div className="flex flex-col items-center gap-3 rounded-3xl bg-white p-10 text-center ring-1 ring-navy-900/8">
+                <span className="flex h-14 w-14 items-center justify-center rounded-full bg-navy-50 text-navy-700/40">
+                  <IconLock className="h-6 w-6" />
+                </span>
+                <div>
+                  <h1 className="text-lg font-bold text-navy-900">This lesson is locked</h1>
+                  <p className="mt-1 text-sm text-navy-700/60">Complete the previous lesson to unlock "{activeLesson.title}".</p>
+                </div>
+              </div>
             ) : activeLesson ? (
               <>
                 <LessonContent lesson={activeLesson} />
@@ -681,6 +716,7 @@ export default function Learn() {
                   <div className="inline-flex items-center gap-1.5 text-xs text-navy-700/50">
                     <IconClock className="h-3.5 w-3.5" />
                     Lesson {activeIndex + 1} of {lessons.length}
+                    {!isActiveDone && <span className="hidden sm:inline">· scroll to the end to auto-complete</span>}
                   </div>
                   <div className="flex items-center gap-2">
                     <button

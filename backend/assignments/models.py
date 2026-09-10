@@ -2,6 +2,40 @@ from django.conf import settings
 from django.db import models
 
 
+class Rubric(models.Model):
+    """A reusable scoring guide — attach to an Assignment so grading breaks
+    a submission's mark down into weighted criteria instead of one opaque
+    number."""
+
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='rubrics_created'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return self.title
+
+
+class RubricCriterion(models.Model):
+    rubric = models.ForeignKey(Rubric, on_delete=models.CASCADE, related_name='criteria')
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    max_points = models.PositiveIntegerField(default=10)
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ['order', 'id']
+
+    def __str__(self):
+        return self.title
+
+
 class Assignment(models.Model):
     class Status(models.TextChoices):
         DRAFT = 'draft', 'Draft'
@@ -32,6 +66,7 @@ class Assignment(models.Model):
     allow_late_submission = models.BooleanField(default=False)
     late_penalty = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, help_text='Percentage deducted per late submission.')
     attachment = models.FileField(upload_to='assignments/', blank=True, null=True)
+    rubric = models.ForeignKey(Rubric, on_delete=models.SET_NULL, null=True, blank=True, related_name='assignments')
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.DRAFT)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='assignments_created'
@@ -59,6 +94,10 @@ class AssignmentSubmission(models.Model):
     submitted_at = models.DateTimeField(auto_now_add=True)
     is_late = models.BooleanField(default=False)
     marks_awarded = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+    # {criterion_id: points_awarded} — populated when the assignment has a
+    # rubric attached; marks_awarded is then the sum of these rather than a
+    # single manually-typed number.
+    rubric_scores = models.JSONField(default=dict, blank=True)
     feedback = models.TextField(blank=True)
     graded_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='graded_submissions'

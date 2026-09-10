@@ -32,6 +32,9 @@ class User(AbstractUser):
     middle_name = models.CharField(max_length=150, blank=True)
     phone_number = models.CharField(max_length=20, blank=True)
     profile_picture = models.ImageField(upload_to='profile_pictures/', blank=True, null=True)
+    profile_picture_url = models.URLField(
+        blank=True, help_text='External image URL — takes priority over an uploaded profile picture file when set.'
+    )
     gender = models.CharField(max_length=20, choices=Gender.choices, blank=True)
     date_of_birth = models.DateField(null=True, blank=True)
     address = models.CharField(max_length=255, blank=True)

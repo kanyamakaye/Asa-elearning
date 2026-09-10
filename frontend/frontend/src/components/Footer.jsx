@@ -1,6 +1,7 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import logo from '../assets/logo.png'
-import { IconArrowRight, IconPhone } from './icons'
+import { IconArrowRight, IconCheck, IconMail, IconMapPin, IconPhone } from './icons'
 
 const columns = [
   {
@@ -10,6 +11,7 @@ const columns = [
       { label: 'Courses', to: '/#courses' },
       { label: 'Instructors', to: '/#instructors' },
       { label: 'About Us', to: '/#about' },
+      { label: 'Pricing', to: '/#pricing' },
     ],
   },
   {
@@ -19,17 +21,26 @@ const columns = [
       { label: 'Software Development', to: '/#courses' },
       { label: 'Data Science', to: '/#courses' },
       { label: 'Business', to: '/#courses' },
+      { label: 'View all courses', to: '/#courses', emphasis: true },
     ],
   },
   {
-    title: 'Support',
+    title: 'Company',
     links: [
       { label: 'Contact Us', to: '/contact' },
       { label: 'FAQ', to: '/#faq' },
       { label: 'Support Center', to: '/contact' },
-      { label: 'Privacy Policy', to: '#' },
+      { label: 'Privacy Policy', to: '/contact' },
     ],
   },
+]
+
+// Same canonical contact details as the Contact page — keep them in one
+// place if those ever change.
+const contactDetails = [
+  { icon: IconMail, label: 'support@asaacademy.com', href: 'mailto:support@asaacademy.com' },
+  { icon: IconPhone, label: '+254 700 123 456', href: 'tel:+254700123456' },
+  { icon: IconMapPin, label: 'Westlands Business Park, Nairobi', href: '/contact' },
 ]
 
 const socials = [
@@ -39,13 +50,27 @@ const socials = [
 ]
 
 export default function Footer() {
+  const [email, setEmail] = useState('')
+  const [subscribed, setSubscribed] = useState(false)
+
+  function handleSubscribe(e) {
+    e.preventDefault()
+    if (!email.trim()) return
+    // No newsletter backend exists yet — this just gives the visitor honest
+    // local confirmation instead of a silent no-op submit.
+    setSubscribed(true)
+    setEmail('')
+  }
+
   return (
     <footer className="bg-navy-950 pt-20 text-navy-100/70">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="grid gap-12 pb-16 lg:grid-cols-[1.3fr_1fr_1fr_1fr]">
           <div>
             <Link to="/" className="flex items-center gap-2.5">
-              <img src={logo} alt="Asa Academy" className="h-10 w-10 object-contain" />
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white p-1.5 shadow-sm">
+                <img src={logo} alt="Asa Academy" className="h-full w-full object-contain" />
+              </span>
               <span className="font-display text-lg font-bold text-white">Asa Academy</span>
             </Link>
             <p className="mt-4 max-w-xs text-sm leading-relaxed">
@@ -53,6 +78,23 @@ export default function Footer() {
               assessments, and certification &mdash; built for students,
               instructors, and administrators.
             </p>
+
+            <ul className="mt-6 space-y-2.5">
+              {contactDetails.map(({ icon: Icon, label, href }) => (
+                <li key={label}>
+                  <a
+                    href={href}
+                    className="inline-flex items-center gap-2.5 text-sm transition-colors hover:text-white"
+                  >
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/5 ring-1 ring-white/10">
+                      <Icon className="h-3.5 w-3.5" />
+                    </span>
+                    {label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+
             <div className="mt-6 flex gap-3">
               {socials.map((s) => (
                 <a
@@ -67,29 +109,6 @@ export default function Footer() {
                 </a>
               ))}
             </div>
-
-            <div className="mt-6 flex flex-wrap gap-2.5">
-              <a
-                href="#"
-                className="flex items-center gap-2 rounded-xl bg-white/5 px-3.5 py-2 text-xs ring-1 ring-white/10 transition-colors hover:bg-white/10"
-              >
-                <IconPhone className="h-4 w-4" />
-                <span>
-                  <span className="block text-[9px] text-navy-100/50">Download on the</span>
-                  <span className="block font-semibold text-white">App Store</span>
-                </span>
-              </a>
-              <a
-                href="#"
-                className="flex items-center gap-2 rounded-xl bg-white/5 px-3.5 py-2 text-xs ring-1 ring-white/10 transition-colors hover:bg-white/10"
-              >
-                <IconPhone className="h-4 w-4" />
-                <span>
-                  <span className="block text-[9px] text-navy-100/50">Get it on</span>
-                  <span className="block font-semibold text-white">Google Play</span>
-                </span>
-              </a>
-            </div>
           </div>
 
           {columns.map((col) => (
@@ -100,7 +119,9 @@ export default function Footer() {
                   <li key={link.label}>
                     <Link
                       to={link.to}
-                      className="text-sm transition-colors hover:text-white"
+                      className={`text-sm transition-colors hover:text-white ${
+                        link.emphasis ? 'font-semibold text-brand-400' : ''
+                      }`}
                     >
                       {link.label}
                     </Link>
@@ -112,27 +133,38 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-white/10 py-8">
-          <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
+          <div className="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
             <p className="text-xs">
               &copy; {new Date().getFullYear()} Asa Academy. All rights reserved.
             </p>
-            <form
-              className="flex w-full max-w-sm items-center gap-2 sm:w-auto"
-              onSubmit={(e) => e.preventDefault()}
-            >
-              <input
-                type="email"
-                required
-                placeholder="Your email"
-                className="w-full rounded-full bg-white/5 px-4 py-2 text-sm text-white placeholder:text-navy-100/40 ring-1 ring-white/10 focus:outline-none focus:ring-brand-400"
-              />
-              <button
-                type="submit"
-                aria-label="Subscribe"
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-500 text-white transition-colors hover:bg-brand-400"
-              >
-                <IconArrowRight className="h-4 w-4" />
-              </button>
+
+            <form onSubmit={handleSubscribe} className="w-full max-w-sm sm:w-auto">
+              {subscribed ? (
+                <p className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-400">
+                  <IconCheck className="h-4 w-4" /> Thanks — you&apos;re on the list.
+                </p>
+              ) : (
+                <>
+                  <p className="text-xs font-semibold text-white">Stay in the loop</p>
+                  <div className="mt-2 flex w-full items-center gap-2 sm:w-72">
+                    <input
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Your email"
+                      className="w-full rounded-full bg-white/5 px-4 py-2 text-sm text-white placeholder:text-navy-100/40 ring-1 ring-white/10 focus:outline-none focus:ring-brand-400"
+                    />
+                    <button
+                      type="submit"
+                      aria-label="Subscribe"
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-500 text-white transition-colors hover:bg-brand-400"
+                    >
+                      <IconArrowRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                </>
+              )}
             </form>
           </div>
         </div>

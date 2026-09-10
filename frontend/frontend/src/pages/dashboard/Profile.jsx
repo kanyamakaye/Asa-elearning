@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { apiFetch } from '../../lib/api'
+import { getMyBadges } from '../../services/badgeService'
 import { ROLE_LABELS } from '../../components/dashboard/navConfig'
 import Alert from '../../components/ui/Alert'
 import Badge from '../../components/ui/Badge'
@@ -10,7 +11,7 @@ import Input from '../../components/ui/Input'
 import LoadingSpinner from '../../components/ui/LoadingSpinner'
 import Textarea from '../../components/ui/Textarea'
 
-const ACCOUNT_FIELDS = ['first_name', 'last_name', 'phone_number', 'country', 'city', 'address']
+const ACCOUNT_FIELDS = ['first_name', 'last_name', 'phone_number', 'country', 'city', 'address', 'profile_picture_url']
 
 const ROLE_PROFILE_ENDPOINT = {
   student: '/users/me/student-profile/',
@@ -48,6 +49,7 @@ export default function Profile() {
   const [accountMessage, setAccountMessage] = useState('')
   const [roleMessage, setRoleMessage] = useState('')
   const [error, setError] = useState('')
+  const [badges, setBadges] = useState([])
 
   const roleEndpoint = ROLE_PROFILE_ENDPOINT[user?.user_type]
 
@@ -60,6 +62,11 @@ export default function Profile() {
       })
       .catch(() => {})
   }, [accessToken])
+
+  useEffect(() => {
+    if (user?.user_type !== 'student') return
+    getMyBadges().then((data) => setBadges(data.results ?? data)).catch(() => {})
+  }, [user?.user_type])
 
   useEffect(() => {
     if (!roleEndpoint) return
@@ -124,9 +131,48 @@ export default function Profile() {
 
       {error && <Alert tone="error">{error}</Alert>}
 
+      {user?.user_type === 'student' && badges.length > 0 && (
+        <div className="rounded-2xl bg-white p-6 ring-1 ring-navy-900/8">
+          <h2 className="text-sm font-bold text-navy-900">My Badges</h2>
+          <div className="mt-4 flex flex-wrap gap-3">
+            {badges.map((b) => (
+              <div key={b.id} className="flex w-32 flex-col items-center gap-1.5 rounded-xl bg-navy-50/60 p-3 text-center" title={b.badge.description}>
+                <span className="text-3xl">{b.badge.icon}</span>
+                <span className="text-xs font-semibold text-navy-900">{b.badge.name}</span>
+                <span className="text-[10px] text-navy-700/45">{new Date(b.awarded_at).toLocaleDateString()}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <form onSubmit={handleAccountSubmit} className="space-y-5 rounded-2xl bg-white p-6 ring-1 ring-navy-900/8">
         <h2 className="text-sm font-bold text-navy-900">Account Information</h2>
         {accountMessage && <Alert tone="success">{accountMessage}</Alert>}
+
+        <div className="flex items-center gap-4">
+          {account.profile_picture_url ? (
+            <img
+              src={account.profile_picture_url}
+              alt="Profile preview"
+              className="h-16 w-16 shrink-0 rounded-full object-cover ring-1 ring-navy-900/8"
+              onError={(e) => { e.currentTarget.style.visibility = 'hidden' }}
+              onLoad={(e) => { e.currentTarget.style.visibility = 'visible' }}
+            />
+          ) : (
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-navy-900 text-xl font-bold text-white">
+              {account.first_name?.[0] ?? user?.email?.[0]?.toUpperCase() ?? '?'}
+            </div>
+          )}
+          <FormField label="Profile Picture URL" hint="Paste a link to an image — no file upload needed." className="flex-1">
+            <Input
+              type="url"
+              value={account.profile_picture_url}
+              onChange={updateAccount('profile_picture_url')}
+              placeholder="https://example.com/me.jpg"
+            />
+          </FormField>
+        </div>
 
         <div className="grid grid-cols-2 gap-4">
           <Field label="First name" value={account.first_name} onChange={updateAccount('first_name')} />

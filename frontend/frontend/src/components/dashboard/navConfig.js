@@ -40,7 +40,10 @@ export const NAV_BY_ROLE = {
         { label: 'Modules & Lessons', to: '/dashboard/courses', icon: IconClipboard },
       ],
     },
-    { items: [{ label: 'Enrollments', to: '/dashboard/enrollments', icon: IconClipboard }] },
+    { items: [
+      { label: 'Enrollments', to: '/dashboard/enrollments', icon: IconClipboard },
+      { label: 'Groups', to: '/dashboard/groups', icon: IconUsers },
+    ] },
     {
       title: 'Assessments',
       items: [
@@ -50,6 +53,8 @@ export const NAV_BY_ROLE = {
         { label: 'Assignments', to: '/dashboard/assignments', icon: IconFileText },
         { label: 'Create Assignment', to: '/dashboard/assignments/create', icon: IconFileText },
         { label: 'Exams', to: '/dashboard/exams', icon: IconFileText },
+        { label: 'Rubrics', to: '/dashboard/rubrics', icon: IconFileText },
+        { label: 'Grading Queue', to: '/dashboard/grading', icon: IconFileText },
       ],
     },
     { items: [{ label: 'Certificates', to: '/dashboard/certificates', icon: IconAward }] },
@@ -99,6 +104,7 @@ export const NAV_BY_ROLE = {
       items: [
         { label: 'Courses', to: '/dashboard/courses', icon: IconBook },
         { label: 'Enrollments', to: '/dashboard/enrollments', icon: IconClipboard },
+        { label: 'Groups', to: '/dashboard/groups', icon: IconUsers },
         { label: 'Students', to: '/dashboard/users?role=student', icon: IconUsers },
         { label: 'Instructors', to: '/dashboard/users?role=instructor', icon: IconUsers },
         { label: 'Certificates', to: '/dashboard/certificates', icon: IconAward },
@@ -111,6 +117,8 @@ export const NAV_BY_ROLE = {
         { label: 'Question Banks', to: '/dashboard/question-banks', icon: IconFileText },
         { label: 'Assignments', to: '/dashboard/assignments', icon: IconFileText },
         { label: 'Exams', to: '/dashboard/exams', icon: IconFileText },
+        { label: 'Rubrics', to: '/dashboard/rubrics', icon: IconFileText },
+        { label: 'Grading Queue', to: '/dashboard/grading', icon: IconFileText },
       ],
     },
     { items: [{ label: 'Live Classes', to: '/dashboard/live-classes', icon: IconTrendingUp }] },
@@ -134,12 +142,15 @@ export const NAV_BY_ROLE = {
         { label: 'Question Banks', to: '/dashboard/question-banks', icon: IconFileText },
         { label: 'Assignments', to: '/dashboard/assignments', icon: IconFileText },
         { label: 'Exams & Grades', to: '/dashboard/exams', icon: IconFileText },
+        { label: 'Rubrics', to: '/dashboard/rubrics', icon: IconFileText },
+        { label: 'Grading Queue', to: '/dashboard/grading', icon: IconFileText },
       ],
     },
     {
       title: 'Students',
       items: [
         { label: 'Enrolled Students', to: '/dashboard/enrollments', icon: IconUsers },
+        { label: 'Groups', to: '/dashboard/groups', icon: IconUsers },
       ],
     },
     {

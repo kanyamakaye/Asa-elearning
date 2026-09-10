@@ -343,6 +343,12 @@ export default function CourseDetail() {
               </div>
             )}
 
+            {course.prerequisite_title && (
+              <div className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                Requires completing <span className="font-semibold">{course.prerequisite_title}</span> first.
+              </div>
+            )}
+
             {course.units?.length > 0 && (
               <div>
                 <div className="flex flex-wrap items-baseline justify-between gap-2">

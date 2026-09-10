@@ -4,12 +4,14 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 
+from certificates.expiry import compute_expiry
 from certificates.models import Certificate
 from certificates.rendering import generate_certificate_file
 from enrollments.models import Enrollment
 from enrollments.serializers import EnrollmentSerializer
 from lessons.models import Lesson
 
+from . import badges
 from .models import LessonProgress
 from .serializers import LessonProgressSerializer
 
@@ -39,10 +41,12 @@ def _sync_enrollment_progress(student, course):
         enrollment.completion_percentage = percentage
         update_fields.append('completion_percentage')
 
+    just_completed = False
     if total and completed >= total and enrollment.status != Enrollment.Status.COMPLETED:
         enrollment.status = Enrollment.Status.COMPLETED
         enrollment.completed_at = timezone.now()
         update_fields += ['status', 'completed_at']
+        just_completed = True
 
     if (
         course.certificate_enabled
@@ -51,16 +55,20 @@ def _sync_enrollment_progress(student, course):
         and percentage >= CERTIFICATE_THRESHOLD_PERCENT
     ):
         certificate, issued = Certificate.objects.get_or_create(
-            student=student, course=course, defaults={'enrollment': enrollment},
+            student=student, course=course,
+            defaults={'enrollment': enrollment, 'expires_at': compute_expiry(course, timezone.localdate())},
         )
         if issued:
             generate_certificate_file(certificate)
             certificate.save(update_fields=['certificate_file'])
+            badges.check_certificate_badge(student, course)
         enrollment.certificate_issued = True
         update_fields.append('certificate_issued')
 
     if update_fields:
         enrollment.save(update_fields=update_fields)
+    if just_completed:
+        badges.check_completion_badges(student, course)
     return EnrollmentSerializer(enrollment).data
 
 

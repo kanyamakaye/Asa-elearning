@@ -1,9 +1,27 @@
 import { useEffect, useMemo, useState } from 'react'
-import { answerQuizQuestion, getMyQuizAttempts, getQuiz, startQuizAttempt, submitQuizAttempt } from '../lib/queries'
+import {
+  answerExamQuestion, answerQuizQuestion, getExam, getMyExamAttempts, getMyQuizAttempts, getQuiz,
+  startExamAttempt, startQuizAttempt, submitExamAttempt, submitQuizAttempt,
+} from '../lib/queries'
 import LoadingSpinner from './ui/LoadingSpinner'
 import { IconAward, IconCheck, IconClipboard, IconClock, IconClose, IconRefresh } from './icons'
 
 const GRADED_TYPES = new Set(['multiple_choice', 'multiple_select', 'true_false'])
+
+// Exam attempts are structurally identical to quiz attempts (same
+// question/option/answer shape, same auto-grade rules) — the /exams/
+// endpoints just mirror /quizzes/ one-for-one, so this component drives
+// both instead of duplicating ~300 lines for an ExamPlayer.
+const API_BY_KIND = {
+  quiz: {
+    getDetail: getQuiz, getAttempts: getMyQuizAttempts, start: startQuizAttempt,
+    answer: answerQuizQuestion, submit: submitQuizAttempt,
+  },
+  exam: {
+    getDetail: getExam, getAttempts: getMyExamAttempts, start: startExamAttempt,
+    answer: answerExamQuestion, submit: submitExamAttempt,
+  },
+}
 
 function OptionInput({ question, options, value, onChange, disabled }) {
   return (
@@ -32,7 +50,9 @@ function OptionInput({ question, options, value, onChange, disabled }) {
   )
 }
 
-export default function QuizPlayer({ quiz, accessToken }) {
+export default function QuizPlayer({ quiz, accessToken, kind = 'quiz' }) {
+  const api = API_BY_KIND[kind]
+  const label = kind === 'exam' ? 'Exam' : 'Quiz'
   const [quizDetail, setQuizDetail] = useState(null)
   const [attempts, setAttempts] = useState([])
   const [currentAttempt, setCurrentAttempt] = useState(null)
@@ -45,7 +65,7 @@ export default function QuizPlayer({ quiz, accessToken }) {
     let cancelled = false
     setLoading(true)
     setError('')
-    Promise.all([getQuiz(quiz.id, accessToken), getMyQuizAttempts(quiz.id, accessToken)])
+    Promise.all([api.getDetail(quiz.id, accessToken), api.getAttempts(quiz.id, accessToken)])
       .then(([detail, attemptsData]) => {
         if (cancelled) return
         setQuizDetail(detail)
@@ -69,7 +89,7 @@ export default function QuizPlayer({ quiz, accessToken }) {
     return () => {
       cancelled = true
     }
-  }, [quiz.id, accessToken])
+  }, [quiz.id, accessToken, kind]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const attemptsUsed = attempts.length
   const attemptsRemaining = Math.max(0, quiz.attempt_limit - attemptsUsed)
@@ -87,7 +107,7 @@ export default function QuizPlayer({ quiz, accessToken }) {
     setBusy(true)
     setError('')
     try {
-      const attempt = await startQuizAttempt(quiz.id, accessToken)
+      const attempt = await api.start(quiz.id, accessToken)
       setCurrentAttempt(attempt)
       setAttempts((prev) => [attempt, ...prev])
       setAnswers({})
@@ -101,7 +121,7 @@ export default function QuizPlayer({ quiz, accessToken }) {
   async function handleSelectOption(questionId, optionId) {
     setAnswers((prev) => ({ ...prev, [questionId]: { ...prev[questionId], selected_option: optionId } }))
     try {
-      await answerQuizQuestion(currentAttempt.id, { question: questionId, selected_option: optionId }, accessToken)
+      await api.answer(currentAttempt.id, { question: questionId, selected_option: optionId }, accessToken)
     } catch {
       // Non-fatal — the selection stays visible locally; submit() below still
       // sends the final answer set and will surface any real failure then.
@@ -110,7 +130,7 @@ export default function QuizPlayer({ quiz, accessToken }) {
 
   async function handleTextAnswer(questionId, text) {
     try {
-      await answerQuizQuestion(currentAttempt.id, { question: questionId, answer_text: text }, accessToken)
+      await api.answer(currentAttempt.id, { question: questionId, answer_text: text }, accessToken)
     } catch {
       // See handleSelectOption — kept non-fatal for the same reason.
     }
@@ -120,7 +140,7 @@ export default function QuizPlayer({ quiz, accessToken }) {
     setBusy(true)
     setError('')
     try {
-      const result = await submitQuizAttempt(currentAttempt.id, accessToken)
+      const result = await api.submit(currentAttempt.id, accessToken)
       setCurrentAttempt(result)
       setAttempts((prev) => [result, ...prev.filter((a) => a.id !== result.id)])
     } catch (err) {
@@ -175,7 +195,7 @@ export default function QuizPlayer({ quiz, accessToken }) {
             disabled={busy || attemptsRemaining <= 0}
             className="inline-flex items-center gap-2 rounded-full bg-navy-900 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-500 disabled:opacity-50"
           >
-            {busy ? 'Starting…' : attemptsRemaining <= 0 ? 'No attempts remaining' : 'Start Quiz'}
+            {busy ? 'Starting…' : attemptsRemaining <= 0 ? 'No attempts remaining' : `Start ${label}`}
           </button>
         </div>
       )}
@@ -220,7 +240,7 @@ export default function QuizPlayer({ quiz, accessToken }) {
             disabled={busy}
             className="inline-flex items-center gap-2 rounded-full bg-navy-900 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-500 disabled:opacity-60"
           >
-            {busy ? 'Submitting…' : 'Submit Quiz'}
+            {busy ? 'Submitting…' : `Submit ${label}`}
           </button>
         </div>
       )}
@@ -314,7 +334,7 @@ export default function QuizPlayer({ quiz, accessToken }) {
               className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold text-navy-900 ring-1 ring-navy-900/15 transition-colors hover:bg-navy-50"
             >
               <IconRefresh className="h-4 w-4" />
-              Retake Quiz ({attemptsRemaining} attempt{attemptsRemaining === 1 ? '' : 's'} left)
+              Retake {label} ({attemptsRemaining} attempt{attemptsRemaining === 1 ? '' : 's'} left)
             </button>
           ) : (
             <p className="text-xs font-semibold text-navy-700/45">You've used all your attempts for this quiz.</p>

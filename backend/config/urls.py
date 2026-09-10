@@ -45,6 +45,7 @@ urlpatterns = [
     path('api/v1/reviews/', include('reviews.urls')),
     path('api/v1/support/', include('support.urls')),
     path('api/v1/dashboard/', include('reports.urls')),
+    path('api/v1/groups/', include('groups.urls')),
 ]
 
 if settings.DEBUG:

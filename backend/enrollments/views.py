@@ -42,6 +42,12 @@ class EnrollmentViewSet(viewsets.ModelViewSet):
             raise ValidationError({'course': 'You are already enrolled in this course.'})
         if course.enrollment_limit and course.enrollments.count() >= course.enrollment_limit:
             raise ValidationError({'course': 'This course has reached its enrollment limit.'})
+        if course.prerequisite_id and not Enrollment.objects.filter(
+            student=request.user, course_id=course.prerequisite_id, status=Enrollment.Status.COMPLETED,
+        ).exists():
+            raise ValidationError({
+                'course': f'You must complete "{course.prerequisite.title}" before enrolling in this course.',
+            })
 
         enrollment = Enrollment.objects.create(student=request.user, course=course)
         return Response(EnrollmentSerializer(enrollment).data, status=status.HTTP_201_CREATED)

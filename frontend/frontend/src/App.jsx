@@ -36,9 +36,11 @@ import UsersList from './pages/dashboard/UsersList'
 
 import CreateCourse from './pages/instructor/courses/CreateCourse'
 import ManageContent from './pages/instructor/courses/ManageContent'
+import SubmoduleEditor from './pages/instructor/courses/SubmoduleEditor'
 import CreateQuiz from './pages/instructor/quizzes/CreateQuiz'
 import QuestionBanksList from './pages/instructor/quizzes/QuestionBanksList'
 import QuestionBankDetail from './pages/instructor/quizzes/QuestionBankDetail'
+import BankQuestionEditor from './pages/instructor/quizzes/BankQuestionEditor'
 import CreateAssignment from './pages/instructor/assignments/CreateAssignment'
 import AssignmentSubmissions from './pages/instructor/assignments/AssignmentSubmissions'
 import ScheduleLiveClass from './pages/instructor/live-classes/ScheduleLiveClass'
@@ -52,6 +54,12 @@ import DiscussionsList from './pages/dashboard/DiscussionsList'
 import RefundsList from './pages/dashboard/RefundsList'
 import AuditLogsList from './pages/dashboard/AuditLogsList'
 import ExamsList from './pages/dashboard/ExamsList'
+import GradingQueue from './pages/instructor/GradingQueue'
+import GroupsList from './pages/dashboard/GroupsList'
+import GroupDetail from './pages/dashboard/GroupDetail'
+import RubricsList from './pages/dashboard/RubricsList'
+import ManageExamQuestions from './pages/dashboard/ManageExamQuestions'
+import TakeExam from './pages/dashboard/TakeExam'
 
 const MANAGER_ROLES = ['admin', 'academic_manager', 'instructor']
 // Content Managers manage modules/lessons on any course, but don't create
@@ -112,6 +120,14 @@ function App() {
             path="courses/:slug/content"
             element={<RequireRole roles={CONTENT_ROLES}><ManageContent /></RequireRole>}
           />
+          <Route
+            path="courses/:slug/content/modules/:moduleId/submodules/new"
+            element={<RequireRole roles={CONTENT_ROLES}><SubmoduleEditor /></RequireRole>}
+          />
+          <Route
+            path="courses/:slug/content/modules/:moduleId/submodules/:lessonId/edit"
+            element={<RequireRole roles={CONTENT_ROLES}><SubmoduleEditor /></RequireRole>}
+          />
 
           <Route path="quizzes" element={<RequireRole roles={MANAGER_ROLES}><QuizzesList /></RequireRole>} />
           <Route
@@ -127,6 +143,14 @@ function App() {
           <Route
             path="question-banks/:id"
             element={<RequireRole roles={MANAGER_ROLES}><QuestionBankDetail /></RequireRole>}
+          />
+          <Route
+            path="question-banks/:bankId/questions/new"
+            element={<RequireRole roles={MANAGER_ROLES}><BankQuestionEditor /></RequireRole>}
+          />
+          <Route
+            path="question-banks/:bankId/questions/:questionId/edit"
+            element={<RequireRole roles={MANAGER_ROLES}><BankQuestionEditor /></RequireRole>}
           />
 
           <Route path="assignments" element={<RequireRole roles={MANAGER_ROLES}><AssignmentsList /></RequireRole>} />
@@ -157,6 +181,15 @@ function App() {
           <Route path="messages" element={<MessagesInbox />} />
           <Route path="discussions" element={<DiscussionsList />} />
           <Route path="exams" element={<ExamsList />} />
+          <Route
+            path="exams/:id/questions"
+            element={<RequireRole roles={MANAGER_ROLES}><ManageExamQuestions /></RequireRole>}
+          />
+          <Route path="exams/:id/take" element={<TakeExam />} />
+          <Route path="grading" element={<RequireRole roles={MANAGER_ROLES}><GradingQueue /></RequireRole>} />
+          <Route path="groups" element={<RequireRole roles={MANAGER_ROLES}><GroupsList /></RequireRole>} />
+          <Route path="groups/:id" element={<RequireRole roles={MANAGER_ROLES}><GroupDetail /></RequireRole>} />
+          <Route path="rubrics" element={<RequireRole roles={MANAGER_ROLES}><RubricsList /></RequireRole>} />
           <Route path="refunds" element={<RequireRole roles={['admin']}><RefundsList /></RequireRole>} />
           <Route path="audit-logs" element={<RequireRole roles={['admin']}><AuditLogsList /></RequireRole>} />
         </Route>

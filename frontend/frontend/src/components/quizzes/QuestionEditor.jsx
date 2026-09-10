@@ -27,7 +27,9 @@ function emptyOption() {
   return { option_text: '', is_correct: false }
 }
 
-export default function QuestionEditor({ index, question, onChange, onDelete, onMoveUp, onMoveDown, isFirst, isLast, error }) {
+export default function QuestionEditor({
+  index, question, onChange, onDelete, onMoveUp, onMoveDown, isFirst, isLast, error, showControls = true,
+}) {
   function update(field, value) {
     const next = { ...question, [field]: value }
     if (field === 'question_type') {
@@ -86,22 +88,24 @@ export default function QuestionEditor({ index, question, onChange, onDelete, on
 
   return (
     <div className="rounded-2xl bg-white p-5 ring-1 ring-navy-900/8">
-      <div className="flex items-center justify-between gap-3">
-        <h4 className="text-sm font-bold text-navy-900">Question {index + 1}</h4>
-        <div className="flex items-center gap-1.5">
-          <button type="button" disabled={isFirst} onClick={onMoveUp} className="rounded-lg p-1.5 text-navy-700/50 hover:bg-navy-50 disabled:opacity-30" aria-label="Move up">
-            <IconArrowUp className="h-4 w-4" />
-          </button>
-          <button type="button" disabled={isLast} onClick={onMoveDown} className="rounded-lg p-1.5 text-navy-700/50 hover:bg-navy-50 disabled:opacity-30" aria-label="Move down">
-            <IconArrowDown className="h-4 w-4" />
-          </button>
-          <button type="button" onClick={onDelete} className="rounded-lg p-1.5 text-red-500 hover:bg-red-50" aria-label="Delete question">
-            <IconTrash className="h-4 w-4" />
-          </button>
+      {showControls && (
+        <div className="flex items-center justify-between gap-3">
+          <h4 className="text-sm font-bold text-navy-900">Question {index + 1}</h4>
+          <div className="flex items-center gap-1.5">
+            <button type="button" disabled={isFirst} onClick={onMoveUp} className="rounded-lg p-1.5 text-navy-700/50 hover:bg-navy-50 disabled:opacity-30" aria-label="Move up">
+              <IconArrowUp className="h-4 w-4" />
+            </button>
+            <button type="button" disabled={isLast} onClick={onMoveDown} className="rounded-lg p-1.5 text-navy-700/50 hover:bg-navy-50 disabled:opacity-30" aria-label="Move down">
+              <IconArrowDown className="h-4 w-4" />
+            </button>
+            <button type="button" onClick={onDelete} className="rounded-lg p-1.5 text-red-500 hover:bg-red-50" aria-label="Delete question">
+              <IconTrash className="h-4 w-4" />
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
-      <div className="mt-4 grid gap-4 sm:grid-cols-4">
+      <div className={`grid gap-4 sm:grid-cols-4 ${showControls ? 'mt-4' : ''}`}>
         <div className="sm:col-span-3">
           <span className="text-xs font-semibold text-navy-700/60">Question Text</span>
           <Textarea rows={2} className="mt-1.5" value={question.question_text} onChange={(e) => update('question_text', e.target.value)} error={error} />

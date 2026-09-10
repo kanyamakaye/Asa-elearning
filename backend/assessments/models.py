@@ -126,6 +126,9 @@ class QuizAnswer(models.Model):
     answer_text = models.TextField(blank=True)
     marks_awarded = models.DecimalField(max_digits=6, decimal_places=2, default=0)
     is_correct = models.BooleanField(default=False)
+    # Grader's comment on this specific answer — distinct from
+    # QuizQuestion.explanation (the model answer shown to every student).
+    feedback = models.TextField(blank=True)
     graded_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='graded_quiz_answers'
     )
@@ -161,6 +164,84 @@ class Exam(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class ExamQuestion(models.Model):
+    """Mirrors QuizQuestion so an Exam can actually be sat by a student —
+    previously Exam only carried scheduling/marks metadata with no way to
+    attach questions or take it."""
+    QuestionType = QuestionType
+
+    exam = models.ForeignKey(Exam, on_delete=models.CASCADE, related_name='questions')
+    question_text = models.TextField()
+    question_type = models.CharField(max_length=20, choices=QuestionType.choices, default=QuestionType.MULTIPLE_CHOICE)
+    marks = models.PositiveIntegerField(default=1)
+    order = models.PositiveIntegerField(default=0)
+    explanation = models.TextField(blank=True)
+    config = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['order', 'id']
+
+    def __str__(self):
+        return self.question_text[:60]
+
+
+class ExamQuestionOption(models.Model):
+    question = models.ForeignKey(ExamQuestion, on_delete=models.CASCADE, related_name='options')
+    option_text = models.CharField(max_length=500)
+    is_correct = models.BooleanField(default=False)
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ['order', 'id']
+
+    def __str__(self):
+        return self.option_text[:60]
+
+
+class ExamAttempt(models.Model):
+    class Status(models.TextChoices):
+        IN_PROGRESS = 'in_progress', 'In Progress'
+        SUBMITTED = 'submitted', 'Submitted'
+        GRADED = 'graded', 'Graded'
+
+    exam = models.ForeignKey(Exam, on_delete=models.CASCADE, related_name='attempts')
+    student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='exam_attempts')
+    attempt_number = models.PositiveIntegerField(default=1)
+    started_at = models.DateTimeField(auto_now_add=True)
+    submitted_at = models.DateTimeField(null=True, blank=True)
+    score = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+    percentage = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    passed = models.BooleanField(default=False)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.IN_PROGRESS)
+
+    class Meta:
+        ordering = ['-started_at']
+
+    def __str__(self):
+        return f'{self.student} attempt #{self.attempt_number} on {self.exam}'
+
+
+class ExamAnswer(models.Model):
+    attempt = models.ForeignKey(ExamAttempt, on_delete=models.CASCADE, related_name='answers')
+    question = models.ForeignKey(ExamQuestion, on_delete=models.CASCADE, related_name='answers')
+    selected_option = models.ForeignKey(
+        ExamQuestionOption, on_delete=models.SET_NULL, null=True, blank=True, related_name='+'
+    )
+    answer_text = models.TextField(blank=True)
+    marks_awarded = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+    is_correct = models.BooleanField(default=False)
+    feedback = models.TextField(blank=True)
+    graded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='graded_exam_answers'
+    )
+    graded_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f'Answer to {self.question} in {self.attempt}'
 
 
 class Grade(models.Model):

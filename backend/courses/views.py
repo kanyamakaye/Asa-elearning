@@ -99,7 +99,9 @@ class CourseViewSet(StandardResponseMixin, viewsets.ModelViewSet):
         is_enrolled = Enrollment.objects.filter(student=user, course=course).exists()
         if not (is_manager or is_instructor or is_enrolled):
             raise PermissionDenied('Enroll in this course to access its lessons.')
-        serializer = CourseLearnSerializer(course, context=self.get_serializer_context())
+        context = self.get_serializer_context()
+        context['bypass_sequential_lock'] = is_manager or is_instructor
+        serializer = CourseLearnSerializer(course, context=context)
         return Response(serializer.data)
 
     @action(detail=False, methods=['get'], url_path='my-courses', permission_classes=[permissions.IsAuthenticated])

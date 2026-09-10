@@ -44,6 +44,14 @@ def thumbnail_seed_url(title):
     uploaded file/image when set)."""
     return f'https://picsum.photos/seed/{slugify(title)}/800/450'
 
+
+def avatar_seed_url(username):
+    """A deterministic placeholder headshot for dummy user data — same
+    username always resolves to the same face. Populates
+    User.profile_picture_url, which the Profile page also lets any user
+    paste directly (it takes priority over an uploaded file when set)."""
+    return f'https://i.pravatar.cc/300?u={username}'
+
 CATEGORIES = [
     ('Information Technology', 'Servers, networking, and IT operations.'),
     ('Software Development', 'Programming, web, and mobile development.'),
@@ -588,14 +596,16 @@ class Command(BaseCommand):
 
     def _create_instructor(self, first, last, specialization, bio):
         email = f'{first.lower()}.{last.lower()}@asaacademy.com'
+        username = f'{first.lower()}{last.lower()}'
         user, created = User.objects.get_or_create(
             email=email,
             defaults={
-                'username': f'{first.lower()}{last.lower()}',
+                'username': username,
                 'first_name': first,
                 'last_name': last,
                 'user_type': User.UserType.INSTRUCTOR,
                 'email_verified': True,
+                'profile_picture_url': avatar_seed_url(username),
             },
         )
         if created:
@@ -648,6 +658,7 @@ class Command(BaseCommand):
                 'last_name': last,
                 'user_type': User.UserType.STUDENT,
                 'email_verified': True,
+                'profile_picture_url': avatar_seed_url(username),
             },
         )
         if created:

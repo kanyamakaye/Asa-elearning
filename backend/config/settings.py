@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     "reviews",
     "support",
     "reports",
+    "groups",
 ]
 
 AUTH_USER_MODEL = 'accounts.User'

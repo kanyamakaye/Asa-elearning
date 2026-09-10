@@ -1,9 +1,17 @@
+import random
+
 from rest_framework import serializers
+
+from accounts.serializers import UserPublicSerializer
 
 from .models import (
     BankQuestion,
     BankQuestionOption,
     Exam,
+    ExamAnswer,
+    ExamAttempt,
+    ExamQuestion,
+    ExamQuestionOption,
     Grade,
     QuestionBank,
     QuestionOption,
@@ -103,27 +111,53 @@ class QuizDetailSerializer(QuizSerializer):
         request = self.context.get('request')
         is_manager = request and request.user.is_authenticated and request.user.user_type in ('instructor', 'admin')
         serializer_class = QuizQuestionSerializer if is_manager else QuizQuestionPublicSerializer
-        return serializer_class(obj.questions.all(), many=True).data
+        questions = list(obj.questions.all())
+        if obj.shuffle_questions and not is_manager and request and request.user.is_authenticated:
+            # Deterministic per (quiz, student) — the same student always
+            # sees the same order on reload, but different students see
+            # different orders, and instructors always see the real order.
+            random.Random(f'{obj.id}:{request.user.id}').shuffle(questions)
+        return serializer_class(questions, many=True).data
 
 
 class QuizAnswerSerializer(serializers.ModelSerializer):
+    question_text = serializers.CharField(source='question.question_text', read_only=True)
+    question_type = serializers.CharField(source='question.question_type', read_only=True)
+    max_marks = serializers.IntegerField(source='question.marks', read_only=True)
+
     class Meta:
         model = QuizAnswer
         fields = [
-            'id', 'attempt', 'question', 'selected_option', 'answer_text', 'marks_awarded',
-            'is_correct', 'graded_by', 'graded_at',
+            'id', 'attempt', 'question', 'question_text', 'question_type', 'max_marks', 'selected_option',
+            'answer_text', 'marks_awarded', 'is_correct', 'feedback', 'graded_by', 'graded_at',
         ]
-        read_only_fields = ['id', 'marks_awarded', 'is_correct', 'graded_by', 'graded_at']
+        read_only_fields = ['id', 'marks_awarded', 'is_correct', 'feedback', 'graded_by', 'graded_at']
+
+
+class GradeAnswerSerializer(serializers.Serializer):
+    """Manual grading of one essay/short-answer QuizAnswer or ExamAnswer —
+    mirrors assignments.GradeSubmissionSerializer."""
+    answer_id = serializers.IntegerField()
+    marks_awarded = serializers.DecimalField(max_digits=6, decimal_places=2)
+    feedback = serializers.CharField(required=False, allow_blank=True, default='')
+
+    def validate_marks_awarded(self, value):
+        if value < 0:
+            raise serializers.ValidationError('Cannot be negative.')
+        return value
 
 
 class QuizAttemptSerializer(serializers.ModelSerializer):
     answers = QuizAnswerSerializer(many=True, read_only=True)
+    student = UserPublicSerializer(read_only=True)
+    quiz_title = serializers.CharField(source='quiz.title', read_only=True)
+    course_title = serializers.CharField(source='quiz.course.title', read_only=True)
 
     class Meta:
         model = QuizAttempt
         fields = [
-            'id', 'quiz', 'student', 'attempt_number', 'started_at', 'submitted_at', 'score',
-            'percentage', 'passed', 'status', 'answers',
+            'id', 'quiz', 'quiz_title', 'course_title', 'student', 'attempt_number', 'started_at',
+            'submitted_at', 'score', 'percentage', 'passed', 'status', 'answers',
         ]
         read_only_fields = [
             'id', 'student', 'attempt_number', 'started_at', 'submitted_at', 'score',
@@ -139,15 +173,124 @@ class SubmitAnswerSerializer(serializers.Serializer):
     answer_text = serializers.CharField(required=False, allow_blank=True, default='')
 
 
+class ExamQuestionOptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ExamQuestionOption
+        fields = ['id', 'option_text', 'is_correct', 'order']
+
+
+class ExamQuestionOptionPublicSerializer(serializers.ModelSerializer):
+    """Hides ``is_correct`` from students while an exam is in progress."""
+
+    class Meta:
+        model = ExamQuestionOption
+        fields = ['id', 'option_text', 'order']
+
+
+class ExamQuestionSerializer(serializers.ModelSerializer):
+    options = ExamQuestionOptionSerializer(many=True, required=False)
+
+    class Meta:
+        model = ExamQuestion
+        fields = ['id', 'exam', 'question_text', 'question_type', 'marks', 'order', 'explanation', 'config', 'options']
+
+    def create(self, validated_data):
+        options_data = validated_data.pop('options', [])
+        question = ExamQuestion.objects.create(**validated_data)
+        for option_data in options_data:
+            ExamQuestionOption.objects.create(question=question, **option_data)
+        return question
+
+    def update(self, instance, validated_data):
+        options_data = validated_data.pop('options', None)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        if options_data is not None:
+            instance.options.all().delete()
+            for option_data in options_data:
+                ExamQuestionOption.objects.create(question=instance, **option_data)
+        return instance
+
+
+class ExamQuestionPublicSerializer(ExamQuestionSerializer):
+    options = ExamQuestionOptionPublicSerializer(many=True, read_only=True)
+
+    class Meta(ExamQuestionSerializer.Meta):
+        fields = ['id', 'exam', 'question_text', 'question_type', 'marks', 'order', 'options']
+
+
 class ExamSerializer(serializers.ModelSerializer):
+    question_count = serializers.IntegerField(source='questions.count', read_only=True)
+
     class Meta:
         model = Exam
         fields = [
             'id', 'course', 'title', 'description', 'exam_date', 'start_time', 'end_time',
             'duration_minutes', 'total_marks', 'passing_marks', 'attempt_limit', 'status',
-            'created_by', 'created_at',
+            'question_count', 'created_by', 'created_at',
         ]
         read_only_fields = ['id', 'created_by', 'created_at']
+
+    def validate(self, attrs):
+        total = attrs.get('total_marks', getattr(self.instance, 'total_marks', None))
+        passing = attrs.get('passing_marks', getattr(self.instance, 'passing_marks', None))
+        if total is not None and passing is not None and passing > total:
+            raise serializers.ValidationError({'passing_marks': 'Cannot exceed the total marks.'})
+        return attrs
+
+
+class ExamDetailSerializer(ExamSerializer):
+    questions = serializers.SerializerMethodField()
+
+    class Meta(ExamSerializer.Meta):
+        fields = ExamSerializer.Meta.fields + ['questions']
+
+    def get_questions(self, obj):
+        request = self.context.get('request')
+        is_manager = request and request.user.is_authenticated and request.user.user_type in ('instructor', 'admin')
+        serializer_class = ExamQuestionSerializer if is_manager else ExamQuestionPublicSerializer
+        return serializer_class(obj.questions.all(), many=True).data
+
+
+class ExamAnswerSerializer(serializers.ModelSerializer):
+    question_text = serializers.CharField(source='question.question_text', read_only=True)
+    question_type = serializers.CharField(source='question.question_type', read_only=True)
+    max_marks = serializers.IntegerField(source='question.marks', read_only=True)
+
+    class Meta:
+        model = ExamAnswer
+        fields = [
+            'id', 'attempt', 'question', 'question_text', 'question_type', 'max_marks', 'selected_option',
+            'answer_text', 'marks_awarded', 'is_correct', 'feedback', 'graded_by', 'graded_at',
+        ]
+        read_only_fields = ['id', 'marks_awarded', 'is_correct', 'feedback', 'graded_by', 'graded_at']
+
+
+class ExamAttemptSerializer(serializers.ModelSerializer):
+    answers = ExamAnswerSerializer(many=True, read_only=True)
+    student = UserPublicSerializer(read_only=True)
+    exam_title = serializers.CharField(source='exam.title', read_only=True)
+    course_title = serializers.CharField(source='exam.course.title', read_only=True)
+
+    class Meta:
+        model = ExamAttempt
+        fields = [
+            'id', 'exam', 'exam_title', 'course_title', 'student', 'attempt_number', 'started_at',
+            'submitted_at', 'score', 'percentage', 'passed', 'status', 'answers',
+        ]
+        read_only_fields = [
+            'id', 'student', 'attempt_number', 'started_at', 'submitted_at', 'score',
+            'percentage', 'passed', 'status',
+        ]
+
+
+class SubmitExamAnswerSerializer(serializers.Serializer):
+    question = serializers.PrimaryKeyRelatedField(queryset=ExamQuestion.objects.all())
+    selected_option = serializers.PrimaryKeyRelatedField(
+        queryset=ExamQuestionOption.objects.all(), required=False, allow_null=True
+    )
+    answer_text = serializers.CharField(required=False, allow_blank=True, default='')
 
 
 class GradeSerializer(serializers.ModelSerializer):

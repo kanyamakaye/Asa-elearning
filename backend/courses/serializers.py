@@ -10,6 +10,21 @@ from .models import Course, CourseCategory, CourseInstructor, CourseModule, Cour
 User = get_user_model()
 
 
+def prerequisite_id_chain_contains(course, target_id, hops=20):
+    """Walks a course's prerequisite chain looking for target_id — used to
+    reject a change that would create a cycle (A requires B requires A).
+    `hops` is a defensive cap; the check itself is what keeps real chains
+    from ever getting that long."""
+    current = course
+    for _ in range(hops):
+        if current is None:
+            return False
+        if current.id == target_id:
+            return True
+        current = current.prerequisite
+    return False
+
+
 class CourseCategorySerializer(serializers.ModelSerializer):
     course_count = serializers.IntegerField(source='courses.count', read_only=True)
 
@@ -124,7 +139,45 @@ class CourseLearnSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Course
-        fields = ['id', 'title', 'slug', 'certificate_enabled', 'instructor', 'units']
+        fields = ['id', 'title', 'slug', 'certificate_enabled', 'sequential_progression', 'instructor', 'units']
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        lessons = [
+            lesson
+            for unit in data['units']
+            for module in unit['modules']
+            for lesson in module['lessons']
+        ]
+        if not instance.sequential_progression or self.context.get('bypass_sequential_lock'):
+            for lesson in lessons:
+                lesson['locked'] = False
+            return data
+
+        request = self.context.get('request')
+        completed_ids = set()
+        if request and request.user.is_authenticated:
+            from progress.models import LessonProgress
+            completed_ids = set(
+                LessonProgress.objects.filter(
+                    student=request.user, course=instance, is_completed=True,
+                ).values_list('lesson_id', flat=True)
+            )
+
+        # Global order across the whole course (units/modules are already
+        # nested in their own order) — the first lesson is always unlocked,
+        # each next one unlocks only once its predecessor is completed.
+        unlocked = True
+        for lesson in lessons:
+            lesson['locked'] = not unlocked
+            if lesson['locked']:
+                lesson['content'] = ''
+                lesson['content_url'] = ''
+                lesson['video_url'] = ''
+                lesson['sections'] = []
+                lesson['resources'] = []
+            unlocked = unlocked and lesson['id'] in completed_ids
+        return data
 
 
 class CourseInstructorSerializer(serializers.ModelSerializer):
@@ -180,11 +233,13 @@ class CourseDetailSerializer(CourseListSerializer):
         source='category', queryset=CourseCategory.objects.all(), write_only=True, required=False
     )
 
+    prerequisite_title = serializers.CharField(source='prerequisite.title', read_only=True, default=None)
+
     class Meta(CourseListSerializer.Meta):
         fields = CourseListSerializer.Meta.fields + [
-            'description', 'video_url', 'enrollment_limit', 'start_date', 'end_date',
-            'requirements', 'learning_objectives', 'units', 'co_instructors', 'category_id',
-            'published_at', 'updated_at',
+            'description', 'video_url', 'enrollment_limit', 'prerequisite', 'prerequisite_title',
+            'sequential_progression', 'start_date', 'end_date', 'requirements', 'learning_objectives',
+            'units', 'co_instructors', 'category_id', 'published_at', 'updated_at',
         ]
 
     def validate_course_code(self, value):
@@ -215,4 +270,8 @@ class CourseDetailSerializer(CourseListSerializer):
         duration = attrs.get('duration_hours', getattr(self.instance, 'duration_hours', None))
         if duration is not None and duration <= 0:
             raise serializers.ValidationError({'duration_hours': 'Must be greater than 0.'})
+
+        prerequisite = attrs.get('prerequisite', getattr(self.instance, 'prerequisite', None))
+        if prerequisite and self.instance and prerequisite_id_chain_contains(prerequisite, self.instance.id):
+            raise serializers.ValidationError({'prerequisite': 'This would create a prerequisite cycle.'})
         return attrs

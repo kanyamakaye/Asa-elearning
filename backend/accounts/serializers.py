@@ -28,7 +28,21 @@ class InstructorProfileSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'staff_number']
 
 
-class UserSerializer(serializers.ModelSerializer):
+class ProfilePictureUrlMixin:
+    """A pasted profile_picture_url is the intended "current" avatar even
+    when an uploaded file also exists — every existing frontend read site
+    already renders `profile_picture` directly, so folding the override in
+    here means they pick it up with no template changes (same pattern as
+    Course.thumbnail_url)."""
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if getattr(instance, 'profile_picture_url', None):
+            data['profile_picture'] = instance.profile_picture_url
+        return data
+
+
+class UserSerializer(ProfilePictureUrlMixin, serializers.ModelSerializer):
     student_profile = StudentProfileSerializer(read_only=True)
     instructor_profile = InstructorProfileSerializer(read_only=True)
     full_name = serializers.ReadOnlyField()
@@ -37,9 +51,9 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'id', 'username', 'email', 'first_name', 'middle_name', 'last_name', 'full_name',
-            'phone_number', 'profile_picture', 'gender', 'date_of_birth', 'address', 'country',
-            'city', 'user_type', 'status', 'email_verified', 'two_factor_enabled', 'date_joined', 'last_login',
-            'student_profile', 'instructor_profile',
+            'phone_number', 'profile_picture', 'profile_picture_url', 'gender', 'date_of_birth', 'address',
+            'country', 'city', 'user_type', 'status', 'email_verified', 'two_factor_enabled', 'date_joined',
+            'last_login', 'student_profile', 'instructor_profile',
         ]
         read_only_fields = ['id', 'user_type', 'status', 'email_verified', 'date_joined', 'last_login']
 
@@ -82,7 +96,7 @@ class AdminUserSerializer(UserSerializer):
         return user
 
 
-class InstructorPublicSerializer(serializers.ModelSerializer):
+class InstructorPublicSerializer(ProfilePictureUrlMixin, serializers.ModelSerializer):
     """Public, marketing-site representation of an instructor with aggregate stats."""
 
     full_name = serializers.ReadOnlyField()
@@ -103,7 +117,7 @@ class InstructorPublicSerializer(serializers.ModelSerializer):
         return round(obj.average_rating, 2) if obj.average_rating else None
 
 
-class UserPublicSerializer(serializers.ModelSerializer):
+class UserPublicSerializer(ProfilePictureUrlMixin, serializers.ModelSerializer):
     """Minimal, safe-to-expose representation used when nested in other resources."""
 
     full_name = serializers.ReadOnlyField()

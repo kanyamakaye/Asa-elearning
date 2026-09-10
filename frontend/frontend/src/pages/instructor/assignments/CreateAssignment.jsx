@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { createAssignment, getAssignment, publishAssignment, updateAssignment } from '../../../services/assignmentService'
 import { getModulesForCourse } from '../../../services/moduleService'
+import { getRubrics } from '../../../services/rubricService'
 import useCourseOptions from '../../../hooks/useCourseOptions'
 import useUnsavedChanges from '../../../hooks/useUnsavedChanges'
 import Alert from '../../../components/ui/Alert'
@@ -31,6 +32,7 @@ const INITIAL_FORM = {
   allow_late_submission: false,
   late_penalty: '',
   attachment: null,
+  rubric: '',
 }
 
 function toFormShape(a) {
@@ -48,6 +50,7 @@ function toFormShape(a) {
     allow_late_submission: a.allow_late_submission,
     late_penalty: a.late_penalty ?? '',
     attachment: a.attachment ?? null,
+    rubric: a.rubric ?? '',
   }
 }
 
@@ -58,6 +61,7 @@ export default function CreateAssignment() {
   const { courses } = useCourseOptions()
   const [form, setForm] = useState(INITIAL_FORM)
   const [modules, setModules] = useState([])
+  const [rubrics, setRubrics] = useState([])
   const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(false)
   const [initialLoading, setInitialLoading] = useState(isEdit)
@@ -82,6 +86,10 @@ export default function CreateAssignment() {
     getModulesForCourse(form.course).then((data) => !cancelled && setModules(data.results ?? data)).catch(() => {})
     return () => { cancelled = true }
   }, [form.course])
+
+  useEffect(() => {
+    getRubrics({ page_size: 100 }).then((data) => setRubrics(data.results ?? data)).catch(() => {})
+  }, [])
 
   const dirty = useMemo(() => JSON.stringify(form) !== JSON.stringify(INITIAL_FORM), [form])
   useUnsavedChanges(dirty && !success)
@@ -117,6 +125,7 @@ export default function CreateAssignment() {
       const payload = {
         ...form,
         module: form.module || null,
+        rubric: form.rubric || null,
         max_file_size: form.max_file_size || undefined,
         late_penalty: form.late_penalty || undefined,
         due_date: new Date(form.due_date).toISOString(),
@@ -191,6 +200,12 @@ export default function CreateAssignment() {
           </FormField>
           <FormField label="Passing Marks" required error={errors.passing_marks}>
             <Input type="number" min="0" value={form.passing_marks} onChange={(e) => update('passing_marks', e.target.value)} error={errors.passing_marks} />
+          </FormField>
+          <FormField label="Rubric" hint="Optional — grade against weighted criteria instead of one number" className="sm:col-span-2">
+            <Select value={form.rubric} onChange={(e) => update('rubric', e.target.value)}>
+              <option value="">No rubric</option>
+              {rubrics.map((r) => <option key={r.id} value={r.id}>{r.title} ({r.total_points} pts)</option>)}
+            </Select>
           </FormField>
         </div>
       </Card>

@@ -5,6 +5,7 @@ from . import views
 
 router = DefaultRouter()
 router.register('submissions', views.AssignmentSubmissionViewSet, basename='assignment-submission')
+router.register('rubrics', views.RubricViewSet, basename='rubric')
 router.register('', views.AssignmentViewSet, basename='assignment')
 
 urlpatterns = [

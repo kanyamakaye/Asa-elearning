@@ -1,7 +1,18 @@
 from django.contrib import admin
 
 from .forms import AssignmentForm
-from .models import Assignment, AssignmentSubmission
+from .models import Assignment, AssignmentSubmission, Rubric, RubricCriterion
+
+
+class RubricCriterionInline(admin.TabularInline):
+    model = RubricCriterion
+    extra = 2
+
+
+@admin.register(Rubric)
+class RubricAdmin(admin.ModelAdmin):
+    list_display = ('title', 'created_by', 'created_at')
+    inlines = [RubricCriterionInline]
 
 
 @admin.register(Assignment)

@@ -2,8 +2,8 @@ import { IconArrowRight, IconAward } from '../icons'
 
 export default function CertificateCard({ certificate }) {
   return (
-    <div className="flex items-center gap-4 rounded-2xl bg-white p-5 ring-1 ring-navy-900/8">
-      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-500">
+    <div className={`flex items-center gap-4 rounded-2xl bg-white p-5 ring-1 ${certificate.is_expired ? 'ring-red-200' : 'ring-navy-900/8'}`}>
+      <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${certificate.is_expired ? 'bg-red-50 text-red-500' : 'bg-brand-50 text-brand-500'}`}>
         <IconAward className="h-6 w-6" />
       </span>
       <div className="min-w-0 flex-1">
@@ -12,6 +12,12 @@ export default function CertificateCard({ certificate }) {
           {certificate.certificate_number} &middot; Issued{' '}
           {certificate.issue_date ? new Date(certificate.issue_date).toLocaleDateString() : '—'}
         </p>
+        {certificate.expires_at && (
+          <p className={`mt-0.5 text-xs font-semibold ${certificate.is_expired ? 'text-red-600' : 'text-navy-700/45'}`}>
+            {certificate.is_expired ? 'Expired' : 'Expires'} {new Date(certificate.expires_at).toLocaleDateString()}
+            {certificate.renewal_count > 0 && ` · renewed ${certificate.renewal_count}x`}
+          </p>
+        )}
       </div>
       <div className="flex shrink-0 items-center gap-4">
         {certificate.certificate_file && (

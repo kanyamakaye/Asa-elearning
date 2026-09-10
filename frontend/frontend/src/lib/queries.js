@@ -106,3 +106,28 @@ export function answerQuizQuestion(attemptId, payload, token) {
 export function submitQuizAttempt(attemptId, token) {
   return apiFetch(`/quizzes/attempts/${attemptId}/submit/`, { method: 'POST', token })
 }
+
+// Exam mirrors of the quiz-taking functions above — same shape, /exams/ prefix.
+export function getCourseExams(courseId, token) {
+  return apiFetch(`/exams/?course=${courseId}`, { token })
+}
+
+export function getExam(examId, token) {
+  return apiFetch(`/exams/${examId}/`, { token })
+}
+
+export function getMyExamAttempts(examId, token) {
+  return apiFetch(`/exams/attempts/?exam=${examId}`, { token })
+}
+
+export function startExamAttempt(examId, token) {
+  return apiFetch(`/exams/${examId}/start/`, { method: 'POST', token })
+}
+
+export function answerExamQuestion(attemptId, payload, token) {
+  return apiFetch(`/exams/attempts/${attemptId}/answer/`, { method: 'POST', body: payload, token })
+}
+
+export function submitExamAttempt(attemptId, token) {
+  return apiFetch(`/exams/attempts/${attemptId}/submit/`, { method: 'POST', token })
+}
