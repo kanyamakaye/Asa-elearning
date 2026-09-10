@@ -7,11 +7,10 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from accounts.models import (
-    EmailVerificationToken,
     InstructorProfile,
     LoginHistory,
+    OTP,
     Permission,
-    PasswordResetToken,
     Role,
     RolePermission,
     StudentProfile,
@@ -25,7 +24,7 @@ from discussions.models import DiscussionReply, DiscussionTopic
 from enrollments.models import Enrollment
 from lessons.models import LearningResource, Lesson
 from live_classes.models import Attendance, LiveSession
-from messaging.models import Message
+from messaging.models import Conversation, ConversationParticipant, Message
 from notifications.models import Announcement, Notification
 from payments.models import Payment, Refund
 from reviews.models import CourseReview, Wishlist
@@ -195,48 +194,64 @@ EXTRA_COURSE_TOPICS = {
         ('Network Security Fundamentals', 'intermediate', 11, 45), ('Introduction to Containers & Docker', 'beginner', 9, 36),
         ('IT Help Desk & Technical Support', 'beginner', 8, None), ('Cloud Computing with AWS Basics', 'intermediate', 13, 48),
         ('Database Administration Essentials', 'intermediate', 10, 42), ('Kubernetes for Beginners', 'advanced', 15, 58),
+        ('Microsoft Azure Fundamentals', 'beginner', 11, 40), ('IT Project Management Basics', 'intermediate', 9, 37),
+        ('PowerShell Scripting for Admins', 'intermediate', 8, 35), ('Cybersecurity Incident Response', 'advanced', 13, 55),
     ],
     'Software Development': [
         ('Testing & Test-Driven Development with Python', 'intermediate', 10, 38), ('GraphQL API Development', 'intermediate', 9, 40),
         ('Introduction to Go Programming', 'beginner', 11, 39), ('Building Microservices with Docker', 'advanced', 16, 56),
         ('Vue.js for Frontend Development', 'intermediate', 10, 37), ('Java Programming Essentials', 'beginner', 14, None),
         ('DevOps Practices for Developers', 'intermediate', 12, 46), ('Mobile App Development with Flutter', 'intermediate', 15, 50),
+        ('TypeScript for JavaScript Developers', 'intermediate', 8, 34), ('Introduction to Rust Programming', 'advanced', 13, 47),
+        ('C# and .NET Fundamentals', 'beginner', 14, None), ('Building CLIs and Developer Tools', 'intermediate', 7, 31),
     ],
     'Data Science': [
         ('Data Engineering Fundamentals', 'intermediate', 15, 55), ('A/B Testing for Product Teams', 'beginner', 6, None),
         ('Natural Language Processing Basics', 'advanced', 18, 62), ('Data Cleaning & Preprocessing', 'beginner', 7, 29),
         ('Time Series Analysis & Forecasting', 'advanced', 16, 59), ('Big Data with Apache Spark', 'advanced', 17, 61),
         ('Python for Data Analysis', 'beginner', 9, 33), ('Business Intelligence Fundamentals', 'beginner', 8, None),
+        ('Data Storytelling & Visualization', 'intermediate', 8, 34), ('Introduction to R Programming', 'beginner', 10, 32),
+        ('MLOps Fundamentals', 'advanced', 14, 57), ('Computer Vision Basics', 'advanced', 16, 60),
     ],
     'Business': [
         ('Financial Modeling for Startups', 'intermediate', 9, 44), ('Change Management Essentials', 'beginner', 7, 33),
         ('Business Analytics Fundamentals', 'intermediate', 10, 41), ('Risk Management Basics', 'beginner', 6, 28),
         ('Corporate Governance Essentials', 'intermediate', 8, 39), ('Introduction to Business Law', 'beginner', 7, None),
         ('Lean Six Sigma Fundamentals', 'advanced', 12, 53), ('Customer Relationship Management', 'beginner', 6, 27),
+        ('Strategic Marketing Planning', 'intermediate', 9, 40), ('Business Negotiation Tactics', 'intermediate', 7, 32),
+        ('Startup Fundraising Essentials', 'advanced', 10, 46), ('Operations & Process Improvement', 'intermediate', 8, 36),
     ],
     'Accounting': [
         ('Payroll Management Basics', 'beginner', 6, 26), ('Cost Accounting Fundamentals', 'intermediate', 8, 37),
         ('Auditing Principles & Practice', 'advanced', 11, 48), ('Introduction to QuickBooks', 'beginner', 5, None),
         ('Forensic Accounting Basics', 'advanced', 10, 46), ('Budgeting & Forecasting Essentials', 'intermediate', 7, 34),
         ('International Financial Reporting Standards', 'advanced', 13, 51), ('Small Business Accounting', 'beginner', 6, None),
+        ('Corporate Tax Planning', 'advanced', 11, 47), ('Excel for Accountants', 'beginner', 6, 25),
+        ('Nonprofit Accounting Essentials', 'intermediate', 7, 33), ('Accounts Payable & Receivable Management', 'beginner', 5, None),
     ],
     'Digital Marketing': [
         ('Email Marketing Automation', 'beginner', 6, 28), ('Influencer Marketing Strategy', 'intermediate', 7, 31),
         ('Marketing Analytics Fundamentals', 'intermediate', 9, 36), ('Affiliate Marketing Basics', 'beginner', 5, None),
         ('Brand Strategy & Positioning', 'intermediate', 8, 34), ('TikTok & Short-Form Video Marketing', 'beginner', 6, 25),
         ('Conversion Rate Optimization', 'advanced', 10, 42), ('E-commerce Marketing Essentials', 'beginner', 7, None),
+        ('LinkedIn Marketing for Business', 'beginner', 6, 27), ('Marketing Automation Tools', 'intermediate', 8, 35),
+        ('Video Marketing & YouTube Growth', 'intermediate', 9, 38), ('Growth Hacking Fundamentals', 'advanced', 10, 43),
     ],
     'Languages': [
         ('Portuguese for Beginners', 'beginner', 12, 28), ('Italian Conversation Basics', 'beginner', 10, None),
         ('Japanese for Absolute Beginners', 'beginner', 14, 32), ('Korean Language Foundations', 'beginner', 13, 30),
         ('Arabic for Travel & Business', 'beginner', 11, None), ('Advanced French Grammar', 'advanced', 10, 33),
         ('Dutch Language Essentials', 'beginner', 9, 26), ('Swahili for Beginners', 'beginner', 8, None),
+        ('Russian Language Basics', 'beginner', 12, 29), ('Business Spanish for Professionals', 'intermediate', 9, 31),
+        ('Hindi for Beginners', 'beginner', 11, None), ('Turkish Language Foundations', 'beginner', 10, 27),
     ],
     'Professional Development': [
         ('Conflict Resolution at Work', 'beginner', 5, 23), ('Effective Delegation Skills', 'beginner', 5, None),
         ('Critical Thinking & Problem Solving', 'beginner', 6, 25), ('Workplace Communication Skills', 'beginner', 5, None),
         ('Building Resilience & Stress Management', 'beginner', 6, 24), ('Coaching & Mentoring Fundamentals', 'intermediate', 7, 30),
         ('Personal Branding for Professionals', 'beginner', 5, None), ('Effective Meetings & Facilitation', 'beginner', 4, 20),
+        ('Career Development Planning', 'beginner', 5, 22), ('Emotional Resilience & Mindfulness', 'beginner', 6, 26),
+        ('Cross-Cultural Communication', 'intermediate', 7, 29), ('Remote Team Leadership', 'intermediate', 8, 32),
     ],
 }
 
@@ -1247,17 +1262,43 @@ class Command(BaseCommand):
             )
 
     def seed_messages(self, students, instructors, target=100):
+        """One conversation per (student, instructor) pair — a student
+        message followed by an instructor reply, mirroring a real support
+        thread rather than one-off unread emails."""
         instructor_list = list(instructors)
+        msg_random = random.Random('messages')
         for i, student in enumerate(students[:target]):
             subject = MESSAGE_SUBJECTS[i % len(MESSAGE_SUBJECTS)]
             instructor = instructor_list[i % len(instructor_list)]
-            if Message.objects.filter(sender=student, subject=subject).exists():
-                continue
-            Message.objects.create(
-                sender=student, receiver=instructor, subject=subject,
-                message_body=f'{subject}. Could you help clarify this when you have a moment?',
-                is_read=random.random() < 0.5,
+
+            conversation = None
+            for candidate in Conversation.objects.filter(participants__user=student).filter(participants__user=instructor):
+                if candidate.participants.count() == 2:
+                    conversation = candidate
+                    break
+            if conversation:
+                continue  # already seeded this pair
+
+            conversation = Conversation.objects.create()
+            student_read = msg_random.random() < 0.7
+            instructor_read = msg_random.random() < 0.5
+            ConversationParticipant.objects.create(
+                conversation=conversation, user=student,
+                last_read_at=timezone.now() if student_read else None,
             )
+            ConversationParticipant.objects.create(
+                conversation=conversation, user=instructor,
+                last_read_at=timezone.now() if instructor_read else None,
+            )
+            Message.objects.create(
+                conversation=conversation, sender=student,
+                content=f'{subject}. Could you help clarify this when you have a moment?',
+            )
+            if msg_random.random() < 0.5:
+                Message.objects.create(
+                    conversation=conversation, sender=instructor,
+                    content="Sure — happy to help. Let's go over it in our next session.",
+                )
 
     def seed_login_history(self, users, target=160):
         history_random = random.Random('login-history')
@@ -1284,31 +1325,39 @@ class Command(BaseCommand):
                 LoginHistory.objects.filter(pk=entry.pk).update(login_at=login_at)
 
     def seed_tokens(self, users, target=60):
-        """Historical password-reset / email-verification requests — kept
-        smaller than the general 100+ target since these are one-off action
-        records rather than an open-ended activity log like LoginHistory."""
+        """Historical password-reset / registration OTPs — kept smaller than
+        the general 100+ target since these are one-off action records
+        rather than an open-ended activity log like LoginHistory."""
+        from accounts.otp import hash_otp
+
         token_random = random.Random('tokens')
         sample_users = token_random.sample(users, k=min(len(users), target))
-        for i, user in enumerate(sample_users):
+        for user in sample_users:
+            if OTP.objects.filter(user=user, purpose=OTP.Purpose.PASSWORD_RESET).exists():
+                continue
             created_at = timezone.now() - timedelta(days=token_random.randint(1, 90))
             used = token_random.random() < 0.6
-            PasswordResetToken.objects.get_or_create(
-                user=user, token=f'seed-reset-{user.id}-{i}',
-                defaults={
-                    'expires_at': created_at + timedelta(hours=1),
-                    'used_at': created_at + timedelta(minutes=token_random.randint(1, 30)) if used else None,
-                },
+            otp = OTP.objects.create(
+                user=user, purpose=OTP.Purpose.PASSWORD_RESET,
+                otp_hash=hash_otp(f'{token_random.randint(0, 999999):06d}'),
+                expires_at=created_at + timedelta(minutes=10),
+                used=used,
+                used_at=created_at + timedelta(minutes=token_random.randint(1, 9)) if used else None,
             )
-        for i, user in enumerate(sample_users[:40]):
+            OTP.objects.filter(pk=otp.pk).update(created_at=created_at)
+        for user in sample_users[:40]:
+            if OTP.objects.filter(user=user, purpose=OTP.Purpose.REGISTRATION).exists():
+                continue
             created_at = timezone.now() - timedelta(days=token_random.randint(1, 90))
             verified = token_random.random() < 0.8
-            EmailVerificationToken.objects.get_or_create(
-                user=user, token=f'seed-verify-{user.id}-{i}',
-                defaults={
-                    'expires_at': created_at + timedelta(days=2),
-                    'verified_at': created_at + timedelta(hours=token_random.randint(1, 40)) if verified else None,
-                },
+            otp = OTP.objects.create(
+                user=user, purpose=OTP.Purpose.REGISTRATION,
+                otp_hash=hash_otp(f'{token_random.randint(0, 999999):06d}'),
+                expires_at=created_at + timedelta(minutes=10),
+                used=verified,
+                used_at=created_at + timedelta(minutes=token_random.randint(1, 9)) if verified else None,
             )
+            OTP.objects.filter(pk=otp.pk).update(created_at=created_at)
 
     def seed_role_permissions(self, users):
         """Role/Permission/RolePermission/UserRole are a legacy RBAC scaffold

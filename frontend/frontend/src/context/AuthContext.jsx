@@ -26,18 +26,34 @@ export function AuthProvider({ children }) {
     else localStorage.removeItem('asa_user')
   }, [user])
 
+  // Step 1 of login (Authentication.md §16) — validates the password and
+  // account status, then always returns a 2FA challenge instead of tokens.
   async function login(email, password) {
     const data = await apiFetch('/auth/login/', {
       method: 'POST',
       body: { email, password },
+    })
+    return { challengeId: data.challenge_id, maskedEmail: data.masked_email }
+  }
+
+  // Step 2 — the OTP emailed for that challenge. Only this call actually
+  // establishes an authenticated session.
+  async function completeLogin(challengeId, otp) {
+    const data = await apiFetch('/auth/verify-2fa/', {
+      method: 'POST',
+      body: { challenge_id: challengeId, otp },
     })
     setTokens({ access: data.access, refresh: data.refresh })
     setUser(data.user)
     return data.user
   }
 
-  async function register({ username, email, password, passwordConfirm, firstName, lastName, userType }) {
-    await apiFetch('/auth/register/', {
+  // Public self-registration always creates a Student/Learner account —
+  // the backend ignores any role hint the client might send. Does not log
+  // the user in; the account is PENDING_VERIFICATION until they enter the
+  // emailed OTP (see verifyEmail).
+  async function register({ username, email, password, passwordConfirm, firstName, lastName, phoneNumber, acceptTerms, acceptPrivacyPolicy }) {
+    return apiFetch('/auth/register/', {
       method: 'POST',
       body: {
         username,
@@ -46,10 +62,30 @@ export function AuthProvider({ children }) {
         password_confirm: passwordConfirm,
         first_name: firstName,
         last_name: lastName,
-        user_type: userType,
+        phone_number: phoneNumber || '',
+        accept_terms: acceptTerms,
+        accept_privacy_policy: acceptPrivacyPolicy,
       },
     })
-    return login(email, password)
+  }
+
+  async function verifyEmail(email, otp) {
+    return apiFetch('/auth/verify-email/', { method: 'POST', body: { email, otp } })
+  }
+
+  async function verifyInstructorEmail(email, otp) {
+    return apiFetch('/auth/instructor/verify-email/', { method: 'POST', body: { email, otp } })
+  }
+
+  async function resendOtp(email, purpose) {
+    return apiFetch('/auth/resend-otp/', { method: 'POST', body: { email, purpose } })
+  }
+
+  async function activateInstructor(token, password, confirmPassword) {
+    return apiFetch('/auth/instructor/activate/', {
+      method: 'POST',
+      body: { token, password, confirm_password: confirmPassword },
+    })
   }
 
   function logout() {
@@ -64,7 +100,12 @@ export function AuthProvider({ children }) {
         accessToken: tokens?.access ?? null,
         isAuthenticated: Boolean(tokens),
         login,
+        completeLogin,
         register,
+        verifyEmail,
+        verifyInstructorEmail,
+        resendOtp,
+        activateInstructor,
         logout,
         setUser,
       }}

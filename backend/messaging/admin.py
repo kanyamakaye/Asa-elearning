@@ -1,9 +1,20 @@
 from django.contrib import admin
 
-from .models import Message
+from .models import Conversation, ConversationParticipant, Message
+
+
+class ConversationParticipantInline(admin.TabularInline):
+    model = ConversationParticipant
+    extra = 0
+
+
+@admin.register(Conversation)
+class ConversationAdmin(admin.ModelAdmin):
+    list_display = ('id', 'created_at', 'updated_at')
+    inlines = [ConversationParticipantInline]
 
 
 @admin.register(Message)
 class MessageAdmin(admin.ModelAdmin):
-    list_display = ('sender', 'receiver', 'subject', 'is_read', 'sent_at')
-    list_filter = ('is_read',)
+    list_display = ('sender', 'conversation', 'created_at')
+    list_filter = ('created_at',)

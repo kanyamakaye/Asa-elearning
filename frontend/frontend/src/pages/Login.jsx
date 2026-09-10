@@ -1,15 +1,9 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { IconAward, IconChevronLeft, IconEye, IconEyeOff, IconLock, IconMail, IconStar } from '../components/icons'
+import AuthBrandPanel from '../components/auth/AuthBrandPanel'
+import { IconAward, IconChevronLeft, IconEye, IconEyeOff, IconLock, IconMail } from '../components/icons'
 import logo from '../assets/logo.png'
-
-const stats = [
-  { value: '500+', label: 'Courses' },
-  { value: '50k+', label: 'Students' },
-  { value: '200+', label: 'Instructors' },
-  { value: '98%', label: 'Completion rate' },
-]
 
 export default function Login() {
   const { login } = useAuth()
@@ -23,14 +17,18 @@ export default function Login() {
   const [loading, setLoading] = useState(false)
 
   const from = location.state?.from?.pathname || '/dashboard'
+  const justVerified = location.state?.verified
+  const justResetPassword = location.state?.passwordReset
 
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
     setLoading(true)
     try {
-      await login(email, password)
-      navigate(from, { replace: true })
+      // Step 1 of Authentication.md's login flow — valid credentials issue a
+      // 2FA challenge, not a session. The OTP screen completes the sign-in.
+      const { challengeId, maskedEmail } = await login(email, password)
+      navigate('/verify-2fa', { state: { challengeId, maskedEmail, email, from: { pathname: from } } })
     } catch (err) {
       setError(err.message || 'Unable to log in. Please check your credentials.')
     } finally {
@@ -40,57 +38,18 @@ export default function Login() {
 
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
-      {/* Brand panel */}
-      <div className="relative hidden overflow-hidden bg-navy-900 lg:flex lg:flex-col lg:justify-between lg:px-12 lg:py-12">
-        <div
-          className="pointer-events-none absolute inset-0 opacity-30"
-          style={{
-            backgroundImage:
-              'radial-gradient(circle at 15% 20%, rgba(59,107,255,0.35), transparent 40%), radial-gradient(circle at 85% 0%, rgba(111,143,255,0.3), transparent 45%)',
-          }}
-        />
-
-        <div className="relative flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2.5">
-            <img src={logo} alt="Asa Academy" className="h-10 w-10 object-contain" />
-            <span className="font-display text-lg font-bold tracking-tight text-white">Asa Academy</span>
-          </Link>
-          <Link
-            to="/"
-            className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3.5 py-2 text-xs font-semibold text-white ring-1 ring-white/15 transition-colors hover:bg-white/20"
-          >
-            <IconChevronLeft className="h-3.5 w-3.5" />
-            Home
-          </Link>
-        </div>
-
-        <div className="relative max-w-md">
-          <div className="animate-fade-up inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-sm font-medium text-brand-100 ring-1 ring-white/15">
-            <IconStar className="h-4 w-4 text-brand-300" />
-            Trusted by 50,000+ learners worldwide
-          </div>
-          <h2 className="animate-fade-up mt-6 text-3xl font-extrabold leading-[1.15] tracking-tight text-white [animation-delay:100ms]">
+      <AuthBrandPanel
+        badge="Trusted by 50,000+ learners worldwide"
+        heading={
+          <>
             Learn without limits,{' '}
             <span className="bg-gradient-to-r from-brand-300 via-violet-300 to-brand-500 bg-clip-text text-transparent">
               grow with Asa Academy
             </span>
-          </h2>
-          <p className="mt-4 text-sm leading-relaxed text-navy-100/70">
-            Courses, live classes, quizzes, assignments, progress tracking, and
-            verified certificates &mdash; all in one place.
-          </p>
-        </div>
-
-        <dl className="relative grid grid-cols-4 gap-4">
-          {stats.map((s) => (
-            <div key={s.label}>
-              <dt className="sr-only">{s.label}</dt>
-              <dd className="text-2xl font-bold text-white">{s.value}</dd>
-              <div className="mt-1 text-xs text-navy-100/60">{s.label}</div>
-            </div>
-          ))}
-        </dl>
-      </div>
+          </>
+        }
+        description="Courses, live classes, quizzes, assignments, progress tracking, and verified certificates — all in one place."
+      />
 
       {/* Sign-in panel */}
       <div className="flex min-h-screen items-center justify-center bg-brand-50/40 px-6 py-12 lg:bg-white">
@@ -130,6 +89,17 @@ export default function Login() {
             <p className="mt-2 text-sm text-navy-700/60">
               Log in to continue your learning journey.
             </p>
+
+            {justVerified && !error && (
+              <div className="mt-6 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+                Your email has been verified. You can now sign in.
+              </div>
+            )}
+            {justResetPassword && !error && (
+              <div className="mt-6 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+                Your password has been reset. You can now sign in with your new password.
+              </div>
+            )}
 
             {error && (
               <div className="mt-6 rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-600">

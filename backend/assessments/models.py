@@ -37,15 +37,29 @@ class Quiz(models.Model):
         return self.title
 
 
+class QuestionType(models.TextChoices):
+    """Shared across QuizQuestion and BankQuestion (question.md #6) so bank
+    questions can be copied into a quiz without a type-mapping step."""
+    MULTIPLE_CHOICE = 'multiple_choice', 'Multiple Choice'
+    MULTIPLE_SELECT = 'multiple_select', 'Multiple Select'
+    TRUE_FALSE = 'true_false', 'True/False'
+    SHORT_ANSWER = 'short_answer', 'Short Answer'
+    ESSAY = 'essay', 'Essay'
+    MATCHING = 'matching', 'Matching'
+    FILL_BLANK = 'fill_blank', 'Fill in the Blank'
+    ORDERING = 'ordering', 'Ordering'
+    NUMERICAL = 'numerical', 'Numerical'
+    NUMERIC_RANGE = 'numeric_range', 'Numeric Range'
+
+
+class Difficulty(models.TextChoices):
+    EASY = 'easy', 'Easy'
+    MEDIUM = 'medium', 'Medium'
+    HARD = 'hard', 'Hard'
+
+
 class QuizQuestion(models.Model):
-    class QuestionType(models.TextChoices):
-        MULTIPLE_CHOICE = 'multiple_choice', 'Multiple Choice'
-        MULTIPLE_SELECT = 'multiple_select', 'Multiple Select'
-        TRUE_FALSE = 'true_false', 'True/False'
-        SHORT_ANSWER = 'short_answer', 'Short Answer'
-        ESSAY = 'essay', 'Essay'
-        MATCHING = 'matching', 'Matching'
-        FILL_BLANK = 'fill_blank', 'Fill in the Blank'
+    QuestionType = QuestionType
 
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name='questions')
     question_text = models.TextField()
@@ -53,6 +67,10 @@ class QuizQuestion(models.Model):
     marks = models.PositiveIntegerField(default=1)
     order = models.PositiveIntegerField(default=0)
     explanation = models.TextField(blank=True)
+    # Type-specific settings that don't fit the common option/is_correct shape
+    # (e.g. numerical tolerance, numeric_range bounds, ordering positions).
+    # See question.md #9 "Question Configuration".
+    config = models.JSONField(default=dict, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -191,3 +209,63 @@ class Grade(models.Model):
 
     def __str__(self):
         return f'{self.student} - {self.course} ({self.letter_grade})'
+
+
+class QuestionBank(models.Model):
+    """A reusable pool of questions, independent of any single quiz
+    (question.md #13). Instructors add questions here once and pull them
+    into any number of quizzes via QuizViewSet.add_from_bank."""
+
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    category = models.ForeignKey(
+        'courses.CourseCategory', on_delete=models.SET_NULL, null=True, blank=True, related_name='question_banks'
+    )
+    course = models.ForeignKey(
+        'courses.Course', on_delete=models.SET_NULL, null=True, blank=True, related_name='question_banks'
+    )
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='question_banks_created'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return self.title
+
+
+class BankQuestion(models.Model):
+    QuestionType = QuestionType
+
+    bank = models.ForeignKey(QuestionBank, on_delete=models.CASCADE, related_name='questions')
+    question_text = models.TextField()
+    question_type = models.CharField(max_length=20, choices=QuestionType.choices, default=QuestionType.MULTIPLE_CHOICE)
+    marks = models.PositiveIntegerField(default=1)
+    difficulty = models.CharField(max_length=10, choices=Difficulty.choices, default=Difficulty.MEDIUM)
+    tags = models.JSONField(default=list, blank=True)
+    explanation = models.TextField(blank=True)
+    config = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return self.question_text[:60]
+
+
+class BankQuestionOption(models.Model):
+    question = models.ForeignKey(BankQuestion, on_delete=models.CASCADE, related_name='options')
+    option_text = models.CharField(max_length=500)
+    is_correct = models.BooleanField(default=False)
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ['order', 'id']
+
+    def __str__(self):
+        return self.option_text[:60]

@@ -1,9 +1,9 @@
-from django.contrib.auth import get_user_model
+from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from .models import EmailVerificationToken, InstructorProfile, LoginHistory, PasswordResetToken, StudentProfile
+from .models import InstructorProfile, LoginHistory, OTP, StudentProfile
 
 User = get_user_model()
 
@@ -38,16 +38,19 @@ class UserSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'username', 'email', 'first_name', 'middle_name', 'last_name', 'full_name',
             'phone_number', 'profile_picture', 'gender', 'date_of_birth', 'address', 'country',
-            'city', 'user_type', 'status', 'email_verified', 'date_joined', 'last_login',
+            'city', 'user_type', 'status', 'email_verified', 'two_factor_enabled', 'date_joined', 'last_login',
             'student_profile', 'instructor_profile',
         ]
         read_only_fields = ['id', 'user_type', 'status', 'email_verified', 'date_joined', 'last_login']
 
 
 class AdminUserSerializer(UserSerializer):
-    """Used by UserViewSet for admin-driven create/update. Unlike the base
-    UserSerializer (self-service profile editing), this lets an admin set
-    role, status, and an initial/replacement password directly."""
+    """Used by UserViewSet for admin-driven create/update of any account
+    type. Unlike RegisterSerializer (public self-registration, always
+    LEARNER/STUDENT) this lets an authenticated Admin set role, status, and
+    an initial/replacement password directly — for the dedicated Instructor
+    invitation flow, see InstructorCreateSerializer instead, which forces
+    the role server-side and never accepts a password from the Admin."""
 
     password = serializers.CharField(write_only=True, required=False, allow_blank=True)
 
@@ -122,16 +125,37 @@ class LoginHistorySerializer(serializers.ModelSerializer):
 
 
 class RegisterSerializer(serializers.ModelSerializer):
+    """Public self-registration — Authentication.md §5/§8: the role is
+    always LEARNER (this project's `student` user_type). A `user_type` (or
+    any other role hint) submitted by the client is silently ignored, never
+    trusted — see `create()`."""
+
     password = serializers.CharField(write_only=True, validators=[validate_password])
     password_confirm = serializers.CharField(write_only=True)
-    user_type = serializers.ChoiceField(choices=[User.UserType.STUDENT, User.UserType.INSTRUCTOR])
+    # Django's own AbstractUser defines first_name/last_name with blank=True,
+    # which DRF's ModelSerializer would otherwise infer as optional — the
+    # spec (FR-REG-002) requires both, so make that explicit here.
+    first_name = serializers.CharField(required=True, allow_blank=False)
+    last_name = serializers.CharField(required=True, allow_blank=False)
+    accept_terms = serializers.BooleanField(write_only=True)
+    accept_privacy_policy = serializers.BooleanField(write_only=True)
 
     class Meta:
         model = User
         fields = [
             'username', 'email', 'password', 'password_confirm', 'first_name', 'last_name',
-            'user_type', 'phone_number',
+            'phone_number', 'accept_terms', 'accept_privacy_policy',
         ]
+
+    def validate_accept_terms(self, value):
+        if not value:
+            raise serializers.ValidationError('You must accept the Terms and Conditions to register.')
+        return value
+
+    def validate_accept_privacy_policy(self, value):
+        if not value:
+            raise serializers.ValidationError('You must accept the Privacy Policy to register.')
+        return value
 
     def validate(self, attrs):
         if attrs['password'] != attrs.pop('password_confirm'):
@@ -139,18 +163,56 @@ class RegisterSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
+        validated_data.pop('accept_terms', None)
+        validated_data.pop('accept_privacy_policy', None)
         password = validated_data.pop('password')
-        user = User(**validated_data)
+        user = User(
+            **validated_data,
+            user_type=User.UserType.STUDENT,
+            status=User.Status.PENDING_VERIFICATION,
+            email_verified=False,
+        )
         user.set_password(password)
         user.save()
-        if user.user_type == User.UserType.STUDENT:
-            StudentProfile.objects.create(user=user)
-        elif user.user_type == User.UserType.INSTRUCTOR:
-            InstructorProfile.objects.create(user=user)
+        StudentProfile.objects.create(user=user)
+        return user
+
+
+class InstructorCreateSerializer(serializers.ModelSerializer):
+    """Admin-only (see IsAdmin-gated view). Authentication.md §14/§15/§18:
+    the role and initial status are always forced server-side; the Admin
+    never sets or sees a password — the Instructor creates their own during
+    activation."""
+
+    first_name = serializers.CharField(required=True, allow_blank=False)
+    last_name = serializers.CharField(required=True, allow_blank=False)
+
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'first_name', 'last_name', 'phone_number']
+
+    def create(self, validated_data):
+        request = self.context['request']
+        user = User(
+            **validated_data,
+            user_type=User.UserType.INSTRUCTOR,
+            status=User.Status.PENDING_ACTIVATION,
+            email_verified=False,
+            created_by=request.user,
+        )
+        user.set_unusable_password()
+        user.save()
+        InstructorProfile.objects.create(user=user)
         return user
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    """Retained for issuing the final token pair once 2FA succeeds (see
+    accounts.views.Verify2FAView) — get_token()'s claim shape is reused
+    there directly rather than going through the full password-auth flow
+    this serializer's own validate() implements, since that flow no longer
+    grants tokens by itself (Authentication.md §11/§16)."""
+
     username_field = User.USERNAME_FIELD
 
     @classmethod
@@ -178,36 +240,78 @@ class ChangePasswordSerializer(serializers.Serializer):
         return value
 
 
+class LoginSerializer(serializers.Serializer):
+    """Step 1 of Authentication.md §16 — validates credentials and account
+    status only. Never returns tokens; the view issues a 2FA challenge on
+    success instead (see accounts.views.LoginView)."""
+
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True)
+
+    def validate(self, attrs):
+        user = authenticate(
+            self.context['request'], username=attrs['email'], password=attrs['password'],
+        )
+        if not user:
+            raise serializers.ValidationError('Invalid email or password.')
+        attrs['user'] = user
+        return attrs
+
+
+class VerifyOTPSerializer(serializers.Serializer):
+    """Shared shape for the two OTP-by-email flows (registration and
+    instructor-activation verification) — both identify the user by email
+    rather than a session, since neither has an authenticated session yet."""
+
+    email = serializers.EmailField()
+    otp = serializers.RegexField(r'^\d{4,8}$', write_only=True)
+
+    def validate_email(self, value):
+        user = User.objects.filter(email__iexact=value).first()
+        if not user:
+            # Generic message — Authentication.md §34 (avoid account enumeration).
+            raise serializers.ValidationError('The verification code is invalid or has expired.')
+        self.context['user'] = user
+        return value
+
+
+class ResendOTPSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    purpose = serializers.ChoiceField(choices=OTP.Purpose.choices)
+
+
+class Verify2FASerializer(serializers.Serializer):
+    """Step 2 of Authentication.md §16 — the challengeId + OTP pair. Holding
+    a valid challengeId is not itself sufficient (Authentication.md §13);
+    the OTP must also match."""
+
+    challenge_id = serializers.UUIDField()
+    otp = serializers.RegexField(r'^\d{4,8}$', write_only=True)
+
+
+class InstructorActivateSerializer(serializers.Serializer):
+    token = serializers.CharField(write_only=True)
+    password = serializers.CharField(write_only=True, validators=[validate_password])
+    confirm_password = serializers.CharField(write_only=True)
+
+    def validate(self, attrs):
+        if attrs['password'] != attrs.pop('confirm_password'):
+            raise serializers.ValidationError({'confirm_password': 'Passwords do not match.'})
+        return attrs
+
+
 class PasswordResetRequestSerializer(serializers.Serializer):
     email = serializers.EmailField()
 
 
 class PasswordResetConfirmSerializer(serializers.Serializer):
-    token = serializers.CharField()
+    email = serializers.EmailField()
+    otp = serializers.RegexField(r'^\d{4,8}$', write_only=True)
     new_password = serializers.CharField(write_only=True, validators=[validate_password])
 
-    def validate_token(self, value):
-        try:
-            reset = PasswordResetToken.objects.get(token=value, used_at__isnull=True)
-        except PasswordResetToken.DoesNotExist:
-            raise serializers.ValidationError('Invalid or already-used token.')
-        from django.utils import timezone
-        if reset.expires_at < timezone.now():
-            raise serializers.ValidationError('This reset token has expired.')
-        self.context['reset'] = reset
-        return value
-
-
-class EmailVerificationConfirmSerializer(serializers.Serializer):
-    token = serializers.CharField()
-
-    def validate_token(self, value):
-        try:
-            verification = EmailVerificationToken.objects.get(token=value, verified_at__isnull=True)
-        except EmailVerificationToken.DoesNotExist:
-            raise serializers.ValidationError('Invalid or already-used token.')
-        from django.utils import timezone
-        if verification.expires_at < timezone.now():
-            raise serializers.ValidationError('This verification token has expired.')
-        self.context['verification'] = verification
+    def validate_email(self, value):
+        user = User.objects.filter(email__iexact=value).first()
+        if not user:
+            raise serializers.ValidationError('The verification code is invalid or has expired.')
+        self.context['user'] = user
         return value

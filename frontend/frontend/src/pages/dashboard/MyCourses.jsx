@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { listEnrollments } from '../../lib/dashboardApi'
-import { IconAward, IconBook } from '../../components/icons'
+import { IconArrowRight, IconAward, IconBook, IconSearch } from '../../components/icons'
 
 const statusStyles = {
   active: 'bg-emerald-50 text-emerald-700',
@@ -30,9 +30,19 @@ export default function MyCourses() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">My Courses</h1>
-        <p className="mt-1 text-sm text-navy-700/55">{enrollments.length} enrolled course{enrollments.length === 1 ? '' : 's'}</p>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">My Courses</h1>
+          <p className="mt-1 text-sm text-navy-700/55">{enrollments.length} enrolled course{enrollments.length === 1 ? '' : 's'}</p>
+        </div>
+        <Link
+          to="/dashboard/browse-courses"
+          className="inline-flex items-center gap-1.5 rounded-full bg-navy-900 px-4 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-brand-500"
+        >
+          <IconSearch className="h-3.5 w-3.5" />
+          Browse Courses
+          <IconArrowRight className="h-3.5 w-3.5" />
+        </Link>
       </div>
 
       {loading ? (
@@ -43,7 +53,7 @@ export default function MyCourses() {
         </div>
       ) : enrollments.length === 0 ? (
         <p className="rounded-2xl bg-white p-10 text-center text-sm text-navy-700/45 ring-1 ring-navy-900/8">
-          You haven't enrolled in any courses yet. <Link to="/#courses" className="font-semibold text-brand-500">Browse the catalog</Link>.
+          You haven't enrolled in any courses yet. <Link to="/dashboard/browse-courses" className="font-semibold text-brand-500">Browse the catalog</Link>.
         </p>
       ) : (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">

@@ -51,7 +51,7 @@ export default function StudentDashboard() {
       <QuickActions
         title="Explore"
         actions={[
-          { label: 'Browse Courses', to: '/#courses', icon: IconSearch },
+          { label: 'Browse Courses', to: '/dashboard/browse-courses', icon: IconSearch },
           { label: 'My Grades', to: '/dashboard/grades', icon: IconTrendingUp },
           { label: 'My Certificates', to: '/dashboard/certificates', icon: IconAward },
         ]}
@@ -66,7 +66,7 @@ export default function StudentDashboard() {
         </div>
         {(data?.continue_learning ?? []).length === 0 ? (
           <p className="rounded-2xl bg-white p-8 text-center text-sm text-navy-700/45 ring-1 ring-navy-900/8">
-            You're not enrolled in any courses yet. <Link to="/#courses" className="font-semibold text-brand-500">Browse the catalog</Link>.
+            You're not enrolled in any courses yet. <Link to="/dashboard/browse-courses" className="font-semibold text-brand-500">Browse the catalog</Link>.
           </p>
         ) : (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">

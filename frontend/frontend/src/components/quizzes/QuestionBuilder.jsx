@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import Button from '../ui/Button'
 import { IconPlus } from '../icons'
 import QuestionEditor, { emptyOption } from './QuestionEditor'
+import AddFromBankModal from './AddFromBankModal'
 
 function emptyQuestion() {
   return {
@@ -16,8 +18,14 @@ function emptyQuestion() {
  * the backend at once (see CreateQuiz.jsx), since questions are created
  * independently of the quiz record per course.md #47. */
 export default function QuestionBuilder({ questions, onChange, errors = {} }) {
+  const [bankModalOpen, setBankModalOpen] = useState(false)
+
   function addQuestion() {
     onChange([...questions, emptyQuestion()])
+  }
+
+  function addFromBank(picked) {
+    onChange([...questions, ...picked])
   }
 
   function updateQuestion(i, next) {
@@ -57,9 +65,16 @@ export default function QuestionBuilder({ questions, onChange, errors = {} }) {
           error={errors[i]}
         />
       ))}
-      <Button type="button" variant="secondary" onClick={addQuestion}>
-        <IconPlus className="h-4 w-4" /> Add Question
-      </Button>
+      <div className="flex flex-wrap gap-3">
+        <Button type="button" variant="secondary" onClick={addQuestion}>
+          <IconPlus className="h-4 w-4" /> Add Question
+        </Button>
+        <Button type="button" variant="outline" onClick={() => setBankModalOpen(true)}>
+          <IconPlus className="h-4 w-4" /> Add from Bank
+        </Button>
+      </div>
+
+      <AddFromBankModal open={bankModalOpen} onClose={() => setBankModalOpen(false)} onAdd={addFromBank} />
     </div>
   )
 }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import useUnreadMessages from '../../hooks/useUnreadMessages'
 import Sidebar from './Sidebar'
 import Topbar from './Topbar'
 import { IconClose } from '../icons'
@@ -14,9 +15,10 @@ function readCollapsed() {
 }
 
 export default function DashboardLayout() {
-  const { user } = useAuth()
+  const { user, accessToken } = useAuth()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(readCollapsed)
+  const { unreadCount } = useUnreadMessages(accessToken)
 
   useEffect(() => {
     try {
@@ -33,7 +35,12 @@ export default function DashboardLayout() {
       {/* Desktop sidebar */}
       <aside className={`hidden shrink-0 lg:block ${sidebarWidth}`}>
         <div className={`fixed h-screen ${sidebarWidth} transition-[width]`}>
-          <Sidebar role={user?.user_type} collapsed={collapsed} onToggleCollapse={() => setCollapsed((c) => !c)} />
+          <Sidebar
+            role={user?.user_type}
+            collapsed={collapsed}
+            onToggleCollapse={() => setCollapsed((c) => !c)}
+            unreadMessageCount={unreadCount}
+          />
         </div>
       </aside>
 
@@ -51,12 +58,12 @@ export default function DashboardLayout() {
               <button
                 type="button"
                 onClick={() => setMobileOpen(false)}
-                className="absolute right-3 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white"
+                className="absolute right-3 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-navy-900/5 text-navy-700 hover:bg-navy-900/10"
                 aria-label="Close menu"
               >
                 <IconClose className="h-4 w-4" />
               </button>
-              <Sidebar role={user?.user_type} onNavigate={() => setMobileOpen(false)} />
+              <Sidebar role={user?.user_type} onNavigate={() => setMobileOpen(false)} unreadMessageCount={unreadCount} />
             </div>
           </div>
         </div>

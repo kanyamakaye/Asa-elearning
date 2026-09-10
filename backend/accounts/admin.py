@@ -2,10 +2,11 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 
 from .models import (
-    EmailVerificationToken,
+    AuditLog,
+    InstructorInvitation,
     InstructorProfile,
     LoginHistory,
-    PasswordResetToken,
+    OTP,
     Permission,
     Role,
     RolePermission,
@@ -37,5 +38,6 @@ admin.site.register(UserRole)
 admin.site.register(StudentProfile)
 admin.site.register(InstructorProfile)
 admin.site.register(LoginHistory)
-admin.site.register(PasswordResetToken)
-admin.site.register(EmailVerificationToken)
+admin.site.register(OTP)
+admin.site.register(InstructorInvitation)
+admin.site.register(AuditLog)

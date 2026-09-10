@@ -12,9 +12,16 @@ const QUESTION_TYPES = [
   { value: 'true_false', label: 'True / False' },
   { value: 'short_answer', label: 'Short Answer' },
   { value: 'essay', label: 'Essay' },
+  { value: 'ordering', label: 'Ordering' },
+  { value: 'numerical', label: 'Numerical' },
+  { value: 'numeric_range', label: 'Numeric Range' },
 ]
 
 const OPTION_BASED_TYPES = ['multiple_choice', 'multiple_select', 'true_false']
+// Ordering shares the plain option list (text only, no correct-answer
+// marker) — the correct sequence is simply the order items are listed in.
+const ORDERING_TYPE = 'ordering'
+const CONFIG_BASED_TYPES = ['numerical', 'numeric_range']
 
 function emptyOption() {
   return { option_text: '', is_correct: false }
@@ -23,13 +30,31 @@ function emptyOption() {
 export default function QuestionEditor({ index, question, onChange, onDelete, onMoveUp, onMoveDown, isFirst, isLast, error }) {
   function update(field, value) {
     const next = { ...question, [field]: value }
-    if (field === 'question_type' && value === 'true_false') {
-      next.options = [
-        { option_text: 'True', is_correct: false },
-        { option_text: 'False', is_correct: false },
-      ]
+    if (field === 'question_type') {
+      const usesOptions = OPTION_BASED_TYPES.includes(value) || value === ORDERING_TYPE
+      if (value === 'true_false') {
+        next.options = [
+          { option_text: 'True', is_correct: false },
+          { option_text: 'False', is_correct: false },
+        ]
+      } else if (value === ORDERING_TYPE && !question.options?.length) {
+        next.options = [emptyOption(), emptyOption()]
+      } else if (!usesOptions) {
+        // Switching away from an option-based type — stale blank options
+        // would otherwise fail backend validation on save.
+        next.options = []
+      }
+      if (CONFIG_BASED_TYPES.includes(value)) {
+        next.config = value === 'numerical' ? { correct_answer: '', tolerance: 0 } : { minimum: '', maximum: '' }
+      } else {
+        next.config = {}
+      }
     }
     onChange(next)
+  }
+
+  function updateConfig(field, value) {
+    onChange({ ...question, config: { ...(question.config ?? {}), [field]: value } })
   }
 
   function updateOption(i, field, value) {
@@ -54,7 +79,10 @@ export default function QuestionEditor({ index, question, onChange, onDelete, on
     onChange({ ...question, options: question.options.filter((_, idx) => idx !== i) })
   }
 
-  const showOptions = OPTION_BASED_TYPES.includes(question.question_type)
+  const showOptions = OPTION_BASED_TYPES.includes(question.question_type) || question.question_type === ORDERING_TYPE
+  const isOrdering = question.question_type === ORDERING_TYPE
+  const showConfig = CONFIG_BASED_TYPES.includes(question.question_type)
+  const config = question.config ?? {}
 
   return (
     <div className="rounded-2xl bg-white p-5 ring-1 ring-navy-900/8">
@@ -93,10 +121,16 @@ export default function QuestionEditor({ index, question, onChange, onDelete, on
 
       {showOptions && (
         <div className="mt-4 space-y-2">
-          <span className="text-xs font-semibold text-navy-700/60">Options — mark the correct answer{question.question_type === 'multiple_select' ? '(s)' : ''}</span>
+          <span className="text-xs font-semibold text-navy-700/60">
+            {isOrdering
+              ? 'Items — enter them in the correct order (top to bottom)'
+              : `Options — mark the correct answer${question.question_type === 'multiple_select' ? '(s)' : ''}`}
+          </span>
           {question.options.map((opt, i) => (
             <div key={i} className="flex items-center gap-2.5">
-              {question.question_type === 'multiple_select' ? (
+              {isOrdering ? (
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-navy-50 text-xs font-bold text-navy-700/60">{i + 1}</span>
+              ) : question.question_type === 'multiple_select' ? (
                 <Checkbox checked={opt.is_correct} onChange={(e) => updateOption(i, 'is_correct', e.target.checked)} />
               ) : (
                 <Radio name={`correct-${index}`} checked={opt.is_correct} onChange={() => updateOption(i, 'is_correct', true)} />
@@ -104,7 +138,7 @@ export default function QuestionEditor({ index, question, onChange, onDelete, on
               <Input
                 value={opt.option_text}
                 onChange={(e) => updateOption(i, 'option_text', e.target.value)}
-                placeholder={`Option ${String.fromCharCode(65 + i)}`}
+                placeholder={isOrdering ? `Item ${i + 1}` : `Option ${String.fromCharCode(65 + i)}`}
                 className="flex-1"
                 disabled={question.question_type === 'true_false'}
               />
@@ -117,8 +151,36 @@ export default function QuestionEditor({ index, question, onChange, onDelete, on
           ))}
           {question.question_type !== 'true_false' && (
             <Button type="button" variant="secondary" size="sm" onClick={addOption}>
-              <IconPlus className="h-3.5 w-3.5" /> Add Option
+              <IconPlus className="h-3.5 w-3.5" /> Add {isOrdering ? 'Item' : 'Option'}
             </Button>
+          )}
+        </div>
+      )}
+
+      {showConfig && (
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          {question.question_type === 'numerical' ? (
+            <>
+              <div>
+                <span className="text-xs font-semibold text-navy-700/60">Correct Answer</span>
+                <Input type="number" className="mt-1.5" value={config.correct_answer ?? ''} onChange={(e) => updateConfig('correct_answer', e.target.value)} />
+              </div>
+              <div>
+                <span className="text-xs font-semibold text-navy-700/60">Tolerance (+/-)</span>
+                <Input type="number" min="0" className="mt-1.5" value={config.tolerance ?? 0} onChange={(e) => updateConfig('tolerance', e.target.value)} />
+              </div>
+            </>
+          ) : (
+            <>
+              <div>
+                <span className="text-xs font-semibold text-navy-700/60">Minimum</span>
+                <Input type="number" className="mt-1.5" value={config.minimum ?? ''} onChange={(e) => updateConfig('minimum', e.target.value)} />
+              </div>
+              <div>
+                <span className="text-xs font-semibold text-navy-700/60">Maximum</span>
+                <Input type="number" className="mt-1.5" value={config.maximum ?? ''} onChange={(e) => updateConfig('maximum', e.target.value)} />
+              </div>
+            </>
           )}
         </div>
       )}

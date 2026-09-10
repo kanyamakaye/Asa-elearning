@@ -7,12 +7,16 @@ import Contact from './pages/Contact'
 import CourseDetail from './pages/CourseDetail'
 import ForgotPassword from './pages/ForgotPassword'
 import Home from './pages/Home'
+import InstructorActivate from './pages/InstructorActivate'
 import Learn from './pages/Learn'
 import Login from './pages/Login'
 import Register from './pages/Register'
+import Verify2FA from './pages/Verify2FA'
 import VerifyCertificate from './pages/VerifyCertificate'
+import VerifyEmail from './pages/VerifyEmail'
 
 import Assessments from './pages/dashboard/Assessments'
+import BrowseCourses from './pages/dashboard/BrowseCourses'
 import CategoriesList from './pages/dashboard/CategoriesList'
 import CertificatesList from './pages/dashboard/CertificatesList'
 import ComingSoon from './pages/dashboard/ComingSoon'
@@ -27,11 +31,14 @@ import PaymentsList from './pages/dashboard/PaymentsList'
 import Profile from './pages/dashboard/Profile'
 import Settings from './pages/dashboard/Settings'
 import TicketsList from './pages/dashboard/TicketsList'
+import Transcript from './pages/dashboard/Transcript'
 import UsersList from './pages/dashboard/UsersList'
 
 import CreateCourse from './pages/instructor/courses/CreateCourse'
 import ManageContent from './pages/instructor/courses/ManageContent'
 import CreateQuiz from './pages/instructor/quizzes/CreateQuiz'
+import QuestionBanksList from './pages/instructor/quizzes/QuestionBanksList'
+import QuestionBankDetail from './pages/instructor/quizzes/QuestionBankDetail'
 import CreateAssignment from './pages/instructor/assignments/CreateAssignment'
 import AssignmentSubmissions from './pages/instructor/assignments/AssignmentSubmissions'
 import ScheduleLiveClass from './pages/instructor/live-classes/ScheduleLiveClass'
@@ -63,7 +70,10 @@ function App() {
 
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Register />} />
+      <Route path="/verify-email" element={<VerifyEmail />} />
+      <Route path="/verify-2fa" element={<Verify2FA />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/instructor/activate" element={<InstructorActivate />} />
 
       <Route element={<RequireAuth />}>
         {/* Full-screen, distraction-free lesson player — deliberately outside
@@ -82,6 +92,8 @@ function App() {
           <Route path="faqs" element={<FAQsList />} />
           <Route path="notifications" element={<NotificationsList />} />
           <Route path="my-courses" element={<MyCourses />} />
+          <Route path="browse-courses" element={<BrowseCourses />} />
+          <Route path="transcript" element={<Transcript />} />
           <Route path="assessments" element={<Assessments />} />
           <Route path="grades" element={<Grades />} />
           <Route path="profile" element={<Profile />} />
@@ -109,6 +121,12 @@ function App() {
           <Route
             path="quizzes/:id/edit"
             element={<RequireRole roles={MANAGER_ROLES}><CreateQuiz /></RequireRole>}
+          />
+
+          <Route path="question-banks" element={<RequireRole roles={MANAGER_ROLES}><QuestionBanksList /></RequireRole>} />
+          <Route
+            path="question-banks/:id"
+            element={<RequireRole roles={MANAGER_ROLES}><QuestionBankDetail /></RequireRole>}
           />
 
           <Route path="assignments" element={<RequireRole roles={MANAGER_ROLES}><AssignmentsList /></RequireRole>} />

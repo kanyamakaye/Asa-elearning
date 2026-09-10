@@ -1,6 +1,17 @@
 from rest_framework import serializers
 
-from .models import Exam, Grade, QuestionOption, Quiz, QuizAnswer, QuizAttempt, QuizQuestion
+from .models import (
+    BankQuestion,
+    BankQuestionOption,
+    Exam,
+    Grade,
+    QuestionBank,
+    QuestionOption,
+    Quiz,
+    QuizAnswer,
+    QuizAttempt,
+    QuizQuestion,
+)
 
 
 class QuestionOptionSerializer(serializers.ModelSerializer):
@@ -22,7 +33,7 @@ class QuizQuestionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = QuizQuestion
-        fields = ['id', 'quiz', 'question_text', 'question_type', 'marks', 'order', 'explanation', 'options']
+        fields = ['id', 'quiz', 'question_text', 'question_type', 'marks', 'order', 'explanation', 'config', 'options']
 
     def create(self, validated_data):
         options_data = validated_data.pop('options', [])
@@ -150,3 +161,66 @@ class GradeSerializer(serializers.ModelSerializer):
             'graded_by', 'graded_at',
         ]
         read_only_fields = ['id', 'percentage', 'letter_grade', 'graded_by', 'graded_at']
+
+
+class BankQuestionOptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BankQuestionOption
+        fields = ['id', 'option_text', 'is_correct', 'order']
+
+
+class BankQuestionSerializer(serializers.ModelSerializer):
+    options = BankQuestionOptionSerializer(many=True, required=False)
+
+    class Meta:
+        model = BankQuestion
+        fields = [
+            'id', 'bank', 'question_text', 'question_type', 'marks', 'difficulty', 'tags',
+            'explanation', 'config', 'options', 'created_at', 'updated_at',
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def create(self, validated_data):
+        options_data = validated_data.pop('options', [])
+        question = BankQuestion.objects.create(**validated_data)
+        for option_data in options_data:
+            BankQuestionOption.objects.create(question=question, **option_data)
+        return question
+
+    def update(self, instance, validated_data):
+        options_data = validated_data.pop('options', None)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        if options_data is not None:
+            instance.options.all().delete()
+            for option_data in options_data:
+                BankQuestionOption.objects.create(question=instance, **option_data)
+        return instance
+
+
+class QuestionBankSerializer(serializers.ModelSerializer):
+    question_count = serializers.IntegerField(source='questions.count', read_only=True)
+    category_name = serializers.CharField(source='category.name', read_only=True, default=None)
+    course_title = serializers.CharField(source='course.title', read_only=True, default=None)
+
+    class Meta:
+        model = QuestionBank
+        fields = [
+            'id', 'title', 'description', 'category', 'category_name', 'course', 'course_title',
+            'question_count', 'created_by', 'created_at', 'updated_at',
+        ]
+        read_only_fields = ['id', 'created_by', 'created_at', 'updated_at']
+
+
+class QuestionBankDetailSerializer(QuestionBankSerializer):
+    questions = BankQuestionSerializer(many=True, read_only=True)
+
+    class Meta(QuestionBankSerializer.Meta):
+        fields = QuestionBankSerializer.Meta.fields + ['questions']
+
+
+class AddFromBankSerializer(serializers.Serializer):
+    bank_question_ids = serializers.ListField(
+        child=serializers.PrimaryKeyRelatedField(queryset=BankQuestion.objects.all()), allow_empty=False
+    )

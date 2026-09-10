@@ -93,16 +93,41 @@ export function deleteAnnouncement(id, token) {
   return apiFetch(`/notifications/announcements/${id}/`, { method: 'DELETE', token })
 }
 
-export function listMessages(token, params = {}) {
-  return apiFetch(`/messages/?${new URLSearchParams(params)}`, { token })
+// -- Messages (conversation-based) -------------------------------------
+
+export function listConversations(token, params = {}) {
+  return apiFetch(`/messages/conversations/?${new URLSearchParams(params)}`, { token })
 }
 
-export function sendMessage(body, token) {
-  return apiFetch('/messages/', { method: 'POST', body, token })
+// Starts a new conversation, or — if one already exists between these two
+// users — reuses it and just appends this message (see the backend's
+// one-to-one dedup rule).
+export function startConversation({ recipient, message }, token) {
+  return apiFetch('/messages/conversations/', { method: 'POST', body: { recipient, message }, token })
 }
 
-export function markMessageRead(id, token) {
-  return apiFetch(`/messages/${id}/mark_read/`, { method: 'POST', token })
+export function getConversationMessages(conversationId, token, params = {}) {
+  return apiFetch(`/messages/conversations/${conversationId}/messages/?${new URLSearchParams(params)}`, { token })
+}
+
+export function sendConversationMessage(conversationId, content, token) {
+  return apiFetch(`/messages/conversations/${conversationId}/messages/`, { method: 'POST', body: { content }, token })
+}
+
+export function markConversationRead(conversationId, token) {
+  return apiFetch(`/messages/conversations/${conversationId}/read/`, { method: 'POST', token })
+}
+
+export function getUnreadMessageCount(token) {
+  return apiFetch('/messages/unread-count/', { token })
+}
+
+// Role-scoped list of users the current user may start a new conversation
+// with (instructors of enrolled courses / their own students / admin —
+// see the backend's messaging.authorization module).
+export function searchMessageContacts(token, search = '') {
+  const qs = search ? `?${new URLSearchParams({ search })}` : ''
+  return apiFetch(`/messages/contacts/${qs}`, { token })
 }
 
 export function listDiscussionTopics(token, params = {}) {

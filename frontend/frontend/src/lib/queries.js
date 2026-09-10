@@ -61,6 +61,12 @@ export function getCourseLearn(slug, token) {
   return apiFetch(`/courses/${slug}/learn/`, { token })
 }
 
+// The signed-in student's full academic record — every course enrolled in,
+// with hours, grade, and certificate status.
+export function getMyTranscript(token) {
+  return apiFetch('/enrollments/transcript/', { token })
+}
+
 export function getLessonProgress(courseId, token) {
   return apiFetch(`/progress/?course=${courseId}`, { token })
 }

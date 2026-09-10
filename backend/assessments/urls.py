@@ -9,6 +9,8 @@ router.register('quizzes/attempts', views.QuizAttemptViewSet, basename='quiz-att
 router.register('quizzes', views.QuizViewSet, basename='quiz')
 router.register('exams', views.ExamViewSet, basename='exam')
 router.register('grades', views.GradeViewSet, basename='grade')
+router.register('question-banks/questions', views.BankQuestionViewSet, basename='bank-question')
+router.register('question-banks', views.QuestionBankViewSet, basename='question-bank')
 
 urlpatterns = [
     path('', include(router.urls)),

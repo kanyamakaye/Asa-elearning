@@ -8,10 +8,24 @@ from accounts.permissions import CanManageAssessment, IsInstructorOrReadOnly
 from common.responses import StandardResponseMixin, success_response
 from notifications.services import notify_enrolled_students
 
-from .models import Exam, Grade, QuestionOption, Quiz, QuizAnswer, QuizAttempt, QuizQuestion
+from .models import (
+    BankQuestion,
+    Exam,
+    Grade,
+    QuestionBank,
+    QuestionOption,
+    Quiz,
+    QuizAnswer,
+    QuizAttempt,
+    QuizQuestion,
+)
 from .serializers import (
+    AddFromBankSerializer,
+    BankQuestionSerializer,
     ExamSerializer,
     GradeSerializer,
+    QuestionBankDetailSerializer,
+    QuestionBankSerializer,
     QuizAttemptSerializer,
     QuizDetailSerializer,
     QuizQuestionSerializer,
@@ -20,6 +34,17 @@ from .serializers import (
 )
 
 AUTO_GRADABLE_TYPES = {QuizQuestion.QuestionType.MULTIPLE_CHOICE, QuizQuestion.QuestionType.TRUE_FALSE}
+
+
+class IsAssessmentManager(CanManageAssessment):
+    """Like CanManageAssessment but without the SAFE_METHODS-open-to-anyone
+    rule — question banks always expose ``is_correct``/``config`` (there is
+    no public/hidden variant like QuizQuestionPublicSerializer), so even
+    reads must stay instructor/admin-only."""
+
+    def has_permission(self, request, view):
+        user = request.user
+        return bool(user and user.is_authenticated and (user.is_staff or user.user_type in self.WRITE_ROLES))
 
 
 class QuizViewSet(StandardResponseMixin, viewsets.ModelViewSet):
@@ -80,6 +105,41 @@ class QuizViewSet(StandardResponseMixin, viewsets.ModelViewSet):
             reference_id=quiz.id,
         )
         return success_response(QuizDetailSerializer(quiz, context=self.get_serializer_context()).data, 'Quiz published successfully.')
+
+    @action(detail=True, methods=['post'], url_path='add-from-bank')
+    def add_from_bank(self, request, pk=None):
+        """Copies bank questions (+ their options) into this quiz. Questions
+        stay independent of the quiz in the bank (question.md #13/#20) — this
+        creates new QuizQuestion rows rather than referencing the bank ones,
+        so later edits to the bank question don't retroactively change a
+        quiz a student may have already attempted."""
+        quiz = self.get_object()
+        self.check_object_permissions(request, quiz)
+        serializer = AddFromBankSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        bank_questions = serializer.validated_data['bank_question_ids']
+
+        next_order = quiz.questions.count()
+        created = []
+        for offset, bank_question in enumerate(bank_questions):
+            question = QuizQuestion.objects.create(
+                quiz=quiz,
+                question_text=bank_question.question_text,
+                question_type=bank_question.question_type,
+                marks=bank_question.marks,
+                order=next_order + offset,
+                explanation=bank_question.explanation,
+                config=bank_question.config,
+            )
+            for option in bank_question.options.all():
+                QuestionOption.objects.create(
+                    question=question, option_text=option.option_text,
+                    is_correct=option.is_correct, order=option.order,
+                )
+            created.append(question)
+        return success_response(
+            QuizQuestionSerializer(created, many=True).data, f'{len(created)} question(s) added from the bank.', 201
+        )
 
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def start(self, request, pk=None):
@@ -208,3 +268,45 @@ class GradeViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(graded_by=self.request.user)
+
+
+class QuestionBankViewSet(StandardResponseMixin, viewsets.ModelViewSet):
+    """Reusable question pools, independent of any one quiz (question.md
+    #13). Read access is restricted to instructors/admins/staff — unlike
+    quizzes, a bank has no "published" concept for students to see."""
+
+    queryset = QuestionBank.objects.select_related('category', 'course', 'created_by').all()
+    permission_classes = [IsAssessmentManager]
+    create_message = 'Question bank created successfully.'
+    update_message = 'Question bank updated successfully.'
+    delete_message = 'Question bank deleted successfully.'
+
+    def get_serializer_class(self):
+        return QuestionBankDetailSerializer if self.action == 'retrieve' else QuestionBankSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        course_id = self.request.query_params.get('course')
+        if course_id:
+            qs = qs.filter(course_id=course_id)
+        category_id = self.request.query_params.get('category')
+        if category_id:
+            qs = qs.filter(category_id=category_id)
+        return qs
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+
+
+class BankQuestionViewSet(StandardResponseMixin, viewsets.ModelViewSet):
+    queryset = BankQuestion.objects.select_related('bank').prefetch_related('options').all()
+    serializer_class = BankQuestionSerializer
+    permission_classes = [IsAssessmentManager]
+    create_message = 'Question added to the bank.'
+    update_message = 'Bank question updated successfully.'
+    delete_message = 'Bank question deleted successfully.'
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        bank_id = self.request.query_params.get('bank')
+        return qs.filter(bank_id=bank_id) if bank_id else qs

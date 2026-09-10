@@ -1,7 +1,18 @@
 from django.contrib import admin
 
 from .forms import ExamForm, GradeForm, QuizForm, QuizQuestionForm
-from .models import Exam, Grade, QuestionOption, Quiz, QuizAnswer, QuizAttempt, QuizQuestion
+from .models import (
+    BankQuestion,
+    BankQuestionOption,
+    Exam,
+    Grade,
+    QuestionBank,
+    QuestionOption,
+    Quiz,
+    QuizAnswer,
+    QuizAttempt,
+    QuizQuestion,
+)
 
 
 class QuestionOptionInline(admin.TabularInline):
@@ -44,3 +55,25 @@ class GradeAdmin(admin.ModelAdmin):
 admin.site.register(QuestionOption)
 admin.site.register(QuizAttempt)
 admin.site.register(QuizAnswer)
+
+
+class BankQuestionOptionInline(admin.TabularInline):
+    model = BankQuestionOption
+    extra = 2
+
+
+class BankQuestionInline(admin.TabularInline):
+    model = BankQuestion
+    extra = 0
+
+
+@admin.register(QuestionBank)
+class QuestionBankAdmin(admin.ModelAdmin):
+    list_display = ('title', 'category', 'course', 'created_by')
+    inlines = [BankQuestionInline]
+
+
+@admin.register(BankQuestion)
+class BankQuestionAdmin(admin.ModelAdmin):
+    list_display = ('bank', 'question_type', 'difficulty', 'marks')
+    inlines = [BankQuestionOptionInline]

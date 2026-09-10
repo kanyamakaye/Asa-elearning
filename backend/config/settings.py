@@ -131,6 +131,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {'min_length': 8},
     },
     {
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
@@ -138,6 +139,18 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
+    {
+        'NAME': 'accounts.validators.ComplexityValidator',
+    },
+]
+
+# Argon2id first (Authentication.md SEC-001) — existing PBKDF2 hashes (from
+# users created before this setting was added) keep working and are
+# transparently upgraded to Argon2 the next time that user logs in.
+PASSWORD_HASHERS = [
+    'django.contrib.auth.hashers.Argon2PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
 ]
 
 
@@ -174,12 +187,30 @@ EMAIL_BACKEND = os.getenv(
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'no-reply@asaacademy.com')
 FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:5173')
 
+# Only read when EMAIL_BACKEND is an SMTP backend — the console backend
+# (the dev default) ignores these entirely, so they're safe to leave unset
+# locally. Never hardcode real values here; supply them via .env / the
+# environment only.
+EMAIL_HOST = os.getenv('EMAIL_HOST', '')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
+EMAIL_HOST_USER = os.getenv('EMAIL_USER', os.getenv('EMAIL_HOST_USER', ''))
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_PASS', os.getenv('EMAIL_HOST_PASSWORD', ''))
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True') == 'True'
+
+# Authentication.md §7 / §17 — OTP and instructor-invitation lifecycle,
+# configurable rather than hardcoded at each call site.
+OTP_LENGTH = int(os.getenv('OTP_LENGTH', '6'))
+OTP_EXPIRATION_MINUTES = int(os.getenv('OTP_EXPIRATION_MINUTES', '10'))
+OTP_MAX_ATTEMPTS = int(os.getenv('OTP_MAX_ATTEMPTS', '5'))
+OTP_RESEND_COOLDOWN_SECONDS = int(os.getenv('OTP_RESEND_COOLDOWN_SECONDS', '60'))
+INSTRUCTOR_INVITATION_EXPIRATION_HOURS = int(os.getenv('INSTRUCTOR_INVITATION_EXPIRATION_HOURS', '24'))
+
 
 # Django REST Framework
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'accounts.authentication.StatusCheckingJWTAuthentication',
         'rest_framework.authentication.SessionAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
@@ -192,6 +223,20 @@ REST_FRAMEWORK = {
         'rest_framework.filters.OrderingFilter',
     ),
     'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%SZ',
+    'DEFAULT_THROTTLE_CLASSES': (
+        'rest_framework.throttling.ScopedRateThrottle',
+    ),
+    # Authentication.md SEC-004 — brute-force / spam protection on the
+    # sensitive auth endpoints. Views opt in via `throttle_scope`; every
+    # other endpoint is unaffected (ScopedRateThrottle no-ops without a scope).
+    'DEFAULT_THROTTLE_RATES': {
+        'auth_register': '5/hour',
+        'auth_login': '10/minute',
+        'auth_otp_verify': '10/minute',
+        'auth_otp_resend': '3/minute',
+        'auth_password_reset': '5/hour',
+        'auth_instructor_invite': '10/hour',
+    },
 }
 
 SIMPLE_JWT = {

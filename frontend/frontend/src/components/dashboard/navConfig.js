@@ -8,6 +8,7 @@ import {
   IconFileText,
   IconHome,
   IconLifeBuoy,
+  IconSearch,
   IconSettings,
   IconShield,
   IconTrendingUp,
@@ -45,6 +46,7 @@ export const NAV_BY_ROLE = {
       items: [
         { label: 'Quizzes', to: '/dashboard/quizzes', icon: IconFileText },
         { label: 'Create Quiz', to: '/dashboard/quizzes/create', icon: IconFileText },
+        { label: 'Question Banks', to: '/dashboard/question-banks', icon: IconFileText },
         { label: 'Assignments', to: '/dashboard/assignments', icon: IconFileText },
         { label: 'Create Assignment', to: '/dashboard/assignments/create', icon: IconFileText },
         { label: 'Exams', to: '/dashboard/exams', icon: IconFileText },
@@ -106,6 +108,7 @@ export const NAV_BY_ROLE = {
       title: 'Assessments',
       items: [
         { label: 'Quizzes', to: '/dashboard/quizzes', icon: IconFileText },
+        { label: 'Question Banks', to: '/dashboard/question-banks', icon: IconFileText },
         { label: 'Assignments', to: '/dashboard/assignments', icon: IconFileText },
         { label: 'Exams', to: '/dashboard/exams', icon: IconFileText },
       ],
@@ -128,6 +131,7 @@ export const NAV_BY_ROLE = {
       title: 'Assessments',
       items: [
         { label: 'Quizzes', to: '/dashboard/quizzes', icon: IconFileText },
+        { label: 'Question Banks', to: '/dashboard/question-banks', icon: IconFileText },
         { label: 'Assignments', to: '/dashboard/assignments', icon: IconFileText },
         { label: 'Exams & Grades', to: '/dashboard/exams', icon: IconFileText },
       ],
@@ -155,9 +159,11 @@ export const NAV_BY_ROLE = {
     {
       title: 'Learning',
       items: [
+        { label: 'Browse Courses', to: '/dashboard/browse-courses', icon: IconSearch },
         { label: 'My Courses', to: '/dashboard/my-courses', icon: IconBook },
         { label: 'Assessments', to: '/dashboard/assessments', icon: IconClipboard },
         { label: 'Grades', to: '/dashboard/grades', icon: IconTrendingUp },
+        { label: 'Transcript', to: '/dashboard/transcript', icon: IconFileText },
         { label: 'Certificates', to: '/dashboard/certificates', icon: IconAward },
       ],
     },

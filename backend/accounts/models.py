@@ -14,9 +14,12 @@ class User(AbstractUser):
         SUPPORT_STAFF = 'support_staff', 'Support Staff'
 
     class Status(models.TextChoices):
+        PENDING_VERIFICATION = 'pending_verification', 'Pending Verification'
+        PENDING_ACTIVATION = 'pending_activation', 'Pending Activation'
         ACTIVE = 'active', 'Active'
         INACTIVE = 'inactive', 'Inactive'
         SUSPENDED = 'suspended', 'Suspended'
+        LOCKED = 'locked', 'Locked'
         BLOCKED = 'blocked', 'Blocked'
 
     class Gender(models.TextChoices):
@@ -35,8 +38,15 @@ class User(AbstractUser):
     country = models.CharField(max_length=100, blank=True)
     city = models.CharField(max_length=100, blank=True)
     user_type = models.CharField(max_length=20, choices=UserType.choices, default=UserType.STUDENT)
-    status = models.CharField(max_length=20, choices=Status.choices, default=Status.ACTIVE)
+    status = models.CharField(max_length=25, choices=Status.choices, default=Status.ACTIVE)
     email_verified = models.BooleanField(default=False)
+    two_factor_enabled = models.BooleanField(
+        default=True, help_text='Whether email-based 2FA is required at login for this account.'
+    )
+    created_by = models.ForeignKey(
+        'self', on_delete=models.SET_NULL, null=True, blank=True, related_name='created_users',
+        help_text='Who provisioned this account — e.g. the admin who created an instructor. Null for self-registration.',
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -158,23 +168,90 @@ class LoginHistory(models.Model):
         return f'{self.user} - {self.login_status} @ {self.login_at}'
 
 
-class PasswordResetToken(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='password_reset_tokens')
-    token = models.CharField(max_length=255, unique=True)
+class OTP(models.Model):
+    """A single, purpose-tagged one-time code — the shared mechanism behind
+    registration email verification, login 2FA, password reset, and
+    instructor account activation (see accounts.otp for generation/
+    verification logic). Replaces the old single-purpose
+    EmailVerificationToken/PasswordResetToken link-token models."""
+
+    class Purpose(models.TextChoices):
+        REGISTRATION = 'registration', 'Registration'
+        LOGIN_2FA = 'login_2fa', 'Login 2FA'
+        PASSWORD_RESET = 'password_reset', 'Password Reset'
+        INSTRUCTOR_ACTIVATION = 'instructor_activation', 'Instructor Activation'
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='otps')
+    purpose = models.CharField(max_length=30, choices=Purpose.choices)
+    otp_hash = models.CharField(max_length=128)
     expires_at = models.DateTimeField()
+    attempt_count = models.PositiveIntegerField(default=0)
+    used = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
     used_at = models.DateTimeField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [models.Index(fields=['user', 'purpose', 'used'])]
 
     def __str__(self):
-        return f'Password reset for {self.user}'
+        return f'{self.purpose} OTP for {self.user}'
 
 
-class EmailVerificationToken(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='email_verification_tokens')
-    token = models.CharField(max_length=255, unique=True)
+class LoginChallenge(models.Model):
+    """The temporary, single-use handle ("challengeId") a client holds
+    between submitting a valid password and completing email 2FA — kept
+    separate from the OTP row itself so a challenge can be invalidated
+    independently and never doubles as a bearer credential on its own."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='login_challenges')
+    otp = models.ForeignKey(OTP, on_delete=models.CASCADE, related_name='+')
     expires_at = models.DateTimeField()
-    verified_at = models.DateTimeField(null=True, blank=True)
+    used = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f'Email verification for {self.user}'
+        return f'Login challenge for {self.user}'
+
+
+class InstructorInvitation(models.Model):
+    """An Admin-issued, single-use invitation letting a newly-created
+    Instructor account set its own password and verify its own email —
+    the Admin never sets or sees the Instructor's password."""
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='invitations')
+    token_hash = models.CharField(max_length=64, unique=True)
+    expires_at = models.DateTimeField()
+    used = models.BooleanField(default=False)
+    created_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name='invitations_sent',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    used_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f'Instructor invitation for {self.user}'
+
+
+class AuditLog(models.Model):
+    """Security-relevant event trail (registration, OTP lifecycle, 2FA,
+    instructor provisioning, password changes, account lockouts, ...) —
+    see accounts.audit.log_event(). Login attempts specifically continue to
+    use the pre-existing LoginHistory model rather than duplicating that
+    here as well."""
+
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='audit_logs')
+    event_type = models.CharField(max_length=50)
+    result = models.CharField(max_length=20, blank=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.CharField(max_length=255, blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [models.Index(fields=['event_type', 'created_at'])]
+
+    def __str__(self):
+        return f'{self.event_type} @ {self.created_at}'
