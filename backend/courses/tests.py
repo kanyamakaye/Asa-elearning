@@ -106,3 +106,34 @@ class CourseCreationTests(APITestCase):
         response = self.client.post(f'/api/v1/courses/{slug}/publish/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['data']['status'], 'published')
+
+    def test_create_course_with_thumbnail_url(self):
+        self.client.force_authenticate(self.instructor)
+        payload = {**self.payload, 'course_code': 'WEB-103', 'thumbnail_url': 'https://example.com/thumb.jpg'}
+        response = self.client.post('/api/v1/courses/', payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
+        self.assertEqual(response.data['data']['thumbnail_url'], 'https://example.com/thumb.jpg')
+
+    def test_invalid_thumbnail_url_rejected(self):
+        self.client.force_authenticate(self.instructor)
+        payload = {**self.payload, 'course_code': 'WEB-104', 'thumbnail_url': 'not-a-url'}
+        response = self.client.post('/api/v1/courses/', payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('thumbnail_url', response.data['errors'])
+
+    def test_thumbnail_url_takes_priority_over_uploaded_image_in_responses(self):
+        course = Course.objects.create(
+            title='Priority Test', course_code='WEB-105', instructor=self.instructor,
+            thumbnail_url='https://example.com/from-url.jpg',
+        )
+        self.client.force_authenticate(self.instructor)
+        response = self.client.get(f'/api/v1/courses/{course.slug}/')
+        self.assertEqual(response.data['image'], 'https://example.com/from-url.jpg')
+        self.assertEqual(response.data['thumbnail'], 'https://example.com/from-url.jpg')
+
+    def test_no_thumbnail_url_falls_back_to_null_image(self):
+        course = Course.objects.create(title='No Thumb', course_code='WEB-106', instructor=self.instructor)
+        self.client.force_authenticate(self.instructor)
+        response = self.client.get(f'/api/v1/courses/{course.slug}/')
+        self.assertIsNone(response.data['image'])
+        self.assertIsNone(response.data['thumbnail'])

@@ -26,6 +26,7 @@ const INITIAL_FORM = {
   short_description: '',
   description: '',
   thumbnail: null,
+  thumbnail_url: '',
   price: '0',
   discount_price: '',
   duration_hours: '',
@@ -92,6 +93,7 @@ function toFormShape(course) {
     short_description: course.short_description,
     description: course.description,
     thumbnail: course.thumbnail ?? null,
+    thumbnail_url: course.thumbnail_url ?? '',
     price: String(course.price ?? '0'),
     discount_price: course.discount_price != null ? String(course.discount_price) : '',
     duration_hours: String(course.duration_hours ?? ''),
@@ -192,6 +194,7 @@ export default function CreateCourse() {
         learning_objectives: form.learning_objectives,
         requirements: form.requirements,
         thumbnail: form.thumbnail ?? undefined,
+        thumbnail_url: form.thumbnail_url.trim(),
       }
       const resultSlug = isEdit ? slug : (await createCourse(payload)).data.slug
       if (isEdit) await updateCourse(slug, payload)
@@ -287,15 +290,35 @@ export default function CreateCourse() {
         )}
 
         {step === 2 && (
-          <FormField label="Course Thumbnail" hint="PNG or JPG, up to 5MB.">
-            <FileUpload
-              label="Upload thumbnail"
-              accept="image/png,image/jpeg,image/webp"
-              maxSizeMb={5}
-              value={form.thumbnail}
-              onChange={(file) => update('thumbnail', file)}
-            />
-          </FormField>
+          <div className="grid gap-5">
+            <FormField label="Thumbnail Image URL" error={errors.thumbnail_url} hint="Paste a link to an image instead of uploading a file — this takes priority if both are set.">
+              <Input
+                type="url"
+                value={form.thumbnail_url}
+                onChange={(e) => update('thumbnail_url', e.target.value)}
+                placeholder="https://example.com/image.jpg"
+                error={errors.thumbnail_url}
+              />
+            </FormField>
+            {form.thumbnail_url.trim() && (
+              <img
+                src={form.thumbnail_url}
+                alt="Thumbnail preview"
+                className="h-40 w-full rounded-xl object-cover ring-1 ring-navy-900/8"
+                onError={(e) => { e.currentTarget.style.display = 'none' }}
+                onLoad={(e) => { e.currentTarget.style.display = 'block' }}
+              />
+            )}
+            <FormField label="Or Upload a File" hint="PNG or JPG, up to 5MB.">
+              <FileUpload
+                label="Upload thumbnail"
+                accept="image/png,image/jpeg,image/webp"
+                maxSizeMb={5}
+                value={form.thumbnail}
+                onChange={(file) => update('thumbnail', file)}
+              />
+            </FormField>
+          </div>
         )}
 
         {step === 3 && (

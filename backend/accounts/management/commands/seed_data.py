@@ -5,6 +5,7 @@ from decimal import Decimal
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
 from django.utils import timezone
+from django.utils.text import slugify
 
 from accounts.models import (
     InstructorProfile,
@@ -33,6 +34,15 @@ from support.models import FAQ, Feedback, SupportTicket
 User = get_user_model()
 
 SEED_PASSWORD = 'Demo@12345'
+
+
+def thumbnail_seed_url(title):
+    """A deterministic placeholder image URL for dummy course data — same
+    title always resolves to the same image, so re-seeding doesn't reshuffle
+    thumbnails. Populates Course.thumbnail_url, which the create-course form
+    also lets instructors paste directly (it takes priority over an
+    uploaded file/image when set)."""
+    return f'https://picsum.photos/seed/{slugify(title)}/800/450'
 
 CATEGORIES = [
     ('Information Technology', 'Servers, networking, and IT operations.'),
@@ -672,6 +682,7 @@ class Command(BaseCommand):
                         'is_free': price is None,
                         'status': Course.Status.PUBLISHED,
                         'certificate_enabled': True,
+                        'thumbnail_url': thumbnail_seed_url(title),
                     },
                 )
                 if created:
@@ -735,6 +746,7 @@ class Command(BaseCommand):
                         'is_free': price is None,
                         'status': Course.Status.PUBLISHED,
                         'certificate_enabled': True,
+                        'thumbnail_url': thumbnail_seed_url(title),
                     },
                 )
                 if created:

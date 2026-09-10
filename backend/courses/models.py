@@ -59,6 +59,9 @@ class Course(models.Model):
     duration_hours = models.PositiveIntegerField(default=0)
     image = models.ImageField(upload_to='courses/', blank=True, null=True)
     thumbnail = models.ImageField(upload_to='courses/thumbnails/', blank=True, null=True)
+    thumbnail_url = models.URLField(
+        blank=True, help_text='External image URL — takes priority over an uploaded thumbnail/image file when set.'
+    )
     video_url = models.URLField(blank=True)
     price = models.DecimalField(max_digits=8, decimal_places=2, default=0)
     discount_price = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)

@@ -151,7 +151,7 @@ class CourseListSerializer(serializers.ModelSerializer):
         model = Course
         fields = [
             'id', 'course_code', 'title', 'slug', 'short_description', 'category', 'instructor',
-            'level', 'language', 'duration_hours', 'image', 'thumbnail', 'price', 'discount_price',
+            'level', 'language', 'duration_hours', 'image', 'thumbnail', 'thumbnail_url', 'price', 'discount_price',
             'is_free', 'status', 'visibility', 'average_rating', 'enrolled_count',
             'certificate_enabled', 'created_at',
         ]
@@ -159,6 +159,18 @@ class CourseListSerializer(serializers.ModelSerializer):
     def get_average_rating(self, obj):
         agg = obj.reviews.filter(status='approved').aggregate(avg=Avg('rating'))
         return round(agg['avg'], 2) if agg['avg'] else None
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        # A pasted thumbnail_url is the intended "current" thumbnail even when
+        # an uploaded file also exists (e.g. an auto-generated one from
+        # seed_data) — every existing frontend read site already renders
+        # `image`/`thumbnail` directly, so folding the override in here means
+        # they pick it up with no template changes.
+        if instance.thumbnail_url:
+            data['image'] = instance.thumbnail_url
+            data['thumbnail'] = instance.thumbnail_url
+        return data
 
 
 class CourseDetailSerializer(CourseListSerializer):
