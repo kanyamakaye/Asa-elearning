@@ -19,12 +19,15 @@ const DASHBOARD = { label: 'Dashboard', to: '/dashboard', icon: IconHome, end: t
 const PROFILE = { label: 'Profile', to: '/dashboard/profile', icon: IconUsers }
 const SETTINGS = { label: 'Settings', to: '/dashboard/settings', icon: IconSettings }
 
+// A nav entry is either a leaf link ({ label, to, icon, end? }) or a
+// collapsible submenu ({ label, icon, children: [leaf, ...] }).
 export const NAV_BY_ROLE = {
   admin: [
-    { items: [DASHBOARD] },
+    DASHBOARD,
     {
-      title: 'Users',
-      items: [
+      label: 'Users',
+      icon: IconUsers,
+      children: [
         { label: 'All Users', to: '/dashboard/users', icon: IconUsers },
         { label: 'Students', to: '/dashboard/users?role=student', icon: IconUsers },
         { label: 'Instructors', to: '/dashboard/users?role=instructor', icon: IconUsers },
@@ -32,21 +35,21 @@ export const NAV_BY_ROLE = {
       ],
     },
     {
-      title: 'Courses',
-      items: [
+      label: 'Courses',
+      icon: IconBook,
+      children: [
         { label: 'All Courses', to: '/dashboard/courses', icon: IconBook },
         { label: 'Create Course', to: '/dashboard/courses/create', icon: IconBook },
         { label: 'Categories', to: '/dashboard/categories', icon: IconClipboard },
         { label: 'Modules & Lessons', to: '/dashboard/courses', icon: IconClipboard },
       ],
     },
-    { items: [
-      { label: 'Enrollments', to: '/dashboard/enrollments', icon: IconClipboard },
-      { label: 'Groups', to: '/dashboard/groups', icon: IconUsers },
-    ] },
+    { label: 'Enrollments', to: '/dashboard/enrollments', icon: IconClipboard },
+    { label: 'Groups', to: '/dashboard/groups', icon: IconUsers },
     {
-      title: 'Assessments',
-      items: [
+      label: 'Assessments',
+      icon: IconFileText,
+      children: [
         { label: 'Quizzes', to: '/dashboard/quizzes', icon: IconFileText },
         { label: 'Create Quiz', to: '/dashboard/quizzes/create', icon: IconFileText },
         { label: 'Question Banks', to: '/dashboard/question-banks', icon: IconFileText },
@@ -57,17 +60,19 @@ export const NAV_BY_ROLE = {
         { label: 'Grading Queue', to: '/dashboard/grading', icon: IconFileText },
       ],
     },
-    { items: [{ label: 'Certificates', to: '/dashboard/certificates', icon: IconAward }] },
+    { label: 'Certificates', to: '/dashboard/certificates', icon: IconAward },
     {
-      title: 'Payments',
-      items: [
+      label: 'Payments',
+      icon: IconCreditCard,
+      children: [
         { label: 'Transactions', to: '/dashboard/payments', icon: IconCreditCard },
         { label: 'Refunds', to: '/dashboard/refunds', icon: IconCreditCard },
       ],
     },
     {
-      title: 'Communication',
-      items: [
+      label: 'Communication',
+      icon: IconChat,
+      children: [
         { label: 'Announcements', to: '/dashboard/announcements', icon: IconBell },
         { label: 'Notifications', to: '/dashboard/notifications', icon: IconBell },
         { label: 'Messages', to: '/dashboard/messages', icon: IconChat },
@@ -75,33 +80,33 @@ export const NAV_BY_ROLE = {
       ],
     },
     {
-      title: 'Live Classes',
-      items: [
+      label: 'Live Classes',
+      icon: IconTrendingUp,
+      children: [
         { label: 'All Live Classes', to: '/dashboard/live-classes', icon: IconTrendingUp },
         { label: 'Schedule Live Class', to: '/dashboard/live-classes/create', icon: IconTrendingUp },
       ],
     },
     {
-      title: 'Support',
-      items: [
+      label: 'Support',
+      icon: IconLifeBuoy,
+      children: [
         { label: 'Tickets', to: '/dashboard/tickets', icon: IconLifeBuoy },
         { label: 'FAQs', to: '/dashboard/faqs', icon: IconLifeBuoy },
       ],
     },
-    {
-      items: [
-        { label: 'Audit Logs', to: '/dashboard/audit-logs', icon: IconShield },
-        { label: 'System Settings', to: '/dashboard/coming-soon?label=System%20Settings', icon: IconSettings },
-      ],
-    },
-    { items: [PROFILE, SETTINGS] },
+    { label: 'Audit Logs', to: '/dashboard/audit-logs', icon: IconShield },
+    { label: 'System Settings', to: '/dashboard/coming-soon?label=System%20Settings', icon: IconSettings },
+    PROFILE,
+    SETTINGS,
   ],
 
   academic_manager: [
-    { items: [DASHBOARD] },
+    DASHBOARD,
     {
-      title: 'Academics',
-      items: [
+      label: 'Academics',
+      icon: IconBook,
+      children: [
         { label: 'Courses', to: '/dashboard/courses', icon: IconBook },
         { label: 'Enrollments', to: '/dashboard/enrollments', icon: IconClipboard },
         { label: 'Groups', to: '/dashboard/groups', icon: IconUsers },
@@ -111,8 +116,9 @@ export const NAV_BY_ROLE = {
       ],
     },
     {
-      title: 'Assessments',
-      items: [
+      label: 'Assessments',
+      icon: IconFileText,
+      children: [
         { label: 'Quizzes', to: '/dashboard/quizzes', icon: IconFileText },
         { label: 'Question Banks', to: '/dashboard/question-banks', icon: IconFileText },
         { label: 'Assignments', to: '/dashboard/assignments', icon: IconFileText },
@@ -121,23 +127,26 @@ export const NAV_BY_ROLE = {
         { label: 'Grading Queue', to: '/dashboard/grading', icon: IconFileText },
       ],
     },
-    { items: [{ label: 'Live Classes', to: '/dashboard/live-classes', icon: IconTrendingUp }] },
-    { items: [PROFILE, SETTINGS] },
+    { label: 'Live Classes', to: '/dashboard/live-classes', icon: IconTrendingUp },
+    PROFILE,
+    SETTINGS,
   ],
 
   instructor: [
-    { items: [DASHBOARD] },
+    DASHBOARD,
     {
-      title: 'My Courses',
-      items: [
+      label: 'My Courses',
+      icon: IconBook,
+      children: [
         { label: 'All Courses', to: '/dashboard/courses', icon: IconBook },
         { label: 'Create Course', to: '/dashboard/courses/create', icon: IconBook },
         { label: 'Content, Modules & Lessons', to: '/dashboard/courses', icon: IconClipboard },
       ],
     },
     {
-      title: 'Assessments',
-      items: [
+      label: 'Assessments',
+      icon: IconFileText,
+      children: [
         { label: 'Quizzes', to: '/dashboard/quizzes', icon: IconFileText },
         { label: 'Question Banks', to: '/dashboard/question-banks', icon: IconFileText },
         { label: 'Assignments', to: '/dashboard/assignments', icon: IconFileText },
@@ -147,29 +156,33 @@ export const NAV_BY_ROLE = {
       ],
     },
     {
-      title: 'Students',
-      items: [
+      label: 'Students',
+      icon: IconUsers,
+      children: [
         { label: 'Enrolled Students', to: '/dashboard/enrollments', icon: IconUsers },
         { label: 'Groups', to: '/dashboard/groups', icon: IconUsers },
       ],
     },
     {
-      title: 'Communication',
-      items: [
+      label: 'Communication',
+      icon: IconChat,
+      children: [
         { label: 'Discussions', to: '/dashboard/discussions', icon: IconChat },
         { label: 'Messages', to: '/dashboard/messages', icon: IconChat },
         { label: 'Announcements', to: '/dashboard/announcements', icon: IconBell },
       ],
     },
-    { items: [{ label: 'Live Classes', to: '/dashboard/live-classes', icon: IconTrendingUp }] },
-    { items: [PROFILE, SETTINGS] },
+    { label: 'Live Classes', to: '/dashboard/live-classes', icon: IconTrendingUp },
+    PROFILE,
+    SETTINGS,
   ],
 
   student: [
-    { items: [DASHBOARD] },
+    DASHBOARD,
     {
-      title: 'Learning',
-      items: [
+      label: 'Learning',
+      icon: IconBook,
+      children: [
         { label: 'Browse Courses', to: '/dashboard/browse-courses', icon: IconSearch },
         { label: 'My Courses', to: '/dashboard/my-courses', icon: IconBook },
         { label: 'Assessments', to: '/dashboard/assessments', icon: IconClipboard },
@@ -179,40 +192,46 @@ export const NAV_BY_ROLE = {
       ],
     },
     {
-      title: 'Communication',
-      items: [
+      label: 'Communication',
+      icon: IconChat,
+      children: [
         { label: 'Notifications', to: '/dashboard/notifications', icon: IconBell },
         { label: 'Messages', to: '/dashboard/messages', icon: IconChat },
         { label: 'Discussions', to: '/dashboard/discussions', icon: IconChat },
       ],
     },
-    { items: [{ label: 'Live Classes', to: '/dashboard/live-classes', icon: IconTrendingUp }] },
-    { items: [PROFILE, SETTINGS] },
+    { label: 'Live Classes', to: '/dashboard/live-classes', icon: IconTrendingUp },
+    PROFILE,
+    SETTINGS,
   ],
 
   content_manager: [
-    { items: [DASHBOARD] },
+    DASHBOARD,
     {
-      title: 'Content',
-      items: [
+      label: 'Content',
+      icon: IconBook,
+      children: [
         { label: 'Courses', to: '/dashboard/courses', icon: IconBook },
         { label: 'Categories', to: '/dashboard/categories', icon: IconClipboard },
         { label: 'Modules & Lessons', to: '/dashboard/courses', icon: IconClipboard },
       ],
     },
-    { items: [PROFILE, SETTINGS] },
+    PROFILE,
+    SETTINGS,
   ],
 
   support_staff: [
-    { items: [DASHBOARD] },
+    DASHBOARD,
     {
-      title: 'Support',
-      items: [
+      label: 'Support',
+      icon: IconLifeBuoy,
+      children: [
         { label: 'Tickets', to: '/dashboard/tickets', icon: IconLifeBuoy },
         { label: 'FAQs', to: '/dashboard/faqs', icon: IconLifeBuoy },
       ],
     },
-    { items: [PROFILE, SETTINGS] },
+    PROFILE,
+    SETTINGS,
   ],
 }
 
