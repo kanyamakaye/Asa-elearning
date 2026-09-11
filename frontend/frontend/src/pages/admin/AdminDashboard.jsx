@@ -3,9 +3,14 @@ import { useAuth } from '../../context/AuthContext'
 import { getDashboard } from '../../lib/dashboardApi'
 import ChartCard from '../../components/dashboard/ChartCard'
 import DashboardHero from '../../components/dashboard/DashboardHero'
+import DonutChartCard from '../../components/dashboard/DonutChartCard'
+import LineChartCard from '../../components/dashboard/LineChartCard'
 import QuickActions from '../../components/dashboard/QuickActions'
 import RecentActivity from '../../components/dashboard/RecentActivity'
+import RecentRegistrations from '../../components/dashboard/RecentRegistrations'
 import StatCard from '../../components/dashboard/StatCard'
+import SystemOverview from '../../components/dashboard/SystemOverview'
+import UpcomingLiveClasses from '../../components/dashboard/UpcomingLiveClasses'
 import {
   IconAward,
   IconBook,
@@ -61,42 +66,73 @@ export default function AdminDashboard() {
         <StatCard icon={IconBook} label="Draft Courses" value={stats.draft_courses} accent="navy" />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <ChartCard
-          title="User Registrations"
-          subtitle="Last 14 days"
-          data={(data?.charts?.user_registrations ?? []).map((r) => ({
-            label: new Date(r.day).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
-            students: r.students,
-            instructors: r.instructors,
-          }))}
-          series={[
-            { key: 'students', label: 'Students', color: 'bg-brand-500' },
-            { key: 'instructors', label: 'Instructors', color: 'bg-navy-700' },
-          ]}
-        />
-        <ChartCard
-          title="Enrollment Trend"
-          subtitle="Last 6 months"
-          data={(data?.charts?.enrollments ?? []).map((r) => ({
-            label: new Date(r.month).toLocaleDateString(undefined, { month: 'short' }),
-            new: r.new,
-            completed: r.completed,
-            cancelled: r.cancelled,
-          }))}
-          series={[
-            { key: 'new', label: 'New', color: 'bg-brand-500' },
-            { key: 'completed', label: 'Completed', color: 'bg-emerald-500' },
-            { key: 'cancelled', label: 'Cancelled', color: 'bg-red-400' },
-          ]}
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <LineChartCard
+            title="User Growth"
+            subtitle="Last 12 months"
+            data={(data?.charts?.user_growth ?? []).map((r) => ({
+              label: new Date(r.month).toLocaleDateString(undefined, { month: 'short' }),
+              students: r.students,
+              instructors: r.instructors,
+              total_users: r.total_users,
+            }))}
+            series={[
+              { key: 'students', label: 'Students', color: '#2f5fff' },
+              { key: 'instructors', label: 'Instructors', color: '#059669' },
+              { key: 'total_users', label: 'Total Users', color: '#7c3aed' },
+            ]}
+          />
+        </div>
+        <DonutChartCard
+          title="Course Categories"
+          centerLabel="Courses"
+          linkTo="/dashboard/categories"
+          data={data?.charts?.course_categories ?? []}
+          valueKey="course_count"
+          labelKey="name"
         />
       </div>
 
+      <ChartCard
+        title="Enrollments vs Completions"
+        subtitle="Last 12 months"
+        data={(data?.charts?.enrollments ?? []).map((r) => ({
+          label: new Date(r.month).toLocaleDateString(undefined, { month: 'short' }),
+          new: r.new,
+          completed: r.completed,
+        }))}
+        series={[
+          { key: 'new', label: 'Enrollments', color: 'bg-brand-500' },
+          { key: 'completed', label: 'Completions', color: 'bg-emerald-500' },
+        ]}
+      />
+
       <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
+        <div className="space-y-6 lg:col-span-2">
           <RecentActivity items={data?.recent_activity ?? []} />
+          <div className="rounded-2xl bg-white p-5 ring-1 ring-navy-900/8">
+            <h3 className="text-sm font-bold text-navy-900">Top Performing Courses</h3>
+            <ul className="mt-3 space-y-3">
+              {(data?.top_courses ?? []).length === 0 && !loading && (
+                <p className="text-sm text-navy-700/45">No courses yet.</p>
+              )}
+              {(data?.top_courses ?? []).map((c) => (
+                <li key={c.id} className="flex items-center justify-between text-sm">
+                  <span className="truncate pr-3 text-navy-800">{c.title}</span>
+                  <span className="flex shrink-0 items-center gap-3">
+                    {c.avg_rating != null && (
+                      <span className="text-xs font-semibold text-amber-600">★ {Number(c.avg_rating).toFixed(1)}</span>
+                    )}
+                    <span className="font-semibold text-navy-900">{c.enrollment_count} enrolled</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
         <div className="space-y-6">
+          <UpcomingLiveClasses items={data?.upcoming_live_classes ?? []} />
           <QuickActions
             actions={[
               { label: 'Add User', to: '/dashboard/users', icon: IconPlus },
@@ -107,22 +143,12 @@ export default function AdminDashboard() {
               { label: 'Support Tickets', to: '/dashboard/tickets', icon: IconLifeBuoy },
             ]}
           />
-
-          <div className="rounded-2xl bg-white p-5 ring-1 ring-navy-900/8">
-            <h3 className="text-sm font-bold text-navy-900">Top Courses</h3>
-            <ul className="mt-3 space-y-3">
-              {(data?.top_courses ?? []).length === 0 && !loading && (
-                <p className="text-sm text-navy-700/45">No courses yet.</p>
-              )}
-              {(data?.top_courses ?? []).map((c) => (
-                <li key={c.id} className="flex items-center justify-between text-sm">
-                  <span className="truncate pr-3 text-navy-800">{c.title}</span>
-                  <span className="shrink-0 font-semibold text-navy-900">{c.enrollment_count} enrolled</span>
-                </li>
-              ))}
-            </ul>
-          </div>
         </div>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <RecentRegistrations items={data?.recent_registrations ?? []} loading={loading} />
+        <SystemOverview system={data?.system} />
       </div>
     </div>
   )
