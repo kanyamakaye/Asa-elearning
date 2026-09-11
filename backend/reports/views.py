@@ -1,5 +1,8 @@
+import shutil
+import time
 from datetime import timedelta
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import Avg, Count, DurationField, ExpressionWrapper, F, Q, Sum
 from django.db.models.functions import TruncDate, TruncMonth
@@ -7,6 +10,7 @@ from django.utils import timezone
 from rest_framework import permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
 
 from accounts.permissions import (
     IsAdmin,
@@ -17,7 +21,7 @@ from accounts.permissions import (
 from assessments.models import Exam, Quiz, QuizAttempt
 from assignments.models import Assignment, AssignmentSubmission
 from certificates.models import Certificate
-from courses.models import Course, CourseModule
+from courses.models import Course, CourseCategory, CourseModule
 from discussions.models import DiscussionReply
 from enrollments.models import Enrollment
 from lessons.models import Lesson, LearningResource
@@ -29,6 +33,22 @@ from reviews.models import CourseReview
 from support.models import SupportTicket
 
 User = get_user_model()
+
+# Approximates "server start" for an uptime readout — set once when this
+# module is first imported (i.e. when the Django process boots).
+SERVER_STARTED_AT = timezone.now()
+
+
+def last_n_month_starts(n):
+    """The first-of-month date for each of the last `n` months, oldest first."""
+    today = timezone.now().date()
+    months = []
+    for i in range(n - 1, -1, -1):
+        month_index = today.month - 1 - i
+        year = today.year + month_index // 12
+        month = month_index % 12 + 1
+        months.append(today.replace(year=year, month=month, day=1))
+    return months
 
 
 def user_summary(user):
@@ -79,34 +99,76 @@ class AdminDashboardView(APIView):
     permission_classes = [IsAdmin]
 
     def get(self, request):
+        request_started = time.monotonic()
+
         since_14d = timezone.now() - timedelta(days=14)
         revenue_agg = Payment.objects.filter(payment_status='successful').aggregate(total=Sum('amount'))
         pending_payments = Payment.objects.filter(payment_status='pending').count()
 
-        registrations = (
-            User.objects.filter(date_joined__gte=since_14d)
-            .annotate(day=TruncDate('date_joined'))
-            .values('day')
-            .annotate(
-                students=Count('id', filter=Q(user_type='student')),
-                instructors=Count('id', filter=Q(user_type='instructor')),
-                total=Count('id'),
-            )
-            .order_by('day')
-        )
+        # -- User Growth: cumulative students/instructors/total, last 12 months --
+        month_starts = last_n_month_starts(12)
+        since_12m_start = month_starts[0]
+        baseline_students = User.objects.filter(
+            user_type='student', date_joined__date__lt=since_12m_start
+        ).count()
+        baseline_instructors = User.objects.filter(
+            user_type='instructor', date_joined__date__lt=since_12m_start
+        ).count()
+        baseline_total = User.objects.filter(date_joined__date__lt=since_12m_start).count()
 
-        since_6m = timezone.now() - timedelta(days=182)
-        enrollment_trend = (
-            Enrollment.objects.filter(created_at__gte=since_6m)
-            .annotate(month=TruncMonth('created_at'))
-            .values('month')
-            .annotate(
-                new=Count('id'),
-                completed=Count('id', filter=Q(status=Enrollment.Status.COMPLETED)),
-                cancelled=Count('id', filter=Q(status=Enrollment.Status.CANCELLED)),
+        monthly_signups = {
+            row['month'].date(): row
+            for row in (
+                User.objects.filter(date_joined__date__gte=since_12m_start)
+                .annotate(month=TruncMonth('date_joined'))
+                .values('month')
+                .annotate(
+                    students=Count('id', filter=Q(user_type='student')),
+                    instructors=Count('id', filter=Q(user_type='instructor')),
+                    total=Count('id'),
+                )
             )
-            .order_by('month')
+        }
+
+        user_growth = []
+        running_students, running_instructors, running_total = (
+            baseline_students, baseline_instructors, baseline_total,
         )
+        for month_start in month_starts:
+            row = monthly_signups.get(month_start, {})
+            running_students += row.get('students', 0)
+            running_instructors += row.get('instructors', 0)
+            running_total += row.get('total', 0)
+            user_growth.append({
+                'month': month_start.isoformat(),
+                'students': running_students,
+                'instructors': running_instructors,
+                'total_users': running_total,
+            })
+
+        # -- Enrollments vs Completions, last 12 months --
+        monthly_enrollments = {
+            row['month'].date(): row
+            for row in (
+                Enrollment.objects.filter(created_at__date__gte=since_12m_start)
+                .annotate(month=TruncMonth('created_at'))
+                .values('month')
+                .annotate(
+                    new=Count('id'),
+                    completed=Count('id', filter=Q(status=Enrollment.Status.COMPLETED)),
+                    cancelled=Count('id', filter=Q(status=Enrollment.Status.CANCELLED)),
+                )
+            )
+        }
+        enrollment_trend = [
+            {
+                'month': month_start.isoformat(),
+                'new': monthly_enrollments.get(month_start, {}).get('new', 0),
+                'completed': monthly_enrollments.get(month_start, {}).get('completed', 0),
+                'cancelled': monthly_enrollments.get(month_start, {}).get('cancelled', 0),
+            }
+            for month_start in month_starts
+        ]
 
         revenue_trend = (
             Payment.objects.filter(payment_status='successful', created_at__gte=since_14d)
@@ -116,6 +178,17 @@ class AdminDashboardView(APIView):
             .order_by('day')
         )
 
+        # -- Course Categories breakdown --
+        category_breakdown = list(
+            CourseCategory.objects.annotate(course_count=Count('courses'))
+            .filter(course_count__gt=0)
+            .order_by('-course_count')
+            .values('name', 'course_count')[:7]
+        )
+        uncategorized_count = Course.objects.filter(category__isnull=True).count()
+        if uncategorized_count:
+            category_breakdown.append({'name': 'Uncategorized', 'course_count': uncategorized_count})
+
         top_courses = list(
             Course.objects.annotate(
                 enrollment_count=Count('enrollments', distinct=True),
@@ -124,6 +197,41 @@ class AdminDashboardView(APIView):
             .order_by('-enrollment_count')
             .values('id', 'title', 'enrollment_count', 'avg_rating')[:5]
         )
+
+        # -- Upcoming Live Classes --
+        today = timezone.now().date()
+        upcoming_live_classes = list(
+            LiveSession.objects.filter(status=LiveSession.Status.SCHEDULED, scheduled_date__gte=today)
+            .select_related('course', 'instructor')
+            .order_by('scheduled_date', 'start_time')
+            .values(
+                'id', 'title', 'scheduled_date', 'start_time', 'end_time',
+                'course__title', 'instructor__first_name', 'instructor__last_name',
+            )[:5]
+        )
+
+        # -- Recent Registrations --
+        recent_registrations = list(
+            User.objects.order_by('-date_joined').values(
+                'id', 'first_name', 'last_name', 'email', 'user_type', 'date_joined',
+            )[:8]
+        )
+
+        # -- System Overview: real, cheaply-computed operational metrics --
+        disk_total, _disk_used, disk_free = shutil.disk_usage(settings.BASE_DIR)
+        storage_usage_percent = round((1 - disk_free / disk_total) * 100, 1) if disk_total else 0
+        blacklisted_ids = BlacklistedToken.objects.values_list('token_id', flat=True)
+        active_sessions = (
+            OutstandingToken.objects.filter(expires_at__gte=timezone.now())
+            .exclude(id__in=blacklisted_ids)
+            .count()
+        )
+        system_overview = {
+            'storage_usage_percent': storage_usage_percent,
+            'active_sessions': active_sessions,
+            'uptime_seconds': int((timezone.now() - SERVER_STARTED_AT).total_seconds()),
+            'api_response_ms': round((time.monotonic() - request_started) * 1000, 1),
+        }
 
         return Response({
             'user': user_summary(request.user),
@@ -143,12 +251,16 @@ class AdminDashboardView(APIView):
                 'open_support_tickets': SupportTicket.objects.filter(status__in=['open', 'in_progress']).count(),
             },
             'charts': {
-                'user_registrations': list(registrations),
-                'enrollments': list(enrollment_trend),
+                'user_growth': user_growth,
+                'enrollments': enrollment_trend,
                 'revenue': list(revenue_trend),
+                'course_categories': category_breakdown,
             },
             'top_courses': top_courses,
             'recent_activity': recent_activity_feed(),
+            'recent_registrations': recent_registrations,
+            'upcoming_live_classes': upcoming_live_classes,
+            'system': system_overview,
         })
 
 
