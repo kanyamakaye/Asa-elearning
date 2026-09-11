@@ -17,7 +17,10 @@ from accounts.models import (
     StudentProfile,
     UserRole,
 )
-from assessments.models import Exam, Grade, QuestionOption, Quiz, QuizAnswer, QuizAttempt, QuizQuestion
+from assessments.models import (
+    BankQuestion, BankQuestionOption, Exam, Grade, QuestionBank, QuestionOption, Quiz, QuizAnswer, QuizAttempt,
+    QuizQuestion,
+)
 from assignments.models import Assignment, AssignmentSubmission
 from certificates.models import Certificate
 from courses.models import Course, CourseCategory, CourseInstructor, CourseModule, CourseUnit
@@ -445,6 +448,98 @@ FEEDBACK_TEMPLATES = [
     ('appreciation', 'Certificates look professional', 'The certificate design is clean and I was proud to share it.'),
 ]
 
+# Category-agnostic templates ({cat}/{cat_lower} filled in per category) that
+# generate a realistic, type-varied question bank without hand-writing a
+# bespoke set per category. `options` is a list of (text, is_correct) pairs
+# for choice-based types, or None for free-response types.
+BANK_QUESTION_TEMPLATES = [
+    {
+        'type': 'multiple_choice', 'difficulty': 'easy', 'marks': 1,
+        'text': 'Which of the following best describes a core principle of {cat_lower}?',
+        'options': [
+            ('Understanding the fundamentals before moving to advanced topics', True),
+            ('Skipping the basics entirely', False),
+            ('Avoiding any hands-on practice', False),
+            ('Memorizing answers without understanding them', False),
+        ],
+    },
+    {
+        'type': 'multiple_choice', 'difficulty': 'medium', 'marks': 1,
+        'text': 'What is typically the best first step when starting to learn {cat_lower}?',
+        'options': [
+            ('Build a strong foundation in the fundamentals', True),
+            ('Jump straight into advanced projects', False),
+            ('Avoid reading any documentation', False),
+            ('Skip practicing with real examples', False),
+        ],
+    },
+    {
+        'type': 'true_false', 'difficulty': 'easy', 'marks': 1,
+        'text': '{cat} skills can only be applied in large organizations.',
+        'options': [('True', False), ('False', True)],
+    },
+    {
+        'type': 'true_false', 'difficulty': 'easy', 'marks': 1,
+        'text': 'Consistent practice improves proficiency in {cat_lower}.',
+        'options': [('True', True), ('False', False)],
+    },
+    {
+        'type': 'multiple_select', 'difficulty': 'medium', 'marks': 2,
+        'text': 'Which of the following are commonly considered good practices in {cat_lower}? (Select all that apply)',
+        'options': [
+            ('Continuous learning and practice', True),
+            ('Seeking feedback from peers or mentors', True),
+            ('Ignoring industry best practices', False),
+            ('Documenting your work clearly', True),
+        ],
+    },
+    {
+        'type': 'short_answer', 'difficulty': 'medium', 'marks': 3,
+        'text': "In one sentence, explain why {cat_lower} skills are valuable in today's job market.",
+        'options': None,
+    },
+    {
+        'type': 'essay', 'difficulty': 'hard', 'marks': 5,
+        'text': 'Describe a real-world scenario where {cat_lower} knowledge would help someone make a better decision.',
+        'options': None,
+    },
+    {
+        'type': 'multiple_choice', 'difficulty': 'medium', 'marks': 1,
+        'text': 'Which resource would most help a beginner learn {cat_lower}?',
+        'options': [
+            ('A structured course with hands-on exercises', True),
+            ('A single unrelated blog post', False),
+            ('Guessing without any study material', False),
+            ('Ignoring foundational concepts entirely', False),
+        ],
+    },
+    {
+        'type': 'true_false', 'difficulty': 'easy', 'marks': 1,
+        'text': 'A certification is required before you can start learning {cat_lower}.',
+        'options': [('True', False), ('False', True)],
+    },
+    {
+        'type': 'multiple_select', 'difficulty': 'hard', 'marks': 2,
+        'text': 'Which of these are common challenges beginners face in {cat_lower}? (Select all that apply)',
+        'options': [
+            ('Information overload from too many resources', True),
+            ('Difficulty applying theory to practice', True),
+            ('Having too much hands-on practice', False),
+            ('Uncertainty about where to start', True),
+        ],
+    },
+    {
+        'type': 'short_answer', 'difficulty': 'medium', 'marks': 3,
+        'text': 'Name one tool or resource commonly used in {cat_lower}.',
+        'options': None,
+    },
+    {
+        'type': 'essay', 'difficulty': 'hard', 'marks': 5,
+        'text': 'Reflect on how {cat_lower} has evolved in recent years and why that matters for learners.',
+        'options': None,
+    },
+]
+
 MESSAGE_SUBJECTS = [
     'Question about the final project',
     'Clarification on grading rubric',
@@ -491,6 +586,9 @@ class Command(BaseCommand):
 
         self.stdout.write('Seeding FAQs...')
         self.seed_faqs(categories)
+
+        self.stdout.write('Seeding question banks...')
+        self.seed_question_banks(categories, all_instructors)
 
         self.stdout.write('Seeding quizzes (one per course)...')
         quizzes = self.seed_quizzes(courses)
@@ -552,7 +650,8 @@ class Command(BaseCommand):
             f'\nDone. {len(courses)} courses, {len(all_instructors)} instructors, '
             f'{len(students)} students, {Enrollment.objects.count()} enrollments, '
             f'{Payment.objects.count()} payments, {SupportTicket.objects.count()} tickets, '
-            f'{Notification.objects.count()} notifications.'
+            f'{Notification.objects.count()} notifications, '
+            f'{QuestionBank.objects.count()} question banks, {BankQuestion.objects.count()} bank questions.'
         ))
         self.stdout.write(self.style.SUCCESS(f'Demo password for all seeded accounts: {SEED_PASSWORD}'))
 
@@ -854,6 +953,48 @@ class Command(BaseCommand):
                     defaults={'answer': answer_tpl.format(**fmt), 'category': category_name, 'display_order': order},
                 )
                 order += 1
+
+    def seed_question_banks(self, categories, all_instructors):
+        """One reusable QuestionBank per category, each pre-loaded with the
+        full BANK_QUESTION_TEMPLATES set (type-varied: MCQ, multi-select,
+        true/false, short answer, essay) so the Question Banks page and
+        quiz "add from bank" flow have realistic content to page through."""
+        banks = []
+        for category_name, category in categories.items():
+            owner_random = random.Random(f'bank-{category_name}')
+            owner = owner_random.choice(all_instructors)
+            bank, created = QuestionBank.objects.get_or_create(
+                title=f'{category_name} Question Bank',
+                defaults={
+                    'description': f'A reusable pool of practice questions covering {category_name.lower()} fundamentals.',
+                    'category': category,
+                    'created_by': owner,
+                },
+            )
+            banks.append(bank)
+            if not created:
+                continue
+
+            fmt = {'cat': category_name, 'cat_lower': category_name.lower()}
+            for template in BANK_QUESTION_TEMPLATES:
+                question = BankQuestion.objects.create(
+                    bank=bank,
+                    question_text=template['text'].format(**fmt),
+                    question_type=template['type'],
+                    marks=template['marks'],
+                    difficulty=template['difficulty'],
+                    tags=[category_name.lower().replace(' ', '-'), template['type']],
+                    explanation=(
+                        f'This question checks understanding of {category_name.lower()} basics.'
+                        if template['options'] else ''
+                    ),
+                )
+                if template['options']:
+                    for o_index, (option_text, is_correct) in enumerate(template['options']):
+                        BankQuestionOption.objects.create(
+                            question=question, option_text=option_text, is_correct=is_correct, order=o_index,
+                        )
+        return banks
 
     def seed_quizzes(self, courses):
         # One quiz per course.
