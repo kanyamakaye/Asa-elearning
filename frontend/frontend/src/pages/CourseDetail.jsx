@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { API_BASE_URL } from '../lib/api'
+import { formatCurrency } from '../lib/currency'
 import { enrollInCourse, getCourse, getCourseReviews, getMyEnrollmentForCourse } from '../lib/queries'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
 import {
@@ -459,11 +460,11 @@ export default function CourseDetail() {
                 <p className="text-3xl font-extrabold text-navy-900">Free</p>
               ) : course.discount_price ? (
                 <>
-                  <p className="text-3xl font-extrabold text-navy-900">${course.discount_price}</p>
-                  <p className="text-base font-medium text-navy-700/40 line-through">${course.price}</p>
+                  <p className="text-3xl font-extrabold text-navy-900">{formatCurrency(course.discount_price)}</p>
+                  <p className="text-base font-medium text-navy-700/40 line-through">{formatCurrency(course.price)}</p>
                 </>
               ) : (
-                <p className="text-3xl font-extrabold text-navy-900">${course.price}</p>
+                <p className="text-3xl font-extrabold text-navy-900">{formatCurrency(course.price)}</p>
               )}
             </div>
 

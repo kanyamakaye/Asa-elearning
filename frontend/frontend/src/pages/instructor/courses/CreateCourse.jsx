@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { createCourse, getCourse, getCourses, getCategories, publishCourse, updateCourse } from '../../../services/courseService'
+import { formatCurrency } from '../../../lib/currency'
 import useUnsavedChanges from '../../../hooks/useUnsavedChanges'
 import Alert from '../../../components/ui/Alert'
 import Badge from '../../../components/ui/Badge'
@@ -402,8 +403,8 @@ export default function CreateCourse() {
             </div>
             <p className="text-navy-700/70">{form.short_description}</p>
             <div className="grid grid-cols-2 gap-4 rounded-xl bg-navy-50 p-4 sm:grid-cols-3">
-              <div><p className="text-xs text-navy-700/50">Price</p><p className="font-semibold text-navy-900">${form.price}</p></div>
-              <div><p className="text-xs text-navy-700/50">Discount</p><p className="font-semibold text-navy-900">{form.discount_price ? `$${form.discount_price}` : '—'}</p></div>
+              <div><p className="text-xs text-navy-700/50">Price</p><p className="font-semibold text-navy-900">{formatCurrency(form.price)}</p></div>
+              <div><p className="text-xs text-navy-700/50">Discount</p><p className="font-semibold text-navy-900">{form.discount_price ? formatCurrency(form.discount_price) : '—'}</p></div>
               <div><p className="text-xs text-navy-700/50">Duration</p><p className="font-semibold text-navy-900">{form.duration_hours || '—'} hrs</p></div>
             </div>
             <div>

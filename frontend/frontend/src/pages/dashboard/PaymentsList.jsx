@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { listPayments } from '../../lib/dashboardApi'
+import { formatCurrency } from '../../lib/currency'
 import DataTable from '../../components/dashboard/DataTable'
 
 const statusStyles = {
@@ -43,7 +44,7 @@ export default function PaymentsList() {
       <div>
         <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">Transactions</h1>
         <p className="mt-1 text-sm text-navy-700/55">
-          {count} transactions &middot; ${total.toFixed(2)} collected
+          {count} transactions &middot; {formatCurrency(total)} collected
         </p>
       </div>
 

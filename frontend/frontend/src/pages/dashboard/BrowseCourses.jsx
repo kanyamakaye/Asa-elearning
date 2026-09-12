@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { enrollInCourse, getCategories, getCourses, getMyEnrollments } from '../../lib/queries'
+import { formatCurrency } from '../../lib/currency'
 import { IconArrowRight, IconBook, IconCheck, IconClipboard, IconSearch, IconStar, IconUsers } from '../../components/icons'
 
 export default function BrowseCourses() {
@@ -204,7 +205,7 @@ export default function BrowseCourses() {
                     </div>
 
                     <div className="mt-auto flex items-center justify-between gap-2 border-t border-navy-900/8 pt-3.5">
-                      <span className="text-sm font-bold text-navy-900">{c.is_free ? 'Free' : `$${c.price}`}</span>
+                      <span className="text-sm font-bold text-navy-900">{c.is_free ? 'Free' : formatCurrency(c.price)}</span>
                       {enrolled ? (
                         <Link
                           to={`/learn/${c.slug}`}

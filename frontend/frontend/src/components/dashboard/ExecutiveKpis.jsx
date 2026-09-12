@@ -1,3 +1,5 @@
+import { formatCurrency } from '../../lib/currency'
+
 const KPI_META = [
   { key: 'total_revenue', label: 'Total Revenue', accent: 'border-t-brand-500', money: true },
   { key: 'new_enrollments', label: 'New Enrollments', accent: 'border-t-violet-500', money: false },
@@ -6,8 +8,7 @@ const KPI_META = [
 ]
 
 function formatValue(value, money) {
-  const num = Number(value) || 0
-  return money ? `$${num.toLocaleString()}` : num.toLocaleString()
+  return money ? formatCurrency(value) : (Number(value) || 0).toLocaleString()
 }
 
 export default function ExecutiveKpis({ data }) {

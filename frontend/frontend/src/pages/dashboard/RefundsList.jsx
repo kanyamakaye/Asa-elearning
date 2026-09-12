@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { listRefunds, processRefund } from '../../lib/dashboardApi'
+import { formatCurrency } from '../../lib/currency'
 import DataTable from '../../components/dashboard/DataTable'
 import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
@@ -57,7 +58,7 @@ export default function RefundsList() {
         columns={[
           { key: 'id', label: 'Ref', render: (r) => `#${r.id}` },
           { key: 'student', label: 'Student', render: (r) => r.student?.full_name ?? r.student ?? '—' },
-          { key: 'refund_amount', label: 'Amount', render: (r) => `$${r.refund_amount}` },
+          { key: 'refund_amount', label: 'Amount', render: (r) => formatCurrency(r.refund_amount) },
           { key: 'refund_reason', label: 'Reason', render: (r) => <span className="max-w-xs truncate">{r.refund_reason || '—'}</span> },
           { key: 'refund_status', label: 'Status', render: (r) => <Badge tone={statusTone[r.refund_status]}>{r.refund_status}</Badge> },
           {

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { getCategories, getCourses } from '../lib/queries'
+import { formatCurrency } from '../lib/currency'
 import {
   IconArrowRight,
   IconBook,
@@ -230,7 +231,7 @@ export default function Courses() {
                         {c.average_rating ?? '—'}
                       </span>
                       <span className="font-bold text-navy-900">
-                        {c.is_free ? 'Free' : `$${c.price}`}
+                        {c.is_free ? 'Free' : formatCurrency(c.price)}
                       </span>
                     </div>
 

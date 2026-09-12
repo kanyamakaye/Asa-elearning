@@ -35,7 +35,7 @@ export default function Pricing() {
         <div className="mx-auto mt-14 grid max-w-3xl gap-6 sm:grid-cols-2">
           <div className="animate-fade-up rounded-3xl bg-white p-8 ring-1 ring-navy-900/8 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-navy-900/5">
             <p className="text-sm font-semibold uppercase tracking-wide text-navy-700/50">Free Courses</p>
-            <p className="mt-3 text-4xl font-extrabold text-navy-900">$0</p>
+            <p className="mt-3 text-4xl font-extrabold text-navy-900">RWF 0</p>
             <ul className="mt-6 space-y-3">
               {free.map((item) => (
                 <li key={item} className="flex items-start gap-2.5 text-sm text-navy-700/75">

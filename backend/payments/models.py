@@ -16,7 +16,7 @@ class Payment(models.Model):
     course = models.ForeignKey('courses.Course', on_delete=models.CASCADE, related_name='payments')
     transaction_reference = models.CharField(max_length=60, unique=True, blank=True)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
-    currency = models.CharField(max_length=10, default='USD')
+    currency = models.CharField(max_length=10, default='RWF')
     payment_method = models.CharField(max_length=50, blank=True)
     payment_provider = models.CharField(max_length=50, blank=True)
     payment_status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)

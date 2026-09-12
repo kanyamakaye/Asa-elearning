@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { apiFetch } from '../../lib/api'
 import { deleteCourse } from '../../services/courseService'
+import { formatCurrency } from '../../lib/currency'
 import DataTable from '../../components/dashboard/DataTable'
 import { IconClipboard, IconEdit, IconTrash } from '../../components/icons'
 
@@ -90,7 +91,7 @@ export default function CoursesList() {
             ),
           },
           { key: 'enrolled_count', label: 'Students' },
-          { key: 'price', label: 'Price', render: (c) => (c.is_free ? 'Free' : `$${c.price}`) },
+          { key: 'price', label: 'Price', render: (c) => (c.is_free ? 'Free' : formatCurrency(c.price)) },
           ...(CONTENT_MANAGER_ROLES.includes(user?.user_type) ? [{
             key: 'actions',
             label: '',

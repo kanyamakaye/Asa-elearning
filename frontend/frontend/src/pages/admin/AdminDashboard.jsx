@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { getDashboard } from '../../lib/dashboardApi'
+import { formatCurrency } from '../../lib/currency'
 import ChartCard from '../../components/dashboard/ChartCard'
 import DashboardFilterBar from '../../components/dashboard/DashboardFilterBar'
 import DashboardHero from '../../components/dashboard/DashboardHero'
@@ -72,7 +73,7 @@ export default function AdminDashboard() {
         <StatCard icon={IconBook} label="Courses" value={stats.total_courses} hint={`${stats.published_courses ?? 0} published`} />
         <StatCard icon={IconTrendingUp} label="Active Enrollments" value={stats.active_enrollments} accent="emerald" />
         <StatCard icon={IconAward} label="Certificates Issued" value={stats.certificates_issued} accent="emerald" />
-        <StatCard icon={IconCreditCard} label="Total Revenue" value={`$${stats.total_revenue ?? 0}`} accent="amber" />
+        <StatCard icon={IconCreditCard} label="Total Revenue" value={formatCurrency(stats.total_revenue)} accent="amber" />
         <StatCard icon={IconCreditCard} label="Pending Payments" value={stats.pending_payments} accent="amber" />
         <StatCard icon={IconLifeBuoy} label="Open Support Tickets" value={stats.open_support_tickets} accent="red" />
         <StatCard icon={IconBook} label="Draft Courses" value={stats.draft_courses} accent="navy" />

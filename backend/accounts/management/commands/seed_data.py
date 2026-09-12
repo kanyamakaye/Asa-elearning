@@ -954,7 +954,7 @@ class Command(BaseCommand):
                 )
                 order += 1
 
-    def seed_question_banks(self, categories, all_instructors, target_total=500):
+    def seed_question_banks(self, categories, all_instructors, target_total=900):
         """One reusable QuestionBank per category, topped up (like
         ensure_minimum_certificates) to `target_total` combined BankQuestions
         spread evenly across banks. Each template is paired with a topic —
@@ -1180,7 +1180,7 @@ class Command(BaseCommand):
                 student=enrollment.student,
                 course=enrollment.course,
                 amount=enrollment.course.price,
-                currency='USD',
+                currency='RWF',
                 payment_method=pay_random.choice(['card', 'mobile_money']),
                 payment_provider=pay_random.choice(['Stripe', 'Flutterwave']),
                 payment_status=status,
