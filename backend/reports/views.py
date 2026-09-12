@@ -1,6 +1,6 @@
 import shutil
 import time
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -49,6 +49,56 @@ def last_n_month_starts(n):
         month = month_index % 12 + 1
         months.append(today.replace(year=year, month=month, day=1))
     return months
+
+
+def _parse_date(value):
+    if not value:
+        return None
+    try:
+        return datetime.strptime(value, '%Y-%m-%d').date()
+    except ValueError:
+        return None
+
+
+def _filtered_courses(request):
+    """Courses matching the admin dashboard's optional filter bar
+    (category/level/instructor) — shared by the portfolio summary and
+    executive KPI blocks below."""
+    qs = Course.objects.all()
+    category = request.query_params.get('category')
+    level = request.query_params.get('level')
+    instructor = request.query_params.get('instructor')
+    if category:
+        qs = qs.filter(category__slug=category)
+    if level:
+        qs = qs.filter(level=level)
+    if instructor:
+        qs = qs.filter(instructor_id=instructor)
+    return qs
+
+
+def _period_bounds(request):
+    """The filter bar's date range, defaulting to month-to-date, plus an
+    equal-length immediately-preceding period to compare against for the
+    executive KPIs' trend indicators."""
+    date_from = _parse_date(request.query_params.get('date_from'))
+    date_to = _parse_date(request.query_params.get('date_to'))
+    if date_from and date_to and date_from <= date_to:
+        current_start, current_end = date_from, date_to
+    else:
+        today = timezone.localdate()
+        current_start, current_end = today.replace(day=1), today
+    period_length = (current_end - current_start).days + 1
+    previous_end = current_start - timedelta(days=1)
+    previous_start = previous_end - timedelta(days=period_length - 1)
+    return current_start, current_end, previous_start, previous_end
+
+
+def _percent_change(current, previous):
+    current, previous = float(current), float(previous)
+    if previous == 0:
+        return 0.0 if current == 0 else 100.0
+    return round(((current - previous) / previous) * 100, 1)
 
 
 def user_summary(user):
@@ -233,6 +283,79 @@ class AdminDashboardView(APIView):
             'api_response_ms': round((time.monotonic() - request_started) * 1000, 1),
         }
 
+        # -- Portfolio Summary + Executive KPIs: filterable by category/level/
+        # instructor/date-range (the admin dashboard's filter bar). Separate
+        # from `statistics`/`charts` above, which stay unfiltered so nothing
+        # already depending on them changes behavior.
+        filtered_courses = _filtered_courses(request)
+        filtered_course_ids = list(filtered_courses.values_list('id', flat=True))
+        current_start, current_end, previous_start, previous_end = _period_bounds(request)
+
+        portfolio_summary = {
+            'period_label': current_end.strftime('%b %Y'),
+            'active_courses': filtered_courses.filter(status=Course.Status.PUBLISHED).count(),
+            'total_courses': filtered_courses.count(),
+            'completed_enrollments': Enrollment.objects.filter(
+                course_id__in=filtered_course_ids, status=Enrollment.Status.COMPLETED,
+            ).count(),
+            'new_enrollments_period': Enrollment.objects.filter(
+                course_id__in=filtered_course_ids,
+                created_at__date__gte=current_start, created_at__date__lte=current_end,
+            ).count(),
+            'pending_review': filtered_courses.filter(status=Course.Status.DRAFT).count(),
+            'inactive_courses': filtered_courses.filter(
+                status__in=[Course.Status.ARCHIVED, Course.Status.SUSPENDED],
+            ).count(),
+            'active_categories': CourseCategory.objects.filter(
+                is_active=True, courses__id__in=filtered_course_ids,
+            ).distinct().count(),
+        }
+
+        def revenue_between(start, end):
+            return Payment.objects.filter(
+                course_id__in=filtered_course_ids, payment_status='successful',
+                created_at__date__gte=start, created_at__date__lte=end,
+            ).aggregate(total=Sum('amount'))['total'] or 0
+
+        def pending_payments_as_of(end):
+            return Payment.objects.filter(
+                course_id__in=filtered_course_ids, payment_status='pending', created_at__date__lte=end,
+            ).aggregate(total=Sum('amount'))['total'] or 0
+
+        def enrollments_between(start, end):
+            return Enrollment.objects.filter(
+                course_id__in=filtered_course_ids, created_at__date__gte=start, created_at__date__lte=end,
+            ).count()
+
+        def active_students_as_of(end):
+            return Enrollment.objects.filter(
+                course_id__in=filtered_course_ids, status=Enrollment.Status.ACTIVE, created_at__date__lte=end,
+            ).values('student').distinct().count()
+
+        current_revenue, previous_revenue = revenue_between(current_start, current_end), revenue_between(previous_start, previous_end)
+        current_enrollments, previous_enrollments = enrollments_between(current_start, current_end), enrollments_between(previous_start, previous_end)
+        current_pending, previous_pending = pending_payments_as_of(current_end), pending_payments_as_of(previous_end)
+        current_students, previous_students = active_students_as_of(current_end), active_students_as_of(previous_end)
+
+        executive_kpis = {
+            'period': {'start': current_start.isoformat(), 'end': current_end.isoformat()},
+            'total_revenue': {'value': current_revenue, 'change_percent': _percent_change(current_revenue, previous_revenue)},
+            'new_enrollments': {'value': current_enrollments, 'change_percent': _percent_change(current_enrollments, previous_enrollments)},
+            'pending_payments': {'value': current_pending, 'change_percent': _percent_change(current_pending, previous_pending)},
+            'active_students': {'value': current_students, 'change_percent': _percent_change(current_students, previous_students)},
+        }
+
+        filter_options = {
+            'categories': list(
+                CourseCategory.objects.filter(is_active=True).order_by('name').values('id', 'slug', 'name')
+            ),
+            'levels': [{'value': value, 'label': label} for value, label in Course.Level.choices],
+            'instructors': list(
+                User.objects.filter(user_type='instructor').order_by('first_name', 'last_name')
+                .values('id', 'first_name', 'last_name')[:200]
+            ),
+        }
+
         return Response({
             'user': user_summary(request.user),
             'statistics': {
@@ -261,6 +384,9 @@ class AdminDashboardView(APIView):
             'recent_registrations': recent_registrations,
             'upcoming_live_classes': upcoming_live_classes,
             'system': system_overview,
+            'portfolio_summary': portfolio_summary,
+            'executive_kpis': executive_kpis,
+            'filter_options': filter_options,
         })
 
 

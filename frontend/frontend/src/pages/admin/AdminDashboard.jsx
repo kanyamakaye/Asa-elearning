@@ -2,9 +2,12 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { getDashboard } from '../../lib/dashboardApi'
 import ChartCard from '../../components/dashboard/ChartCard'
+import DashboardFilterBar from '../../components/dashboard/DashboardFilterBar'
 import DashboardHero from '../../components/dashboard/DashboardHero'
 import DonutChartCard from '../../components/dashboard/DonutChartCard'
+import ExecutiveKpis from '../../components/dashboard/ExecutiveKpis'
 import LineChartCard from '../../components/dashboard/LineChartCard'
+import PortfolioSummary from '../../components/dashboard/PortfolioSummary'
 import QuickActions from '../../components/dashboard/QuickActions'
 import RecentActivity from '../../components/dashboard/RecentActivity'
 import RecentRegistrations from '../../components/dashboard/RecentRegistrations'
@@ -22,15 +25,18 @@ import {
   IconUsers,
 } from '../../components/icons'
 
+const EMPTY_FILTERS = { category: '', level: '', instructor: '', date_from: '', date_to: '' }
+
 export default function AdminDashboard() {
   const { accessToken } = useAuth()
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
+  const [filters, setFilters] = useState(EMPTY_FILTERS)
 
   function load(isRefresh) {
     if (isRefresh) setRefreshing(true)
-    return getDashboard('admin', accessToken)
+    return getDashboard('admin', accessToken, filters)
       .then((d) => setData(d))
       .catch(() => {})
       .finally(() => {
@@ -39,7 +45,7 @@ export default function AdminDashboard() {
       })
   }
 
-  useEffect(() => { load(false) }, [accessToken]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { load(false) }, [accessToken, filters]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const stats = data?.statistics ?? {}
 
@@ -52,6 +58,12 @@ export default function AdminDashboard() {
         onRefresh={() => load(true)}
         refreshing={refreshing}
       />
+
+      <DashboardFilterBar options={data?.filter_options} value={filters} onChange={setFilters} />
+
+      <PortfolioSummary data={data?.portfolio_summary} />
+
+      <ExecutiveKpis data={data?.executive_kpis} />
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-5">
         <StatCard icon={IconUsers} label="Total Users" value={stats.total_users} hint={`${stats.active_users ?? 0} active`} />

@@ -9,10 +9,13 @@ export const DASHBOARD_ENDPOINT_BY_ROLE = {
   support_staff: '/dashboard/support/',
 }
 
-export function getDashboard(role, token) {
+export function getDashboard(role, token, params = {}) {
   const path = DASHBOARD_ENDPOINT_BY_ROLE[role]
   if (!path) return Promise.reject(new Error(`No dashboard defined for role "${role}".`))
-  return apiFetch(path, { token })
+  const query = new URLSearchParams(
+    Object.fromEntries(Object.entries(params).filter(([, v]) => v !== '' && v != null)),
+  ).toString()
+  return apiFetch(query ? `${path}?${query}` : path, { token })
 }
 
 // -- reused CRUD endpoints for the management list pages --------------------
