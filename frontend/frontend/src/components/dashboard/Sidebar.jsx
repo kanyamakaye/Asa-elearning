@@ -20,30 +20,28 @@ export default function Sidebar({ role, onNavigate, collapsed = false, onToggleC
     return isActiveItem(item, location, currentPath)
   }
 
-  const [openMenus, setOpenMenus] = useState(() => {
-    const initial = {}
-    for (const entry of entries) {
-      if (entry.children?.some((child) => isActiveItem(child, location, currentPath))) {
-        initial[entry.label] = true
-      }
-    }
-    return initial
+  // Exclusive accordion — only one submenu open at a time. Initialize to
+  // whichever submenu (if any) contains the current route.
+  const [openMenu, setOpenMenu] = useState(() => {
+    const activeEntry = entries.find((entry) =>
+      entry.children?.some((child) => isActiveItem(child, location, currentPath))
+    )
+    return activeEntry?.label ?? null
   })
 
-  // Keep the submenu containing the active route expanded when navigating
-  // directly to it (e.g. via a link elsewhere in the app), without closing
-  // any submenu the user has opened manually.
+  // Switch to the submenu containing the active route when navigating
+  // directly to it (e.g. via a link elsewhere in the app), closing whatever
+  // else was open.
   useEffect(() => {
-    for (const entry of entries) {
-      if (entry.children?.some((child) => isActiveItem(child, location, currentPath))) {
-        setOpenMenus((prev) => (prev[entry.label] ? prev : { ...prev, [entry.label]: true }))
-      }
-    }
+    const activeEntry = entries.find((entry) =>
+      entry.children?.some((child) => isActiveItem(child, location, currentPath))
+    )
+    if (activeEntry) setOpenMenu(activeEntry.label)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname, location.search])
 
   function toggleMenu(label) {
-    setOpenMenus((prev) => ({ ...prev, [label]: !prev[label] }))
+    setOpenMenu((prev) => (prev === label ? null : label))
   }
 
   function linkClasses(active) {
@@ -130,7 +128,7 @@ export default function Sidebar({ role, onNavigate, collapsed = false, onToggleC
             )
           }
 
-          const open = !!openMenus[entry.label]
+          const open = openMenu === entry.label
           return (
             <div key={entry.label}>
               <button
