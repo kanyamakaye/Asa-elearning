@@ -954,16 +954,26 @@ class Command(BaseCommand):
                 )
                 order += 1
 
-    def seed_question_banks(self, categories, all_instructors):
-        """One reusable QuestionBank per category, each pre-loaded with the
-        full BANK_QUESTION_TEMPLATES set (type-varied: MCQ, multi-select,
-        true/false, short answer, essay) so the Question Banks page and
-        quiz "add from bank" flow have realistic content to page through."""
+    def seed_question_banks(self, categories, all_instructors, target_total=500):
+        """One reusable QuestionBank per category, topped up (like
+        ensure_minimum_certificates) to `target_total` combined BankQuestions
+        spread evenly across banks. Each template is paired with a topic —
+        the course titles already defined for that category in COURSE_ROWS /
+        EXTRA_COURSE_TOPICS — so a large volume of questions reads as
+        topically varied instead of near-duplicates of a dozen generic
+        prompts. Re-running only adds what's missing, keyed on exact
+        question text, so it's safe to bump target_total and re-seed."""
+        category_names = list(categories.keys())
+        base = target_total // len(category_names)
+        remainder = target_total % len(category_names)
+
         banks = []
-        for category_name, category in categories.items():
+        for i, (category_name, category) in enumerate(categories.items()):
+            target_for_category = base + (1 if i < remainder else 0)
+
             owner_random = random.Random(f'bank-{category_name}')
             owner = owner_random.choice(all_instructors)
-            bank, created = QuestionBank.objects.get_or_create(
+            bank, _ = QuestionBank.objects.get_or_create(
                 title=f'{category_name} Question Bank',
                 defaults={
                     'description': f'A reusable pool of practice questions covering {category_name.lower()} fundamentals.',
@@ -972,28 +982,43 @@ class Command(BaseCommand):
                 },
             )
             banks.append(bank)
-            if not created:
+
+            existing_count = bank.questions.count()
+            if existing_count >= target_for_category:
                 continue
 
-            fmt = {'cat': category_name, 'cat_lower': category_name.lower()}
-            for template in BANK_QUESTION_TEMPLATES:
+            topics = (
+                [row[0] for row in COURSE_ROWS.get(category_name, [])]
+                + [row[0] for row in EXTRA_COURSE_TOPICS.get(category_name, [])]
+            )
+            combos = [(template, topic) for template in BANK_QUESTION_TEMPLATES for topic in topics]
+            combo_random = random.Random(f'bank-questions-{category_name}')
+            combo_random.shuffle(combos)
+
+            existing_texts = set(bank.questions.values_list('question_text', flat=True))
+            created_count = 0
+            for template, topic in combos:
+                if existing_count + created_count >= target_for_category:
+                    break
+                text = template['text'].format(cat=topic, cat_lower=topic)
+                if text in existing_texts:
+                    continue
+
                 question = BankQuestion.objects.create(
                     bank=bank,
-                    question_text=template['text'].format(**fmt),
+                    question_text=text,
                     question_type=template['type'],
                     marks=template['marks'],
                     difficulty=template['difficulty'],
                     tags=[category_name.lower().replace(' ', '-'), template['type']],
-                    explanation=(
-                        f'This question checks understanding of {category_name.lower()} basics.'
-                        if template['options'] else ''
-                    ),
+                    explanation=f'This question checks understanding of {topic}.' if template['options'] else '',
                 )
                 if template['options']:
                     for o_index, (option_text, is_correct) in enumerate(template['options']):
                         BankQuestionOption.objects.create(
                             question=question, option_text=option_text, is_correct=is_correct, order=o_index,
                         )
+                created_count += 1
         return banks
 
     def seed_quizzes(self, courses):
