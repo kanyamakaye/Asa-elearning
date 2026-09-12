@@ -13,6 +13,7 @@ from certificates.rendering import render_sample_certificate_image
 from common.responses import StandardResponseMixin, success_response
 from enrollments.models import Enrollment
 
+from .access import can_access_course
 from .models import Course, CourseCategory, CourseInstructor, CourseModule, CourseUnit
 from .serializers import (
     CourseCategorySerializer,
@@ -88,17 +89,17 @@ class CourseViewSet(StandardResponseMixin, viewsets.ModelViewSet):
     @action(detail=True, methods=['get'], permission_classes=[permissions.IsAuthenticated])
     def learn(self, request, slug=None):
         """Full lesson content for the student learning view — gated to
-        enrolled students (or the owning/co-instructor and course managers,
-        so they can preview what students see)."""
+        enrolled students, group-authorized students (Group.md), or the
+        owning/co-instructor and course managers (so they can preview what
+        students see)."""
         course = self.get_object()
         user = request.user
+        if not can_access_course(user, course):
+            raise PermissionDenied('Enroll in this course to access its lessons.')
         is_manager = user.is_staff or user.user_type in ('admin', 'academic_manager', 'content_manager')
         is_instructor = course.instructor_id == user.id or CourseInstructor.objects.filter(
             course=course, instructor=user,
         ).exists()
-        is_enrolled = Enrollment.objects.filter(student=user, course=course).exists()
-        if not (is_manager or is_instructor or is_enrolled):
-            raise PermissionDenied('Enroll in this course to access its lessons.')
         context = self.get_serializer_context()
         context['bypass_sequential_lock'] = is_manager or is_instructor
         serializer = CourseLearnSerializer(course, context=context)

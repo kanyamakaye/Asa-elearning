@@ -1,14 +1,21 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { listUsers } from '../../lib/dashboardApi'
-import { addGroupMember, getGroup, removeGroupMember } from '../../services/groupService'
+import useCourseOptions from '../../hooks/useCourseOptions'
+import {
+  addGroupMember,
+  assignGroupCourse,
+  getGroup,
+  removeGroupCourse,
+  removeGroupMember,
+} from '../../services/groupService'
 import Alert from '../../components/ui/Alert'
 import Breadcrumb from '../../components/ui/Breadcrumb'
 import Button from '../../components/ui/Button'
 import LoadingSpinner from '../../components/ui/LoadingSpinner'
 import PageHeader from '../../components/ui/PageHeader'
-import { IconPlus, IconSearch, IconTrash, IconUsers } from '../../components/icons'
+import { IconBook, IconPlus, IconSearch, IconTrash, IconUsers } from '../../components/icons'
 
 function Avatar({ user }) {
   return (
@@ -25,6 +32,7 @@ function Avatar({ user }) {
 export default function GroupDetail() {
   const { id } = useParams()
   const { accessToken } = useAuth()
+  const { courses: allCourses } = useCourseOptions()
   const [group, setGroup] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -32,6 +40,8 @@ export default function GroupDetail() {
   const [results, setResults] = useState([])
   const [searching, setSearching] = useState(false)
   const [busyId, setBusyId] = useState(null)
+  const [courseQuery, setCourseQuery] = useState('')
+  const [busyCourseId, setBusyCourseId] = useState(null)
 
   function load() {
     setLoading(true)
@@ -59,6 +69,36 @@ export default function GroupDetail() {
   }, [query, accessToken])
 
   const memberIds = new Set((group?.memberships ?? []).map((m) => m.student.id))
+  const assignedCourseIds = new Set((group?.courses ?? []).map((c) => c.id))
+  const courseMatches = useMemo(() => {
+    const q = courseQuery.trim().toLowerCase()
+    if (!q) return []
+    return allCourses.filter((c) => !assignedCourseIds.has(c.id) && c.title.toLowerCase().includes(q)).slice(0, 8)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [courseQuery, allCourses, group])
+
+  async function handleAssignCourse(courseId) {
+    setBusyCourseId(courseId)
+    try {
+      await assignGroupCourse(id, courseId)
+      setCourseQuery('')
+      load()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setBusyCourseId(null)
+    }
+  }
+
+  async function handleRemoveCourse(courseId) {
+    setBusyCourseId(courseId)
+    try {
+      await removeGroupCourse(id, courseId)
+      load()
+    } finally {
+      setBusyCourseId(null)
+    }
+  }
 
   async function handleAdd(studentId) {
     setBusyId(studentId)
@@ -91,7 +131,10 @@ export default function GroupDetail() {
       <PageHeader
         breadcrumb={<Breadcrumb items={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Groups', to: '/dashboard/groups' }, { label: group?.name ?? 'Group' }]} />}
         title={group?.name}
-        description={group?.description || (group?.course_title ? `Scoped to ${group.course_title}` : 'No description')}
+        description={
+          group?.description
+          || (group?.courses?.length ? `Assigned to ${group.courses.map((c) => c.title).join(', ')}` : 'No description')
+        }
       />
 
       {error && <Alert tone="error">{error}</Alert>}
@@ -132,6 +175,63 @@ export default function GroupDetail() {
               })
             )}
           </div>
+        )}
+      </div>
+
+      <div className="rounded-2xl bg-white p-6 ring-1 ring-navy-900/8">
+        <h2 className="flex items-center gap-2 text-sm font-bold text-navy-900">
+          <IconBook className="h-4 w-4 text-navy-700/40" /> Assigned Courses ({group?.courses?.length ?? 0})
+        </h2>
+        <p className="mt-1 text-xs text-navy-700/50">
+          Members of this group can access every course assigned here, in addition to any course they're separately enrolled in.
+        </p>
+        <div className="relative mt-3">
+          <IconSearch className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-navy-700/35" />
+          <input
+            type="text"
+            value={courseQuery}
+            onChange={(e) => setCourseQuery(e.target.value)}
+            placeholder="Search courses to assign…"
+            className="w-full rounded-xl border border-navy-900/10 py-2.5 pl-10 pr-3 text-sm text-navy-900 placeholder:text-navy-700/35 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
+          />
+        </div>
+        {courseQuery.trim() && (
+          <div className="mt-2 max-h-56 overflow-y-auto rounded-xl ring-1 ring-navy-900/8">
+            {courseMatches.length === 0 ? (
+              <p className="px-4 py-4 text-center text-sm text-navy-700/45">No matching courses found.</p>
+            ) : (
+              courseMatches.map((course) => (
+                <div key={course.id} className="flex items-center gap-2.5 border-b border-navy-900/6 px-3.5 py-2.5 last:border-0">
+                  <p className="min-w-0 flex-1 truncate text-sm font-semibold text-navy-900">{course.title}</p>
+                  <Button size="sm" disabled={busyCourseId === course.id} onClick={() => handleAssignCourse(course.id)}>
+                    <IconPlus className="h-3.5 w-3.5" /> Assign
+                  </Button>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
+        {(group?.courses ?? []).length === 0 ? (
+          <p className="mt-3 rounded-xl bg-navy-50 p-4 text-center text-sm text-navy-700/50">No courses assigned to this group yet.</p>
+        ) : (
+          <ul className="mt-3 space-y-2">
+            {group.courses.map((course) => (
+              <li key={course.id} className="flex items-center gap-2.5 rounded-xl bg-navy-50/60 px-3.5 py-2.5">
+                <IconBook className="h-4 w-4 shrink-0 text-navy-700/40" />
+                <p className="min-w-0 flex-1 truncate text-sm font-semibold text-navy-900">{course.title}</p>
+                <button
+                  type="button"
+                  disabled={busyCourseId === course.id}
+                  onClick={() => handleRemoveCourse(course.id)}
+                  className="rounded-lg p-1.5 text-red-500 hover:bg-red-50 disabled:opacity-40"
+                  aria-label="Remove course from group"
+                >
+                  <IconTrash className="h-4 w-4" />
+                </button>
+              </li>
+            ))}
+          </ul>
         )}
       </div>
 

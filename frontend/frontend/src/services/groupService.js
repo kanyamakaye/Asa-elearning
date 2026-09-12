@@ -10,3 +10,8 @@ export const addGroupMember = (groupId, studentId) =>
   api.post(`/groups/${groupId}/add-member/`, { student_id: studentId }).then((r) => r.data)
 export const removeGroupMember = (groupId, studentId) =>
   api.post(`/groups/${groupId}/remove-member/`, { student_id: studentId }).then((r) => r.data)
+
+export const assignGroupCourse = (groupId, courseId) =>
+  api.post(`/groups/${groupId}/assign-course/`, { course_id: courseId }).then((r) => r.data)
+export const removeGroupCourse = (groupId, courseId) =>
+  api.post(`/groups/${groupId}/remove-course/`, { course_id: courseId }).then((r) => r.data)

@@ -6,6 +6,7 @@ from rest_framework.response import Response
 
 from accounts.permissions import CanManageAssessment
 from common.responses import StandardResponseMixin, success_response
+from courses.access import can_access_course
 from notifications.services import notify_enrolled_students
 
 from .models import Assignment, AssignmentSubmission, Rubric
@@ -54,6 +55,8 @@ class AssignmentViewSet(StandardResponseMixin, viewsets.ModelViewSet):
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def submit(self, request, pk=None):
         assignment = self.get_object()
+        if not can_access_course(request.user, assignment.course):
+            raise PermissionDenied('You do not have access to this course.')
         is_late = bool(assignment.due_date and timezone.now() > assignment.due_date)
         if is_late and not assignment.allow_late_submission:
             raise ValidationError('The due date for this assignment has passed.')

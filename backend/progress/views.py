@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from certificates.expiry import compute_expiry
 from certificates.models import Certificate
 from certificates.rendering import generate_certificate_file
+from courses.access import can_access_course
 from enrollments.models import Enrollment
 from enrollments.serializers import EnrollmentSerializer
 from lessons.models import Lesson
@@ -106,7 +107,7 @@ class LessonProgressViewSet(viewsets.ModelViewSet):
         if not lesson:
             raise ValidationError({'lesson': 'Lesson not found.'})
         course = lesson.course
-        if not Enrollment.objects.filter(student=request.user, course=course).exists():
+        if not can_access_course(request.user, course):
             raise PermissionDenied('You must be enrolled in this course to track progress.')
 
         now = timezone.now()

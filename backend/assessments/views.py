@@ -6,6 +6,7 @@ from rest_framework.response import Response
 
 from accounts.permissions import CanManageAssessment
 from common.responses import StandardResponseMixin, success_response
+from courses.access import can_access_course
 from notifications.services import notify_enrolled_students
 from progress import badges
 
@@ -153,6 +154,8 @@ class QuizViewSet(StandardResponseMixin, viewsets.ModelViewSet):
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def start(self, request, pk=None):
         quiz = self.get_object()
+        if not can_access_course(request.user, quiz.course):
+            raise PermissionDenied('You do not have access to this course.')
         previous_attempts = QuizAttempt.objects.filter(quiz=quiz, student=request.user).count()
         if previous_attempts >= quiz.attempt_limit:
             raise ValidationError('You have reached the maximum number of attempts for this quiz.')
@@ -354,6 +357,8 @@ class ExamViewSet(StandardResponseMixin, viewsets.ModelViewSet):
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def start(self, request, pk=None):
         exam = self.get_object()
+        if not can_access_course(request.user, exam.course):
+            raise PermissionDenied('You do not have access to this course.')
         if exam.status != Exam.Status.ACTIVE:
             raise ValidationError('This exam is not currently open.')
         previous_attempts = ExamAttempt.objects.filter(exam=exam, student=request.user).count()
