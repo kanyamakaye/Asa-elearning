@@ -19,12 +19,12 @@ export default function Home() {
       <Hero />
       <TrustStrip />
       <Reveal><Features /></Reveal>
+      <Reveal><HowItWorks /></Reveal>
       <Reveal><Courses /></Reveal>
       <Reveal><LearningPaths /></Reveal>
-      <Reveal><HowItWorks /></Reveal>
+      <Reveal><CareerOutcomes /></Reveal>
       <Reveal><Testimonials /></Reveal>
       <Reveal><Instructors /></Reveal>
-      <Reveal><CareerOutcomes /></Reveal>
       <Reveal><InstructorCTA /></Reveal>
       <Reveal><Pricing /></Reveal>
       <Reveal><FAQ /></Reveal>
