@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Plus Jakarta Sans", system-ui, "Segoe UI", Roboto, sans-serif;
-  --font-display: "Sora", "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-sans: Arial, Helvetica, system-ui, sans-serif;
+  --font-display: Arial, Helvetica, system-ui, sans-serif;
 
   --color-navy-950: #050b1f;
   --color-navy-900: #0a1440;

@@ -64,7 +64,7 @@ export default function InstructorActivate() {
         heading={
           <>
             Set up your{' '}
-            <span className="bg-gradient-to-r from-brand-300 via-violet-300 to-brand-500 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-brand-600 via-violet-500 to-brand-500 bg-clip-text text-transparent">
               Instructor account
             </span>
           </>
