@@ -26,6 +26,7 @@ from certificates.models import Certificate
 from courses.models import Course, CourseCategory, CourseInstructor, CourseModule, CourseUnit
 from discussions.models import DiscussionReply, DiscussionTopic
 from enrollments.models import Enrollment
+from groups.models import StudentGroup
 from lessons.models import LearningResource, Lesson
 from live_classes.models import Attendance, LiveSession
 from messaging.models import Conversation, ConversationParticipant, Message
@@ -435,6 +436,34 @@ ANNOUNCEMENT_TEMPLATES = [
     ('Course updated', 'This course has been refreshed with updated examples and exercises.'),
 ]
 
+# (group name, category name to pull courses from, description) — see
+# Group.md: a StudentGroup grants its members access to whichever courses
+# it's assigned, independent of normal per-course enrollment, so members
+# below are sampled from all seeded students rather than only those already
+# enrolled in the matched courses.
+GROUP_TEMPLATES = [
+    ('Web Development Bootcamp — Cohort A', 'Software Development',
+     'A fast-paced cohort working through the full web development track together.'),
+    ('Data Science Evening Batch', 'Data Science',
+     'Part-time learners studying data science together after work hours.'),
+    ('Digital Marketing Fast Track', 'Digital Marketing',
+     'An accelerated cohort covering the digital marketing curriculum in a shorter timeframe.'),
+    ('Accounting Certification Group', 'Accounting',
+     'Students preparing for professional accounting certification as a study group.'),
+    ('Business Leadership Cohort', 'Business',
+     'A cohort of aspiring managers working through the business and leadership courses.'),
+    ('IT Fundamentals — Weekend Group', 'Information Technology',
+     'A weekend cohort building core IT skills together.'),
+    ('Languages Immersion Circle', 'Languages',
+     'A peer group practicing new languages together through the course catalog.'),
+    ('Professional Development Track', 'Professional Development',
+     'Working professionals progressing through career-development courses as a group.'),
+    ('Data Science Cohort B', 'Data Science',
+     'A second data science cohort, offset from Cohort A to keep class sizes small.'),
+    ('Software Engineering Intensive', 'Software Development',
+     'An intensive, project-heavy cohort for the software development track.'),
+]
+
 FEEDBACK_TEMPLATES = [
     ('suggestion', 'Add downloadable slides', 'It would help to have downloadable slides for offline review.'),
     ('appreciation', 'Loving the platform', 'The dashboard is clean and easy to use — great work!'),
@@ -628,6 +657,9 @@ class Command(BaseCommand):
         self.stdout.write('Seeding live classes and attendance...')
         self.seed_live_classes(courses)
 
+        self.stdout.write('Seeding student groups...')
+        self.seed_groups(students, courses, all_instructors)
+
         self.stdout.write('Seeding feedback and messages...')
         self.seed_feedback(students)
         self.seed_messages(students, all_instructors)
@@ -651,7 +683,8 @@ class Command(BaseCommand):
             f'{len(students)} students, {Enrollment.objects.count()} enrollments, '
             f'{Payment.objects.count()} payments, {SupportTicket.objects.count()} tickets, '
             f'{Notification.objects.count()} notifications, '
-            f'{QuestionBank.objects.count()} question banks, {BankQuestion.objects.count()} bank questions.'
+            f'{QuestionBank.objects.count()} question banks, {BankQuestion.objects.count()} bank questions, '
+            f'{StudentGroup.objects.count()} student groups.'
         ))
         self.stdout.write(self.style.SUCCESS(f'Demo password for all seeded accounts: {SEED_PASSWORD}'))
 
@@ -1438,6 +1471,37 @@ class Command(BaseCommand):
                                 'check_in_time': timezone.now(),
                             },
                         )
+
+    def seed_groups(self, students, courses, all_instructors):
+        admin = User.objects.filter(user_type='admin').first()
+        courses_by_category = {}
+        for course in courses:
+            if course.category:
+                courses_by_category.setdefault(course.category.name, []).append(course)
+
+        for name, category_name, description in GROUP_TEMPLATES:
+            if StudentGroup.objects.filter(name=name).exists():
+                continue
+
+            candidate_courses = courses_by_category.get(category_name, [])
+            if not candidate_courses:
+                continue
+
+            group_random = random.Random(name)
+            assigned_courses = group_random.sample(candidate_courses, k=min(len(candidate_courses), group_random.randint(1, 3)))
+            instructor = assigned_courses[0].instructor
+
+            group = StudentGroup.objects.create(
+                name=name, description=description, instructor=instructor, created_by=admin or instructor,
+            )
+            group.courses.set(assigned_courses, through_defaults={'assigned_by': admin or instructor})
+
+            # Membership grants access independent of enrollment (Group.md), so
+            # members are sampled from every seeded student, not just those
+            # already enrolled in the assigned courses.
+            members = group_random.sample(students, k=min(len(students), group_random.randint(6, 16)))
+            for student in members:
+                group.memberships.get_or_create(student=student)
 
     def seed_feedback(self, students, target=100):
         # Cycle the template pool across students — Feedback has no unique
