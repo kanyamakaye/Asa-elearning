@@ -7,6 +7,7 @@ import CertificateCard from '../../components/dashboard/CertificateCard'
 import DashboardHero from '../../components/dashboard/DashboardHero'
 import ProgressCard from '../../components/dashboard/ProgressCard'
 import QuickActions from '../../components/dashboard/QuickActions'
+import RemindersPanel from '../../components/dashboard/RemindersPanel'
 import StatCard from '../../components/dashboard/StatCard'
 import { IconAward, IconBook, IconClipboard, IconFileText, IconSearch, IconTrendingUp } from '../../components/icons'
 
@@ -47,6 +48,8 @@ export default function StudentDashboard() {
         <StatCard icon={IconClipboard} label="Upcoming Exams" value={stats.upcoming_exams} accent="amber" />
         <StatCard icon={IconAward} label="Certificates Earned" value={stats.certificates} accent="emerald" />
       </div>
+
+      <RemindersPanel reminders={data?.reminders} />
 
       <QuickActions
         title="Explore"

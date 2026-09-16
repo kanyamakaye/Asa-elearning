@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.db.models import Avg, Count, DurationField, ExpressionWrapper, F, Q, Sum
+from django.db.models import Avg, Count, DurationField, ExpressionWrapper, F, Max, Q, Sum
 from django.db.models.functions import TruncDate, TruncMonth
 from django.utils import timezone
 from rest_framework import permissions
@@ -571,6 +571,49 @@ class StudentDashboardView(APIView):
             } for e in upcoming_exams_qs[:5]]
         )
 
+        # Reminders panel — deliberately doesn't repeat assignments/quizzes/
+        # exams, since `upcoming_assessments` above already covers those.
+        # This surfaces the things a student otherwise has no visibility
+        # into from the dashboard: live classes, courses gone cold, and
+        # payments that still need action.
+        upcoming_live_classes = list(
+            LiveSession.objects.filter(
+                course_id__in=course_ids,
+                status=LiveSession.Status.SCHEDULED,
+                scheduled_date__gte=now.date(),
+            )
+            .select_related('course')
+            .order_by('scheduled_date', 'start_time')
+            .values('id', 'title', 'course__title', 'course__slug', 'scheduled_date', 'start_time')[:5]
+        )
+
+        INACTIVITY_DAYS = 14
+        inactivity_cutoff = now - timedelta(days=INACTIVITY_DAYS)
+        last_activity_by_course = dict(
+            LessonProgress.objects.filter(student=user, course_id__in=course_ids)
+            .values('course_id').annotate(last_activity=Max('last_accessed_at'))
+            .values_list('course_id', 'last_activity')
+        )
+        inactive_courses = [
+            {
+                'course_id': e.course_id,
+                'course_slug': e.course.slug,
+                'course_title': e.course.title,
+                'last_activity': last_activity_by_course.get(e.course_id) or e.updated_at,
+                'progress_percentage': float(e.completion_percentage),
+            }
+            for e in enrollments.filter(status=Enrollment.Status.ACTIVE, completion_percentage__lt=100)
+            if (last_activity_by_course.get(e.course_id) or e.updated_at) < inactivity_cutoff
+        ][:5]
+
+        unresolved_payments = list(
+            Payment.objects.filter(
+                student=user, payment_status__in=[Payment.Status.PENDING, Payment.Status.FAILED]
+            )
+            .select_related('course').order_by('-created_at')
+            .values('id', 'course__title', 'amount', 'currency', 'payment_status', 'created_at')[:5]
+        )
+
         return Response({
             'user': user_summary(user),
             'statistics': {
@@ -587,6 +630,11 @@ class StudentDashboardView(APIView):
             },
             'continue_learning': continue_learning,
             'upcoming_assessments': upcoming_assessments[:8],
+            'reminders': {
+                'upcoming_live_classes': upcoming_live_classes,
+                'inactive_courses': inactive_courses,
+                'unresolved_payments': unresolved_payments,
+            },
             'recent_grades': list(
                 user.grades.select_related('course').order_by('-graded_at').values(
                     'course__title', 'assessment_type', 'marks_obtained', 'maximum_marks',
