@@ -19,7 +19,8 @@ export const getAssignments = (params) => api.get('/assignments/', { params }).t
 export const getAssignment = (id) => api.get(`/assignments/${id}/`).then((r) => r.data)
 export const createAssignment = (data) => api.post('/assignments/', toRequestBody(data)).then((r) => r.data)
 export const updateAssignment = (id, data) => api.patch(`/assignments/${id}/`, toRequestBody(data)).then((r) => r.data)
-export const deleteAssignment = (id) => api.delete(`/assignments/${id}/`).then((r) => r.data)
+export const deleteAssignment = (id, reason) =>
+  api.delete(`/assignments/${id}/`, reason ? { data: { reason } } : undefined).then((r) => r.data)
 export const publishAssignment = (id) => api.post(`/assignments/${id}/publish/`).then((r) => r.data)
 
 export const getSubmissions = (assignmentId) => api.get(`/assignments/${assignmentId}/submissions/`).then((r) => r.data)

@@ -60,6 +60,7 @@ class IsAssessmentManager(CanManageAssessment):
 class QuizViewSet(StandardResponseMixin, viewsets.ModelViewSet):
     queryset = Quiz.objects.select_related('course', 'created_by').all()
     permission_classes = [CanManageAssessment]
+    search_fields = ['title', 'description']
     create_message = 'Quiz created successfully.'
     update_message = 'Quiz updated successfully.'
     delete_message = 'Quiz deleted successfully.'
@@ -83,6 +84,10 @@ class QuizViewSet(StandardResponseMixin, viewsets.ModelViewSet):
         # allow through CanManageAssessment) only ever see published quizzes.
         if not is_manager:
             qs = qs.filter(status=Quiz.Status.PUBLISHED)
+        else:
+            status_param = self.request.query_params.get('status')
+            if status_param:
+                qs = qs.filter(status=status_param)
         return qs
 
     def perform_create(self, serializer):
@@ -300,6 +305,7 @@ class QuizAttemptViewSet(viewsets.ReadOnlyModelViewSet):
 class ExamViewSet(StandardResponseMixin, viewsets.ModelViewSet):
     queryset = Exam.objects.select_related('course', 'created_by').all()
     permission_classes = [CanManageAssessment]
+    search_fields = ['title', 'description']
     create_message = 'Exam created successfully.'
     update_message = 'Exam updated successfully.'
     delete_message = 'Exam deleted successfully.'
@@ -318,6 +324,10 @@ class ExamViewSet(StandardResponseMixin, viewsets.ModelViewSet):
         )
         if not is_manager:
             qs = qs.filter(status=Exam.Status.ACTIVE)
+        else:
+            status_param = self.request.query_params.get('status')
+            if status_param:
+                qs = qs.filter(status=status_param)
         return qs
 
     def perform_create(self, serializer):
@@ -495,10 +505,14 @@ class ExamAttemptViewSet(viewsets.ReadOnlyModelViewSet):
 class GradeViewSet(viewsets.ModelViewSet):
     serializer_class = GradeSerializer
     permission_classes = [permissions.IsAuthenticated]
+    search_fields = ['course__title']
 
     def get_queryset(self):
         user = self.request.user
         qs = Grade.objects.select_related('student', 'course')
+        assessment_type = self.request.query_params.get('assessment_type')
+        if assessment_type:
+            qs = qs.filter(assessment_type=assessment_type)
         if user.user_type in ('admin', 'instructor') or user.is_staff:
             course_id = self.request.query_params.get('course')
             student_id = self.request.query_params.get('student')
@@ -520,6 +534,7 @@ class QuestionBankViewSet(StandardResponseMixin, viewsets.ModelViewSet):
 
     queryset = QuestionBank.objects.select_related('category', 'course', 'created_by').all()
     permission_classes = [IsAssessmentManager]
+    search_fields = ['title', 'description']
     create_message = 'Question bank created successfully.'
     update_message = 'Question bank updated successfully.'
     delete_message = 'Question bank deleted successfully.'

@@ -10,10 +10,14 @@ from .serializers import FAQSerializer, FeedbackSerializer, SupportTicketSeriali
 class SupportTicketViewSet(viewsets.ModelViewSet):
     serializer_class = SupportTicketSerializer
     permission_classes = [permissions.IsAuthenticated]
+    search_fields = ['subject', 'description']
 
     def get_queryset(self):
         user = self.request.user
         qs = SupportTicket.objects.select_related('user', 'assigned_to')
+        status_param = self.request.query_params.get('status')
+        if status_param:
+            qs = qs.filter(status=status_param)
         if user.user_type in ('admin', 'support_staff') or user.is_staff:
             return qs
         return qs.filter(user=user)

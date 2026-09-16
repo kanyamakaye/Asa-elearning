@@ -10,24 +10,30 @@ import { IconBook, IconEdit, IconPlus, IconTrash, IconUsers } from '../../compon
 export default function GroupsList() {
   const confirm = useConfirm()
   const [groups, setGroups] = useState([])
+  const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState(null)
 
   function load() {
     setLoading(true)
-    getGroups({ page_size: 100 })
+    getGroups({ page_size: 100, ...(search.trim() ? { search: search.trim() } : {}) })
       .then((data) => setGroups(data.results ?? data))
       .catch(() => setGroups([]))
       .finally(() => setLoading(false))
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    const timer = setTimeout(load, search ? 300 : 0)
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search])
 
   async function handleDelete(group) {
-    if (!(await confirm(`Delete group "${group.name}"? This cannot be undone.`))) return
+    const { confirmed, reason } = await confirm(`Delete group "${group.name}"? This cannot be undone.`)
+    if (!confirmed) return
     setBusyId(group.id)
     try {
-      await deleteGroup(group.id)
+      await deleteGroup(group.id, reason)
       load()
     } finally {
       setBusyId(null)
@@ -46,19 +52,27 @@ export default function GroupsList() {
         loading={loading}
         rows={groups}
         emptyMessage="No groups yet. Create your first one."
+        search={{ value: search, onChange: setSearch, placeholder: 'Search by name…' }}
+        exportFilename="groups"
+        exportTitle="Groups"
         columns={[
           { key: 'name', label: 'Name', render: (g) => <span className="font-semibold text-navy-900">{g.name}</span> },
           {
-            key: 'courses', label: 'Courses', render: (g) => (
+            key: 'courses', label: 'Courses',
+            render: (g) => (
               <span className="inline-flex items-center gap-1.5" title={(g.courses ?? []).map((c) => c.title).join(', ')}>
                 <IconBook className="h-3.5 w-3.5 text-navy-700/40" /> {g.course_count ?? g.courses?.length ?? 0}
               </span>
             ),
+            exportValue: (g) => g.course_count ?? g.courses?.length ?? 0,
           },
-          { key: 'instructor_detail', label: 'Instructor', render: (g) => g.instructor_detail?.full_name ?? '—' },
-          { key: 'member_count', label: 'Members', render: (g) => (
-            <span className="inline-flex items-center gap-1.5"><IconUsers className="h-3.5 w-3.5 text-navy-700/40" /> {g.member_count}</span>
-          ) },
+          { key: 'instructor_detail', label: 'Instructor', render: (g) => g.instructor_detail?.full_name ?? '—', exportValue: (g) => g.instructor_detail?.full_name ?? '' },
+          {
+            key: 'member_count', label: 'Members',
+            render: (g) => (
+              <span className="inline-flex items-center gap-1.5"><IconUsers className="h-3.5 w-3.5 text-navy-700/40" /> {g.member_count}</span>
+            ),
+          },
           {
             key: 'actions',
             label: '',

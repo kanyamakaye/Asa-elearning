@@ -27,6 +27,8 @@ export default function CoursesList() {
   const confirm = useConfirm()
   const [allCourses, setAllCourses] = useState([])
   const [page, setPage] = useState(1)
+  const [search, setSearch] = useState('')
+  const [status, setStatus] = useState('')
   const [loading, setLoading] = useState(true)
   const [busySlug, setBusySlug] = useState(null)
   const isInstructor = user?.user_type === 'instructor'
@@ -47,10 +49,11 @@ export default function CoursesList() {
   useEffect(() => { setPage(1); load() }, [accessToken, isInstructor]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleDelete(course) {
-    if (!(await confirm(`Delete course "${course.title}"? This cannot be undone.`))) return
+    const { confirmed, reason } = await confirm(`Delete course "${course.title}"? This cannot be undone.`)
+    if (!confirmed) return
     setBusySlug(course.slug)
     try {
-      await deleteCourse(course.slug)
+      await deleteCourse(course.slug, reason)
       await load()
     } catch (err) {
       window.alert(err.message)
@@ -59,7 +62,18 @@ export default function CoursesList() {
     }
   }
 
-  const courses = allCourses.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+  const filteredCourses = allCourses.filter((c) => {
+    if (status && c.status !== status) return false
+    const q = search.trim().toLowerCase()
+    if (!q) return true
+    return (
+      c.title?.toLowerCase().includes(q)
+      || c.course_code?.toLowerCase().includes(q)
+      || c.instructor?.full_name?.toLowerCase().includes(q)
+    )
+  })
+  useEffect(() => { setPage(1) }, [search, status])
+  const courses = filteredCourses.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   return (
     <div className="space-y-4">
@@ -76,13 +90,35 @@ export default function CoursesList() {
         loading={loading}
         rows={courses}
         page={page}
-        total={allCourses.length}
+        total={filteredCourses.length}
         onPageChange={setPage}
+        search={{ value: search, onChange: setSearch, placeholder: 'Search by title, code, or instructor…' }}
+        filters={[
+          {
+            label: 'Status',
+            value: status,
+            onChange: setStatus,
+            options: [
+              { value: '', label: 'All statuses' },
+              { value: 'published', label: 'Published' },
+              { value: 'draft', label: 'Draft' },
+              { value: 'archived', label: 'Archived' },
+              { value: 'suspended', label: 'Suspended' },
+            ],
+          },
+        ]}
+        exportRows={filteredCourses}
+        exportFilename="courses"
+        exportTitle="Courses"
         columns={[
-          { key: 'title', label: 'Title', render: (c) => <Link to={`/courses/${c.slug}`} className="font-semibold text-navy-900 hover:text-brand-500">{c.title}</Link> },
+          {
+            key: 'title', label: 'Title',
+            render: (c) => <Link to={`/courses/${c.slug}`} className="font-semibold text-navy-900 hover:text-brand-500">{c.title}</Link>,
+            exportValue: (c) => c.title,
+          },
           { key: 'course_code', label: 'Code' },
-          { key: 'category', label: 'Category', render: (c) => c.category?.name ?? '—' },
-          { key: 'instructor', label: 'Instructor', render: (c) => c.instructor?.full_name ?? '—' },
+          { key: 'category', label: 'Category', render: (c) => c.category?.name ?? '—', exportValue: (c) => c.category?.name ?? '' },
+          { key: 'instructor', label: 'Instructor', render: (c) => c.instructor?.full_name ?? '—', exportValue: (c) => c.instructor?.full_name ?? '' },
           {
             key: 'status',
             label: 'Status',
@@ -91,9 +127,14 @@ export default function CoursesList() {
                 {c.status}
               </span>
             ),
+            exportValue: (c) => c.status,
           },
           { key: 'enrolled_count', label: 'Students' },
-          { key: 'price', label: 'Price', render: (c) => (c.is_free ? 'Free' : formatCurrency(c.price)) },
+          {
+            key: 'price', label: 'Price',
+            render: (c) => (c.is_free ? 'Free' : formatCurrency(c.price)),
+            exportValue: (c) => (c.is_free ? 'Free' : c.price),
+          },
           ...(CONTENT_MANAGER_ROLES.includes(user?.user_type) ? [{
             key: 'actions',
             label: '',

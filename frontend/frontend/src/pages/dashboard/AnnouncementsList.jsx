@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { useConfirm } from '../../context/ConfirmContext'
 import { createAnnouncement, deleteAnnouncement, listAnnouncements } from '../../lib/dashboardApi'
+import { exportTableToExcel, exportTableToPdf } from '../../lib/exportTable'
 import Alert from '../../components/ui/Alert'
 import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
@@ -11,7 +12,14 @@ import Modal from '../../components/ui/Modal'
 import PageHeader from '../../components/ui/PageHeader'
 import Select from '../../components/ui/Select'
 import Textarea from '../../components/ui/Textarea'
-import { IconMegaphone, IconPlus, IconTrash } from '../../components/icons'
+import { IconArrowDown, IconMegaphone, IconPlus, IconSearch, IconTrash } from '../../components/icons'
+
+const EXPORT_COLUMNS = [
+  { key: 'title', label: 'Title' },
+  { key: 'message', label: 'Message' },
+  { key: 'audience_type', label: 'Audience' },
+  { key: 'created_at', label: 'Date', exportValue: (a) => new Date(a.created_at).toLocaleDateString() },
+]
 
 const audienceTone = { all: 'brand', students: 'success', instructors: 'warning', course: 'neutral' }
 // Matches the backend's IsInstructorOrReadOnly gate on AnnouncementViewSet (admin/instructor only).
@@ -22,6 +30,7 @@ export default function AnnouncementsList() {
   const confirm = useConfirm()
   const canManage = MANAGER_ROLES.includes(user?.user_type)
   const [announcements, setAnnouncements] = useState([])
+  const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
   const [form, setForm] = useState({ title: '', message: '', audience_type: 'all' })
@@ -31,7 +40,7 @@ export default function AnnouncementsList() {
   async function load() {
     setLoading(true)
     try {
-      const data = await listAnnouncements(accessToken)
+      const data = await listAnnouncements(accessToken, search.trim() ? { search: search.trim() } : {})
       setAnnouncements(data.results ?? data)
     } catch {
       // handled by empty state
@@ -40,7 +49,11 @@ export default function AnnouncementsList() {
     }
   }
 
-  useEffect(() => { load() }, [accessToken]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const timer = setTimeout(load, search ? 300 : 0)
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accessToken, search])
 
   async function submit() {
     if (!form.title.trim() || !form.message.trim()) {
@@ -62,8 +75,9 @@ export default function AnnouncementsList() {
   }
 
   async function remove(a) {
-    if (!(await confirm(`Delete announcement "${a.title}"?`))) return
-    await deleteAnnouncement(a.id, accessToken)
+    const { confirmed, reason } = await confirm(`Delete announcement "${a.title}"?`)
+    if (!confirmed) return
+    await deleteAnnouncement(a.id, accessToken, reason)
     await load()
   }
 
@@ -74,6 +88,25 @@ export default function AnnouncementsList() {
         description={`${announcements.length} announcement${announcements.length === 1 ? '' : 's'}`}
         actions={canManage ? <Button onClick={() => setModalOpen(true)}><IconPlus className="h-4 w-4" /> New Announcement</Button> : null}
       />
+
+      <div className="flex flex-wrap items-center gap-2.5">
+        <div className="relative min-w-[220px] flex-1">
+          <IconSearch className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-navy-700/35" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search announcements…"
+            className="w-full rounded-lg border border-navy-900/10 py-2 pl-8 pr-3 text-xs text-navy-900 placeholder:text-navy-700/35 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
+          />
+        </div>
+        <Button type="button" size="sm" variant="outline" onClick={() => exportTableToExcel(announcements, EXPORT_COLUMNS, 'announcements')}>
+          <IconArrowDown className="h-3.5 w-3.5" /> Excel
+        </Button>
+        <Button type="button" size="sm" variant="outline" onClick={() => exportTableToPdf(announcements, EXPORT_COLUMNS, 'announcements', 'Announcements')}>
+          <IconArrowDown className="h-3.5 w-3.5" /> PDF
+        </Button>
+      </div>
 
       {loading ? (
         <div className="space-y-3">

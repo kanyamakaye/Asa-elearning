@@ -36,6 +36,7 @@ export default function Transcript() {
   const [loading, setLoading] = useState(true)
   const [downloading, setDownloading] = useState(false)
   const [downloadError, setDownloadError] = useState('')
+  const [search, setSearch] = useState('')
 
   useEffect(() => {
     let cancelled = false
@@ -74,7 +75,10 @@ export default function Transcript() {
   }
 
   const summary = data?.summary
-  const courses = data?.courses ?? []
+  const courses = (data?.courses ?? []).filter((c) => {
+    const q = search.trim().toLowerCase()
+    return !q || c.course_title?.toLowerCase().includes(q)
+  })
 
   return (
     <div className="space-y-4">
@@ -118,10 +122,14 @@ export default function Transcript() {
         rows={courses}
         rowKey="course_id"
         emptyMessage="You haven't enrolled in any courses yet."
+        search={{ value: search, onChange: setSearch, placeholder: 'Search by course…' }}
+        exportFilename="transcript"
+        exportTitle="Academic Transcript"
         columns={[
           {
             key: 'course_title',
             label: 'Course',
+            exportValue: (c) => c.course_title,
             render: (c) => (
               <div>
                 <p className="font-semibold text-navy-900">{c.course_title}</p>
@@ -133,6 +141,7 @@ export default function Transcript() {
           {
             key: 'status',
             label: 'Status',
+            exportValue: (c) => STATUS_LABELS[c.status] ?? c.status,
             render: (c) => (
               <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusStyles[c.status] ?? ''}`}>
                 {STATUS_LABELS[c.status] ?? c.status}
@@ -147,6 +156,7 @@ export default function Transcript() {
           {
             key: 'grade',
             label: 'Grade',
+            exportValue: (c) => (c.grade_percentage != null ? `${c.letter_grade} (${c.grade_percentage}%)` : ''),
             render: (c) =>
               c.grade_percentage != null ? (
                 <span className="font-bold text-navy-900">
@@ -159,6 +169,7 @@ export default function Transcript() {
           {
             key: 'certificate_issued',
             label: 'Certificate',
+            exportValue: (c) => (c.certificate_issued ? 'Earned' : ''),
             render: (c) =>
               c.certificate_issued ? (
                 <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700">

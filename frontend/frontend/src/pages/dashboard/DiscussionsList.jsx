@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext'
 import { useConfirm } from '../../context/ConfirmContext'
 import { createDiscussionTopic, deleteDiscussionTopic, listDiscussionTopics } from '../../lib/dashboardApi'
 import useCourseOptions from '../../hooks/useCourseOptions'
+import { exportTableToExcel, exportTableToPdf } from '../../lib/exportTable'
 import Alert from '../../components/ui/Alert'
 import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
@@ -13,7 +14,16 @@ import Modal from '../../components/ui/Modal'
 import PageHeader from '../../components/ui/PageHeader'
 import Select from '../../components/ui/Select'
 import Textarea from '../../components/ui/Textarea'
-import { IconChat, IconPlus, IconTrash } from '../../components/icons'
+import { IconArrowDown, IconChat, IconPlus, IconSearch, IconTrash } from '../../components/icons'
+
+const EXPORT_COLUMNS = [
+  { key: 'title', label: 'Title' },
+  { key: 'course', label: 'Course' },
+  { key: 'created_by', label: 'Created By', exportValue: (t) => t.created_by?.full_name ?? t.created_by?.username ?? '' },
+  { key: 'reply_count', label: 'Replies' },
+  { key: 'status', label: 'Status' },
+  { key: 'created_at', label: 'Created', exportValue: (t) => new Date(t.created_at).toLocaleDateString() },
+]
 
 const MODERATOR_ROLES = ['admin', 'academic_manager', 'instructor', 'content_manager']
 
@@ -22,6 +32,7 @@ export default function DiscussionsList() {
   const confirm = useConfirm()
   const { courses } = useCourseOptions()
   const [topics, setTopics] = useState([])
+  const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
   const [form, setForm] = useState({ course: '', title: '', description: '' })
@@ -31,7 +42,7 @@ export default function DiscussionsList() {
   async function load() {
     setLoading(true)
     try {
-      const data = await listDiscussionTopics(accessToken)
+      const data = await listDiscussionTopics(accessToken, search.trim() ? { search: search.trim() } : {})
       setTopics(data.results ?? data)
     } catch {
       // handled by empty state
@@ -40,11 +51,16 @@ export default function DiscussionsList() {
     }
   }
 
-  useEffect(() => { load() }, [accessToken]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const timer = setTimeout(load, search ? 300 : 0)
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accessToken, search])
 
   async function remove(topic) {
-    if (!(await confirm(`Delete discussion topic "${topic.title}"? This removes all its replies too.`))) return
-    await deleteDiscussionTopic(topic.id, accessToken)
+    const { confirmed, reason } = await confirm(`Delete discussion topic "${topic.title}"? This removes all its replies too.`)
+    if (!confirmed) return
+    await deleteDiscussionTopic(topic.id, accessToken, reason)
     await load()
   }
 
@@ -78,6 +94,25 @@ export default function DiscussionsList() {
         description={`${topics.length} topic${topics.length === 1 ? '' : 's'}`}
         actions={<Button onClick={() => setModalOpen(true)}><IconPlus className="h-4 w-4" /> New Topic</Button>}
       />
+
+      <div className="flex flex-wrap items-center gap-2.5">
+        <div className="relative min-w-[220px] flex-1">
+          <IconSearch className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-navy-700/35" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search discussions…"
+            className="w-full rounded-lg border border-navy-900/10 py-2 pl-8 pr-3 text-xs text-navy-900 placeholder:text-navy-700/35 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
+          />
+        </div>
+        <Button type="button" size="sm" variant="outline" onClick={() => exportTableToExcel(topics, EXPORT_COLUMNS, 'discussions')}>
+          <IconArrowDown className="h-3.5 w-3.5" /> Excel
+        </Button>
+        <Button type="button" size="sm" variant="outline" onClick={() => exportTableToPdf(topics, EXPORT_COLUMNS, 'discussions', 'Discussions')}>
+          <IconArrowDown className="h-3.5 w-3.5" /> PDF
+        </Button>
+      </div>
 
       {loading ? (
         <div className="space-y-2">

@@ -18,11 +18,15 @@ MANAGER_TYPES = ('admin', 'instructor', 'academic_manager')
 class EnrollmentViewSet(viewsets.ModelViewSet):
     serializer_class = EnrollmentSerializer
     permission_classes = [permissions.IsAuthenticated]
+    search_fields = ['student__username', 'student__email', 'course__title']
 
     def get_queryset(self):
         user = self.request.user
         qs = Enrollment.objects.select_related('student', 'course')
         course_id = self.request.query_params.get('course')
+        status_param = self.request.query_params.get('status')
+        if status_param:
+            qs = qs.filter(status=status_param)
         if user.user_type == 'admin' or user.is_staff:
             return qs.filter(course_id=course_id) if course_id else qs
         if user.user_type == 'instructor':

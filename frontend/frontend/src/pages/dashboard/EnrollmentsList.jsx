@@ -19,24 +19,31 @@ export default function EnrollmentsList() {
   const [enrollments, setEnrollments] = useState([])
   const [count, setCount] = useState(0)
   const [page, setPage] = useState(1)
+  const [search, setSearch] = useState('')
+  const [status, setStatus] = useState('')
   const [loading, setLoading] = useState(true)
   const [issuingId, setIssuingId] = useState(null)
 
+  useEffect(() => { setPage(1) }, [status, search])
+
   useEffect(() => {
     let cancelled = false
-    setLoading(true)
-    listEnrollments(accessToken, { page })
-      .then((data) => {
-        if (cancelled) return
-        setEnrollments(data.results ?? data)
-        setCount(data.count ?? (data.results ?? data).length)
-      })
-      .catch(() => {})
-      .finally(() => !cancelled && setLoading(false))
+    const timer = setTimeout(() => {
+      setLoading(true)
+      listEnrollments(accessToken, { page, ...(status ? { status } : {}), ...(search.trim() ? { search: search.trim() } : {}) })
+        .then((data) => {
+          if (cancelled) return
+          setEnrollments(data.results ?? data)
+          setCount(data.count ?? (data.results ?? data).length)
+        })
+        .catch(() => {})
+        .finally(() => !cancelled && setLoading(false))
+    }, search ? 300 : 0)
     return () => {
       cancelled = true
+      clearTimeout(timer)
     }
-  }, [accessToken, page])
+  }, [accessToken, page, status, search])
 
   async function handleIssue(enrollment) {
     setIssuingId(enrollment.id)
@@ -65,9 +72,27 @@ export default function EnrollmentsList() {
         page={page}
         total={count}
         onPageChange={setPage}
+        search={{ value: search, onChange: setSearch, placeholder: 'Search by student or course…' }}
+        filters={[
+          {
+            label: 'Status',
+            value: status,
+            onChange: setStatus,
+            options: [
+              { value: '', label: 'All statuses' },
+              { value: 'active', label: 'Active' },
+              { value: 'completed', label: 'Completed' },
+              { value: 'pending', label: 'Pending' },
+              { value: 'cancelled', label: 'Cancelled' },
+              { value: 'suspended', label: 'Suspended' },
+            ],
+          },
+        ]}
+        exportFilename="enrollments"
+        exportTitle="Enrollments"
         columns={[
-          { key: 'student', label: 'Student', render: (e) => e.student?.full_name ?? '—' },
-          { key: 'course', label: 'Course', render: (e) => e.course_detail?.title ?? '—' },
+          { key: 'student', label: 'Student', render: (e) => e.student?.full_name ?? '—', exportValue: (e) => e.student?.full_name ?? '' },
+          { key: 'course', label: 'Course', render: (e) => e.course_detail?.title ?? '—', exportValue: (e) => e.course_detail?.title ?? '' },
           {
             key: 'status',
             label: 'Status',
@@ -76,6 +101,7 @@ export default function EnrollmentsList() {
                 {e.status}
               </span>
             ),
+            exportValue: (e) => e.status,
           },
           { key: 'completion_percentage', label: 'Progress', render: (e) => `${Math.round(e.completion_percentage)}%` },
           {
@@ -97,6 +123,7 @@ export default function EnrollmentsList() {
               }
               return '—'
             },
+            exportValue: (e) => (e.certificate_issued ? 'Issued' : 'Not issued'),
           },
           { key: 'created_at', label: 'Enrolled', render: (e) => new Date(e.created_at).toLocaleDateString() },
         ]}

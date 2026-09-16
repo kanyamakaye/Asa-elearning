@@ -1,8 +1,59 @@
+import { useState } from 'react'
+import { exportTableToExcel, exportTableToPdf } from '../../lib/exportTable'
+import { IconArrowDown, IconChevronDown, IconSearch } from '../icons'
+
+function ExportMenu({ rows, columns, filename, title }) {
+  const [open, setOpen] = useState(false)
+  if (!filename) return null
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        onBlur={() => setTimeout(() => setOpen(false), 150)}
+        className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold text-navy-700 ring-1 ring-navy-900/10 hover:bg-navy-50"
+      >
+        <IconArrowDown className="h-3.5 w-3.5" /> Export
+        <IconChevronDown className="h-3 w-3" />
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full z-10 mt-1 w-44 rounded-xl bg-white p-1.5 shadow-lg ring-1 ring-navy-900/10">
+          <button
+            type="button"
+            onClick={() => exportTableToExcel(rows, columns, filename)}
+            className="block w-full rounded-lg px-3 py-2 text-left text-xs font-medium text-navy-800 hover:bg-navy-50"
+          >
+            Export as Excel
+          </button>
+          <button
+            type="button"
+            onClick={() => exportTableToPdf(rows, columns, filename, title)}
+            className="block w-full rounded-lg px-3 py-2 text-left text-xs font-medium text-navy-800 hover:bg-navy-50"
+          >
+            Export as PDF
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 /**
- * Generic reusable table with row numbering and page-number pagination.
- *   columns: [{ key, label, render?(row) }]
- *   rows: array of objects (a single page's worth)
+ * Generic reusable table with row numbering, page-number pagination, and an
+ * optional toolbar (search box, filter dropdowns, Excel/PDF export).
+ *   columns: [{ key, label, render?(row), exportValue?(row) }]
+ *   rows: array of objects (a single page's worth, or the full filtered set
+ *     if the caller doesn't paginate server-side)
  *   page, pageSize, total: pass all three (with onPageChange) to enable pagination
+ *   search: { value, onChange, placeholder? } — renders a search input
+ *   filters: [{ label, value, onChange, options: [{ value, label }] }]
+ *   exportRows: the rows to export — defaults to `rows`; pass the full
+ *     filtered/unpaginated array here if `rows` is just the current page,
+ *     so export covers everything currently filtered/searched, not just
+ *     what's on screen.
+ *   exportFilename: enables the Export button when set (e.g. "users")
+ *   exportTitle: optional heading printed at the top of the PDF
  */
 export default function DataTable({
   columns,
@@ -14,13 +65,51 @@ export default function DataTable({
   pageSize = 20,
   total,
   onPageChange,
+  search,
+  filters,
+  exportRows,
+  exportFilename,
+  exportTitle,
 }) {
   const paginated = total != null && typeof onPageChange === 'function'
   const totalPages = paginated ? Math.max(1, Math.ceil(total / pageSize)) : 1
   const startIndex = (page - 1) * pageSize
+  const hasToolbar = Boolean(search || (filters && filters.length > 0) || exportFilename)
 
   return (
     <div className="overflow-hidden rounded-2xl ring-1 ring-navy-900/8">
+      {hasToolbar && (
+        <div className="flex flex-wrap items-center gap-2.5 border-b border-navy-900/8 bg-white px-4 py-3">
+          {search && (
+            <div className="relative min-w-[200px] flex-1">
+              <IconSearch className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-navy-700/35" />
+              <input
+                type="text"
+                value={search.value}
+                onChange={(e) => search.onChange(e.target.value)}
+                placeholder={search.placeholder ?? 'Search…'}
+                className="w-full rounded-lg border border-navy-900/10 py-2 pl-8 pr-3 text-xs text-navy-900 placeholder:text-navy-700/35 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
+              />
+            </div>
+          )}
+          {(filters ?? []).map((f) => (
+            <select
+              key={f.label}
+              value={f.value}
+              onChange={(e) => f.onChange(e.target.value)}
+              className="rounded-lg border border-navy-900/10 py-2 pl-2.5 pr-7 text-xs font-medium text-navy-800 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
+            >
+              {f.options.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          ))}
+          <div className="ml-auto">
+            <ExportMenu rows={exportRows ?? rows} columns={columns} filename={exportFilename} title={exportTitle} />
+          </div>
+        </div>
+      )}
+
       <div className="overflow-x-auto">
         <table className="w-full min-w-[640px] text-left text-sm">
           <thead>

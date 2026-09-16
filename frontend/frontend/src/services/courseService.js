@@ -5,7 +5,8 @@ import api from './api'
 export const getCourses = (params) => api.get('/courses/', { params }).then((r) => r.data)
 export const getMyCourses = () => api.get('/courses/my-courses/').then((r) => r.data)
 export const getCourse = (slug) => api.get(`/courses/${slug}/`).then((r) => r.data)
-export const deleteCourse = (slug) => api.delete(`/courses/${slug}/`).then((r) => r.data)
+export const deleteCourse = (slug, reason) =>
+  api.delete(`/courses/${slug}/`, reason ? { data: { reason } } : undefined).then((r) => r.data)
 export const publishCourse = (slug) => api.post(`/courses/${slug}/publish/`).then((r) => r.data)
 export const archiveCourse = (slug) => api.post(`/courses/${slug}/archive/`).then((r) => r.data)
 export const getCategories = () => api.get('/courses/categories/').then((r) => r.data)

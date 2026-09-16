@@ -101,16 +101,23 @@ export default function UsersList() {
   const [users, setUsers] = useState([])
   const [count, setCount] = useState(0)
   const [page, setPage] = useState(1)
+  const [search, setSearch] = useState('')
+  const [status, setStatus] = useState('')
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState(null)
   const [modal, setModal] = useState(null) // { mode: 'create'|'edit', user? }
   const [saving, setSaving] = useState(false)
 
-  useEffect(() => { setPage(1) }, [role])
+  useEffect(() => { setPage(1) }, [role, status, search])
 
   function load() {
     setLoading(true)
-    listUsers(accessToken, { ...(role ? { role } : {}), page })
+    listUsers(accessToken, {
+      ...(role ? { role } : {}),
+      ...(status ? { status } : {}),
+      ...(search.trim() ? { search: search.trim() } : {}),
+      page,
+    })
       .then((data) => {
         setUsers(data.results ?? data)
         setCount(data.count ?? (data.results ?? data).length)
@@ -119,7 +126,11 @@ export default function UsersList() {
       .finally(() => setLoading(false))
   }
 
-  useEffect(load, [accessToken, role, page]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const timer = setTimeout(load, search ? 300 : 0)
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accessToken, role, status, search, page])
 
   async function save(form) {
     setSaving(true)
@@ -134,10 +145,11 @@ export default function UsersList() {
   }
 
   async function remove(u) {
-    if (!(await confirm(`Delete user "${u.full_name || u.username}"? This cannot be undone.`))) return
+    const { confirmed, reason } = await confirm(`Delete user "${u.full_name || u.username}"? This cannot be undone.`)
+    if (!confirmed) return
     setBusyId(u.id)
     try {
-      await deleteUser(u.id, accessToken)
+      await deleteUser(u.id, accessToken, reason)
       load()
     } finally {
       setBusyId(null)
@@ -158,6 +170,17 @@ export default function UsersList() {
         page={page}
         total={count}
         onPageChange={setPage}
+        search={{ value: search, onChange: setSearch, placeholder: 'Search by name, username, or email…' }}
+        filters={[
+          {
+            label: 'Status',
+            value: status,
+            onChange: setStatus,
+            options: [{ value: '', label: 'All statuses' }, ...STATUS_OPTIONS.map((s) => ({ value: s, label: s[0].toUpperCase() + s.slice(1) }))],
+          },
+        ]}
+        exportFilename="users"
+        exportTitle="Users"
         columns={[
           { key: 'full_name', label: 'Name' },
           { key: 'email', label: 'Email' },
@@ -165,6 +188,7 @@ export default function UsersList() {
             key: 'user_type',
             label: 'Role',
             render: (u) => ROLE_LABELS[u.user_type] ?? u.user_type,
+            exportValue: (u) => ROLE_LABELS[u.user_type] ?? u.user_type,
           },
           {
             key: 'status',

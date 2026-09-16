@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { useConfirm } from '../../context/ConfirmContext'
 import { apiFetch } from '../../lib/api'
+import { exportTableToExcel, exportTableToPdf } from '../../lib/exportTable'
 import Alert from '../../components/ui/Alert'
 import Button from '../../components/ui/Button'
 import FormField from '../../components/ui/FormField'
@@ -10,7 +11,14 @@ import LoadingSpinner from '../../components/ui/LoadingSpinner'
 import Modal from '../../components/ui/Modal'
 import PageHeader from '../../components/ui/PageHeader'
 import Textarea from '../../components/ui/Textarea'
-import { IconEdit, IconPlus, IconTrash } from '../../components/icons'
+import { IconArrowDown, IconEdit, IconPlus, IconSearch, IconTrash } from '../../components/icons'
+
+const EXPORT_COLUMNS = [
+  { key: 'question', label: 'Question' },
+  { key: 'answer', label: 'Answer' },
+  { key: 'category', label: 'Category' },
+  { key: 'is_active', label: 'Active', exportValue: (f) => (f.is_active ? 'Yes' : 'No') },
+]
 
 const EMPTY_FORM = { question: '', answer: '', category: '' }
 
@@ -53,19 +61,24 @@ export default function FAQsList() {
   const confirm = useConfirm()
   const canManage = user?.user_type === 'admin'
   const [faqs, setFaqs] = useState([])
+  const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const [modal, setModal] = useState(null) // { mode: 'create'|'edit', faq? }
   const [saving, setSaving] = useState(false)
 
   function load() {
     setLoading(true)
-    apiFetch('/support/faqs/', { token: accessToken })
+    apiFetch(`/support/faqs/${search.trim() ? `?search=${encodeURIComponent(search.trim())}` : ''}`, { token: accessToken })
       .then((data) => setFaqs(data.results ?? data))
       .catch(() => {})
       .finally(() => setLoading(false))
   }
 
-  useEffect(load, [accessToken])
+  useEffect(() => {
+    const timer = setTimeout(load, search ? 300 : 0)
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accessToken, search])
 
   async function save(form) {
     setSaving(true)
@@ -83,8 +96,9 @@ export default function FAQsList() {
   }
 
   async function remove(faq) {
-    if (!(await confirm(`Delete FAQ "${faq.question}"?`))) return
-    await apiFetch(`/support/faqs/${faq.id}/`, { method: 'DELETE', token: accessToken })
+    const { confirmed, reason } = await confirm(`Delete FAQ "${faq.question}"?`)
+    if (!confirmed) return
+    await apiFetch(`/support/faqs/${faq.id}/`, { method: 'DELETE', token: accessToken, body: reason ? { reason } : undefined })
     load()
   }
 
@@ -102,6 +116,25 @@ export default function FAQsList() {
         description={`${faqs.length} question${faqs.length === 1 ? '' : 's'}`}
         actions={canManage ? <Button onClick={() => setModal({ mode: 'create' })}><IconPlus className="h-4 w-4" /> Add FAQ</Button> : null}
       />
+
+      <div className="flex flex-wrap items-center gap-2.5">
+        <div className="relative min-w-[220px] flex-1">
+          <IconSearch className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-navy-700/35" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search FAQs…"
+            className="w-full rounded-lg border border-navy-900/10 py-2 pl-8 pr-3 text-xs text-navy-900 placeholder:text-navy-700/35 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
+          />
+        </div>
+        <Button type="button" size="sm" variant="outline" onClick={() => exportTableToExcel(faqs, EXPORT_COLUMNS, 'faqs')}>
+          <IconArrowDown className="h-3.5 w-3.5" /> Excel
+        </Button>
+        <Button type="button" size="sm" variant="outline" onClick={() => exportTableToPdf(faqs, EXPORT_COLUMNS, 'faqs', 'FAQs')}>
+          <IconArrowDown className="h-3.5 w-3.5" /> PDF
+        </Button>
+      </div>
 
       {loading ? (
         <LoadingSpinner label="Loading FAQs…" />

@@ -21,6 +21,7 @@ MANAGER_TYPES = ('admin', 'academic_manager')
 class StudentGroupViewSet(StandardResponseMixin, viewsets.ModelViewSet):
     queryset = StudentGroup.objects.select_related('instructor', 'created_by').prefetch_related('courses').all()
     permission_classes = [CanManageGroups]
+    search_fields = ['name', 'description']
     create_message = 'Group created successfully.'
     update_message = 'Group updated successfully.'
     delete_message = 'Group deleted successfully.'

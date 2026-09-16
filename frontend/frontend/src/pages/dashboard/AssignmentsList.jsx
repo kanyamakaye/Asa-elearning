@@ -17,6 +17,8 @@ export default function AssignmentsList() {
   const confirm = useConfirm()
   const [allAssignments, setAllAssignments] = useState([])
   const [page, setPage] = useState(1)
+  const [search, setSearch] = useState('')
+  const [status, setStatus] = useState('')
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState(null)
   const isManager = user?.user_type === 'admin' || user?.user_type === 'academic_manager'
@@ -38,7 +40,13 @@ export default function AssignmentsList() {
 
   useEffect(() => { load() }, [user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const assignments = allAssignments.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+  const filteredAssignments = allAssignments.filter((a) => {
+    if (status && a.status !== status) return false
+    const term = search.trim().toLowerCase()
+    return !term || a.title?.toLowerCase().includes(term)
+  })
+  useEffect(() => { setPage(1) }, [search, status])
+  const assignments = filteredAssignments.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   async function handlePublish(id) {
     setBusyId(id)
@@ -53,10 +61,11 @@ export default function AssignmentsList() {
   }
 
   async function handleDelete(assignment) {
-    if (!(await confirm(`Delete assignment "${assignment.title}"? This cannot be undone.`))) return
+    const { confirmed, reason } = await confirm(`Delete assignment "${assignment.title}"? This cannot be undone.`)
+    if (!confirmed) return
     setBusyId(assignment.id)
     try {
-      await deleteAssignment(assignment.id)
+      await deleteAssignment(assignment.id, reason)
       await load()
     } finally {
       setBusyId(null)
@@ -75,15 +84,32 @@ export default function AssignmentsList() {
         loading={loading}
         rows={assignments}
         page={page}
-        total={allAssignments.length}
+        total={filteredAssignments.length}
         onPageChange={setPage}
         emptyMessage="No assignments yet. Create your first one."
+        search={{ value: search, onChange: setSearch, placeholder: 'Search by title…' }}
+        filters={[
+          {
+            label: 'Status',
+            value: status,
+            onChange: setStatus,
+            options: [
+              { value: '', label: 'All statuses' },
+              { value: 'draft', label: 'Draft' },
+              { value: 'published', label: 'Published' },
+              { value: 'closed', label: 'Closed' },
+            ],
+          },
+        ]}
+        exportRows={filteredAssignments}
+        exportFilename="assignments"
+        exportTitle="Assignments"
         columns={[
           { key: 'title', label: 'Title', render: (a) => <span className="font-semibold text-navy-900">{a.title}</span> },
           { key: 'due_date', label: 'Due', render: (a) => a.due_date ? new Date(a.due_date).toLocaleDateString() : '—' },
           { key: 'maximum_marks', label: 'Marks', render: (a) => `${a.passing_marks}/${a.maximum_marks}` },
           { key: 'submission_count', label: 'Submissions' },
-          { key: 'status', label: 'Status', render: (a) => <Badge tone={statusTone[a.status]}>{a.status}</Badge> },
+          { key: 'status', label: 'Status', render: (a) => <Badge tone={statusTone[a.status]}>{a.status}</Badge>, exportValue: (a) => a.status },
           {
             key: 'actions',
             label: '',

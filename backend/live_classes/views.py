@@ -15,6 +15,7 @@ class LiveSessionViewSet(StandardResponseMixin, viewsets.ModelViewSet):
     queryset = LiveSession.objects.select_related('instructor', 'course').all()
     serializer_class = LiveSessionSerializer
     permission_classes = [CanScheduleLiveClass]
+    search_fields = ['title', 'description']
     create_message = 'Live class scheduled successfully.'
     update_message = 'Live class updated successfully.'
     delete_message = 'Live class deleted successfully.'
@@ -22,7 +23,12 @@ class LiveSessionViewSet(StandardResponseMixin, viewsets.ModelViewSet):
     def get_queryset(self):
         qs = super().get_queryset()
         course_id = self.request.query_params.get('course')
-        return qs.filter(course_id=course_id) if course_id else qs
+        if course_id:
+            qs = qs.filter(course_id=course_id)
+        status_param = self.request.query_params.get('status')
+        if status_param:
+            qs = qs.filter(status=status_param)
+        return qs
 
     def perform_create(self, serializer):
         session = serializer.save(instructor=self.request.user)

@@ -90,10 +90,11 @@ export default function BankQuestionEditor() {
   }
 
   async function handleDelete() {
-    if (!(await confirm('Delete this question from the bank?'))) return
+    const { confirmed, reason } = await confirm('Delete this question from the bank?')
+    if (!confirmed) return
     setDeleting(true)
     try {
-      await deleteBankQuestion(questionId)
+      await deleteBankQuestion(questionId, reason)
       navigate(`/dashboard/question-banks/${bankId}`)
     } finally {
       setDeleting(false)

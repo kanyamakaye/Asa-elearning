@@ -126,31 +126,37 @@ export default function ExamsList() {
   const [exams, setExams] = useState([])
   const [count, setCount] = useState(0)
   const [page, setPage] = useState(1)
+  const [search, setSearch] = useState('')
+  const [status, setStatus] = useState('')
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState(null)
   const [modal, setModal] = useState(null) // { mode: 'create'|'edit', exam? }
   const [saving, setSaving] = useState(false)
 
-  async function load() {
+  function load() {
     setLoading(true)
-    try {
-      const data = await listExams(accessToken, { page })
-      setExams(data.results ?? data)
-      setCount(data.count ?? (data.results ?? data).length)
-    } catch {
-      // handled by empty state
-    } finally {
-      setLoading(false)
-    }
+    listExams(accessToken, { page, ...(status ? { status } : {}), ...(search.trim() ? { search: search.trim() } : {}) })
+      .then((data) => {
+        setExams(data.results ?? data)
+        setCount(data.count ?? (data.results ?? data).length)
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false))
   }
 
-  useEffect(() => { load() }, [accessToken, page]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { setPage(1) }, [status, search])
+  useEffect(() => {
+    const timer = setTimeout(load, search ? 300 : 0)
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accessToken, page, status, search])
 
   async function remove(exam) {
-    if (!(await confirm(`Delete exam "${exam.title}"?`))) return
+    const { confirmed, reason } = await confirm(`Delete exam "${exam.title}"?`)
+    if (!confirmed) return
     setBusyId(exam.id)
     try {
-      await deleteExam(exam.id, accessToken)
+      await deleteExam(exam.id, accessToken, reason)
       await load()
     } finally {
       setBusyId(null)
@@ -192,12 +198,29 @@ export default function ExamsList() {
         total={count}
         onPageChange={setPage}
         emptyMessage="No exams scheduled yet."
+        search={{ value: search, onChange: setSearch, placeholder: 'Search by title…' }}
+        filters={canManage ? [
+          {
+            label: 'Status',
+            value: status,
+            onChange: setStatus,
+            options: [
+              { value: '', label: 'All statuses' },
+              { value: 'scheduled', label: 'Scheduled' },
+              { value: 'active', label: 'Active' },
+              { value: 'completed', label: 'Completed' },
+              { value: 'cancelled', label: 'Cancelled' },
+            ],
+          },
+        ] : undefined}
+        exportFilename="exams"
+        exportTitle="Exams"
         columns={[
           { key: 'title', label: 'Title', render: (e) => <span className="font-semibold text-navy-900">{e.title}</span> },
           { key: 'exam_date', label: 'Date', render: (e) => e.exam_date ? new Date(e.exam_date).toLocaleDateString() : '—' },
           { key: 'passing_marks', label: 'Passing', render: (e) => `${e.passing_marks}/${e.total_marks}` },
           ...(canManage ? [{ key: 'question_count', label: 'Questions', render: (e) => e.question_count ?? 0 }] : []),
-          { key: 'status', label: 'Status', render: (e) => <Badge tone={statusTone[e.status]}>{e.status}</Badge> },
+          { key: 'status', label: 'Status', render: (e) => <Badge tone={statusTone[e.status]}>{e.status}</Badge>, exportValue: (e) => e.status },
           {
             key: 'actions',
             label: '',

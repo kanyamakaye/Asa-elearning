@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { useConfirm } from '../../context/ConfirmContext'
 import { apiFetch } from '../../lib/api'
+import { exportTableToExcel, exportTableToPdf } from '../../lib/exportTable'
 import Alert from '../../components/ui/Alert'
 import Button from '../../components/ui/Button'
 import FormField from '../../components/ui/FormField'
@@ -10,7 +11,13 @@ import LoadingSpinner from '../../components/ui/LoadingSpinner'
 import Modal from '../../components/ui/Modal'
 import PageHeader from '../../components/ui/PageHeader'
 import Textarea from '../../components/ui/Textarea'
-import { IconEdit, IconPlus, IconTrash } from '../../components/icons'
+import { IconArrowDown, IconEdit, IconPlus, IconSearch, IconTrash } from '../../components/icons'
+
+const EXPORT_COLUMNS = [
+  { key: 'name', label: 'Name' },
+  { key: 'description', label: 'Description' },
+  { key: 'course_count', label: 'Courses' },
+]
 
 const MANAGER_ROLES = ['admin', 'academic_manager', 'instructor']
 const EMPTY_FORM = { name: '', description: '' }
@@ -51,6 +58,7 @@ export default function CategoriesList() {
   const confirm = useConfirm()
   const canManage = MANAGER_ROLES.includes(user?.user_type)
   const [categories, setCategories] = useState([])
+  const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const [modal, setModal] = useState(null) // { mode: 'create'|'edit', category? }
   const [saving, setSaving] = useState(false)
@@ -81,10 +89,16 @@ export default function CategoriesList() {
   }
 
   async function remove(cat) {
-    if (!(await confirm(`Delete category "${cat.name}"? Courses in this category will be uncategorized.`))) return
-    await apiFetch(`/courses/categories/${cat.slug}/`, { method: 'DELETE', token: accessToken })
+    const { confirmed, reason } = await confirm(`Delete category "${cat.name}"? Courses in this category will be uncategorized.`)
+    if (!confirmed) return
+    await apiFetch(`/courses/categories/${cat.slug}/`, { method: 'DELETE', token: accessToken, body: reason ? { reason } : undefined })
     load()
   }
+
+  const filteredCategories = categories.filter((c) => {
+    const q = search.trim().toLowerCase()
+    return !q || c.name.toLowerCase().includes(q) || c.description?.toLowerCase().includes(q)
+  })
 
   return (
     <div className="space-y-6">
@@ -94,11 +108,36 @@ export default function CategoriesList() {
         actions={canManage ? <Button onClick={() => setModal({ mode: 'create' })}><IconPlus className="h-4 w-4" /> Add Category</Button> : null}
       />
 
+      <div className="flex flex-wrap items-center gap-2.5">
+        <div className="relative min-w-[220px] flex-1">
+          <IconSearch className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-navy-700/35" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search categories…"
+            className="w-full rounded-lg border border-navy-900/10 py-2 pl-8 pr-3 text-xs text-navy-900 placeholder:text-navy-700/35 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
+          />
+        </div>
+        <Button
+          type="button" size="sm" variant="outline"
+          onClick={() => exportTableToExcel(filteredCategories, EXPORT_COLUMNS, 'categories')}
+        >
+          <IconArrowDown className="h-3.5 w-3.5" /> Excel
+        </Button>
+        <Button
+          type="button" size="sm" variant="outline"
+          onClick={() => exportTableToPdf(filteredCategories, EXPORT_COLUMNS, 'categories', 'Course Categories')}
+        >
+          <IconArrowDown className="h-3.5 w-3.5" /> PDF
+        </Button>
+      </div>
+
       {loading ? (
         <LoadingSpinner label="Loading categories…" />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {categories.map((cat) => (
+          {filteredCategories.map((cat) => (
             <div key={cat.id} className="rounded-2xl bg-white p-5 ring-1 ring-navy-900/8">
               <div className="flex items-start justify-between gap-2">
                 <h3 className="text-sm font-bold text-navy-900">{cat.name}</h3>

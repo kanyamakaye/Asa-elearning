@@ -39,10 +39,11 @@ export default function QuestionBankDetail() {
   useEffect(() => { load() }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function removeQuestion(q) {
-    if (!(await confirm('Delete this question from the bank?'))) return
+    const { confirmed, reason } = await confirm('Delete this question from the bank?')
+    if (!confirmed) return
     setBusyId(q.id)
     try {
-      await deleteBankQuestion(q.id)
+      await deleteBankQuestion(q.id, reason)
       load()
     } finally {
       setBusyId(null)

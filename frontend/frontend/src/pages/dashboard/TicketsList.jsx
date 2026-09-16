@@ -16,11 +16,13 @@ export default function TicketsList() {
   const [tickets, setTickets] = useState([])
   const [count, setCount] = useState(0)
   const [page, setPage] = useState(1)
+  const [search, setSearch] = useState('')
+  const [status, setStatus] = useState('')
   const [loading, setLoading] = useState(true)
 
   function load() {
     setLoading(true)
-    listSupportTickets(accessToken, { page })
+    listSupportTickets(accessToken, { page, ...(status ? { status } : {}), ...(search.trim() ? { search: search.trim() } : {}) })
       .then((data) => {
         setTickets(data.results ?? data)
         setCount(data.count ?? (data.results ?? data).length)
@@ -29,7 +31,12 @@ export default function TicketsList() {
       .finally(() => setLoading(false))
   }
 
-  useEffect(load, [accessToken, page]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { setPage(1) }, [status, search])
+  useEffect(() => {
+    const timer = setTimeout(load, search ? 300 : 0)
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accessToken, page, status, search])
 
   async function handleStatusChange(ticket, status) {
     setTickets((prev) => prev.map((t) => (t.id === ticket.id ? { ...t, status } : t)))
@@ -53,10 +60,21 @@ export default function TicketsList() {
         page={page}
         total={count}
         onPageChange={setPage}
+        search={{ value: search, onChange: setSearch, placeholder: 'Search by subject or description…' }}
+        filters={[
+          {
+            label: 'Status',
+            value: status,
+            onChange: setStatus,
+            options: [{ value: '', label: 'All statuses' }, ...STATUSES.map((s) => ({ value: s, label: s.replace('_', ' ') }))],
+          },
+        ]}
+        exportFilename="support-tickets"
+        exportTitle="Support Tickets"
         columns={[
           { key: 'subject', label: 'Subject' },
-          { key: 'user', label: 'User', render: (t) => t.user?.full_name ?? '—' },
-          { key: 'category', label: 'Category', render: (t) => <span className="capitalize">{t.category}</span> },
+          { key: 'user', label: 'User', render: (t) => t.user?.full_name ?? '—', exportValue: (t) => t.user?.full_name ?? '' },
+          { key: 'category', label: 'Category', render: (t) => <span className="capitalize">{t.category}</span>, exportValue: (t) => t.category },
           {
             key: 'priority',
             label: 'Priority',
@@ -65,10 +83,12 @@ export default function TicketsList() {
                 {t.priority}
               </span>
             ),
+            exportValue: (t) => t.priority,
           },
           {
             key: 'status',
             label: 'Status',
+            exportValue: (t) => t.status,
             render: (t) => (
               <select
                 value={t.status}

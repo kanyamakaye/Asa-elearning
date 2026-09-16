@@ -17,6 +17,7 @@ class AssignmentViewSet(StandardResponseMixin, viewsets.ModelViewSet):
     queryset = Assignment.objects.select_related('course', 'created_by').all()
     serializer_class = AssignmentSerializer
     permission_classes = [CanManageAssessment]
+    search_fields = ['title', 'description']
     create_message = 'Assignment created successfully.'
     update_message = 'Assignment updated successfully.'
     delete_message = 'Assignment deleted successfully.'
@@ -24,7 +25,12 @@ class AssignmentViewSet(StandardResponseMixin, viewsets.ModelViewSet):
     def get_queryset(self):
         qs = super().get_queryset()
         course_id = self.request.query_params.get('course')
-        return qs.filter(course_id=course_id) if course_id else qs
+        if course_id:
+            qs = qs.filter(course_id=course_id)
+        status_param = self.request.query_params.get('status')
+        if status_param:
+            qs = qs.filter(status=status_param)
+        return qs
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
@@ -84,6 +90,7 @@ class RubricViewSet(StandardResponseMixin, viewsets.ModelViewSet):
     queryset = Rubric.objects.prefetch_related('criteria').all()
     serializer_class = RubricSerializer
     permission_classes = [CanManageAssessment]
+    search_fields = ['title', 'description']
     create_message = 'Rubric created successfully.'
     update_message = 'Rubric updated successfully.'
     delete_message = 'Rubric deleted successfully.'

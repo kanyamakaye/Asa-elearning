@@ -17,23 +17,30 @@ export default function PaymentsList() {
   const [payments, setPayments] = useState([])
   const [count, setCount] = useState(0)
   const [page, setPage] = useState(1)
+  const [search, setSearch] = useState('')
+  const [status, setStatus] = useState('')
   const [loading, setLoading] = useState(true)
+
+  useEffect(() => { setPage(1) }, [status, search])
 
   useEffect(() => {
     let cancelled = false
-    setLoading(true)
-    listPayments(accessToken, { page })
-      .then((data) => {
-        if (cancelled) return
-        setPayments(data.results ?? data)
-        setCount(data.count ?? (data.results ?? data).length)
-      })
-      .catch(() => {})
-      .finally(() => !cancelled && setLoading(false))
+    const timer = setTimeout(() => {
+      setLoading(true)
+      listPayments(accessToken, { page, ...(status ? { status } : {}), ...(search.trim() ? { search: search.trim() } : {}) })
+        .then((data) => {
+          if (cancelled) return
+          setPayments(data.results ?? data)
+          setCount(data.count ?? (data.results ?? data).length)
+        })
+        .catch(() => {})
+        .finally(() => !cancelled && setLoading(false))
+    }, search ? 300 : 0)
     return () => {
       cancelled = true
+      clearTimeout(timer)
     }
-  }, [accessToken, page])
+  }, [accessToken, page, status, search])
 
   const total = payments
     .filter((p) => p.payment_status === 'successful')
@@ -54,9 +61,27 @@ export default function PaymentsList() {
         page={page}
         total={count}
         onPageChange={setPage}
+        search={{ value: search, onChange: setSearch, placeholder: 'Search by reference, student, or course…' }}
+        filters={[
+          {
+            label: 'Status',
+            value: status,
+            onChange: setStatus,
+            options: [
+              { value: '', label: 'All statuses' },
+              { value: 'successful', label: 'Successful' },
+              { value: 'pending', label: 'Pending' },
+              { value: 'failed', label: 'Failed' },
+              { value: 'cancelled', label: 'Cancelled' },
+              { value: 'refunded', label: 'Refunded' },
+            ],
+          },
+        ]}
+        exportFilename="payments"
+        exportTitle="Payments"
         columns={[
           { key: 'transaction_reference', label: 'Reference' },
-          { key: 'course', label: 'Course', render: (p) => p.course_detail?.title ?? '—' },
+          { key: 'course', label: 'Course', render: (p) => p.course_detail?.title ?? '—', exportValue: (p) => p.course_detail?.title ?? '' },
           { key: 'amount', label: 'Amount', render: (p) => `${p.currency} ${p.amount}` },
           { key: 'payment_method', label: 'Method' },
           {
@@ -67,6 +92,7 @@ export default function PaymentsList() {
                 {p.payment_status}
               </span>
             ),
+            exportValue: (p) => p.payment_status,
           },
           { key: 'created_at', label: 'Date', render: (p) => new Date(p.created_at).toLocaleDateString() },
         ]}

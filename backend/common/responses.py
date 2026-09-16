@@ -9,6 +9,8 @@ from rest_framework import status as http_status
 from rest_framework.exceptions import APIException, ValidationError
 from rest_framework.response import Response
 
+from accounts.audit import log_event
+
 
 def success_response(data=None, message='', status_code=http_status.HTTP_200_OK):
     return Response({'success': True, 'message': message, 'data': data}, status=status_code)
@@ -43,6 +45,18 @@ class StandardResponseMixin:
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
+        # Optional — the confirm dialog collects it but never requires it, so
+        # most deletions still have no reason attached, and that's fine.
+        reason = str(request.data.get('reason') or '').strip()
+        log_event(
+            'RECORD_DELETED',
+            user=request.user if request.user.is_authenticated else None,
+            request=request,
+            model=instance.__class__.__name__,
+            object_id=instance.pk,
+            object_repr=str(instance)[:200],
+            reason=reason,
+        )
         self.perform_destroy(instance)
         return success_response(None, self.delete_message, http_status.HTTP_204_NO_CONTENT)
 

@@ -13,10 +13,14 @@ from .serializers import PaymentSerializer, RefundSerializer
 class PaymentViewSet(viewsets.ModelViewSet):
     serializer_class = PaymentSerializer
     permission_classes = [permissions.IsAuthenticated]
+    search_fields = ['transaction_reference', 'student__username', 'student__email', 'course__title']
 
     def get_queryset(self):
         user = self.request.user
         qs = Payment.objects.select_related('student', 'course')
+        status_param = self.request.query_params.get('status')
+        if status_param:
+            qs = qs.filter(payment_status=status_param)
         if user.user_type == 'admin' or user.is_staff:
             return qs
         return qs.filter(student=user)
@@ -36,10 +40,14 @@ class PaymentViewSet(viewsets.ModelViewSet):
 class RefundViewSet(viewsets.ModelViewSet):
     serializer_class = RefundSerializer
     permission_classes = [permissions.IsAuthenticated]
+    search_fields = ['payment__transaction_reference', 'student__username', 'student__email']
 
     def get_queryset(self):
         user = self.request.user
         qs = Refund.objects.select_related('payment', 'student')
+        status_param = self.request.query_params.get('status')
+        if status_param:
+            qs = qs.filter(refund_status=status_param)
         if user.user_type == 'admin' or user.is_staff:
             return qs
         return qs.filter(student=user)

@@ -185,8 +185,9 @@ export default function ManageContent() {
   }
 
   async function removeUnit(u) {
-    if (!(await confirm(`Delete lesson "${u.title}" and everything inside it?`))) return
-    await deleteUnit(u.id)
+    const { confirmed, reason } = await confirm(`Delete lesson "${u.title}" and everything inside it?`)
+    if (!confirmed) return
+    await deleteUnit(u.id, reason)
     await loadAll()
   }
 
@@ -217,8 +218,9 @@ export default function ManageContent() {
   }
 
   async function removeModule(m) {
-    if (!(await confirm(`Delete module "${m.title}" and all its submodules?`))) return
-    await deleteModule(m.id)
+    const { confirmed, reason } = await confirm(`Delete module "${m.title}" and all its submodules?`)
+    if (!confirmed) return
+    await deleteModule(m.id, reason)
     await loadAll()
   }
 
@@ -233,8 +235,9 @@ export default function ManageContent() {
   }
 
   async function removeLesson(lesson) {
-    if (!(await confirm(`Delete submodule "${lesson.title}" and its sections?`))) return
-    await deleteLesson(lesson.id)
+    const { confirmed, reason } = await confirm(`Delete submodule "${lesson.title}" and its sections?`)
+    if (!confirmed) return
+    await deleteLesson(lesson.id, reason)
     await loadAll()
   }
 

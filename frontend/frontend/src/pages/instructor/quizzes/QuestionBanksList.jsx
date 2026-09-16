@@ -10,24 +10,30 @@ import { IconEdit, IconPlus, IconTrash } from '../../../components/icons'
 export default function QuestionBanksList() {
   const confirm = useConfirm()
   const [banks, setBanks] = useState([])
+  const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState(null)
 
   function load() {
     setLoading(true)
-    getQuestionBanks({ page_size: 100 })
+    getQuestionBanks({ page_size: 100, ...(search.trim() ? { search: search.trim() } : {}) })
       .then((data) => setBanks(data.results ?? data))
       .catch(() => setBanks([]))
       .finally(() => setLoading(false))
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    const timer = setTimeout(load, search ? 300 : 0)
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search])
 
   async function handleDelete(bank) {
-    if (!(await confirm(`Delete question bank "${bank.title}"? This cannot be undone.`))) return
+    const { confirmed, reason } = await confirm(`Delete question bank "${bank.title}"? This cannot be undone.`)
+    if (!confirmed) return
     setBusyId(bank.id)
     try {
-      await deleteQuestionBank(bank.id)
+      await deleteQuestionBank(bank.id, reason)
       load()
     } finally {
       setBusyId(null)
@@ -46,6 +52,9 @@ export default function QuestionBanksList() {
         loading={loading}
         rows={banks}
         emptyMessage="No question banks yet. Create your first one."
+        search={{ value: search, onChange: setSearch, placeholder: 'Search by title…' }}
+        exportFilename="question-banks"
+        exportTitle="Question Banks"
         columns={[
           { key: 'title', label: 'Title', render: (b) => <span className="font-semibold text-navy-900">{b.title}</span> },
           { key: 'category_name', label: 'Category', render: (b) => b.category_name ?? '—' },

@@ -32,8 +32,8 @@ export function updateUser(id, body, token) {
   return apiFetch(`/users/${id}/`, { method: 'PATCH', body, token })
 }
 
-export function deleteUser(id, token) {
-  return apiFetch(`/users/${id}/`, { method: 'DELETE', token })
+export function deleteUser(id, token, reason) {
+  return apiFetch(`/users/${id}/`, { method: 'DELETE', token, body: reason ? { reason } : undefined })
 }
 
 export function listEnrollments(token, params = {}) {
@@ -96,8 +96,8 @@ export function createAnnouncement(body, token) {
   return apiFetch('/notifications/announcements/', { method: 'POST', body, token })
 }
 
-export function deleteAnnouncement(id, token) {
-  return apiFetch(`/notifications/announcements/${id}/`, { method: 'DELETE', token })
+export function deleteAnnouncement(id, token, reason) {
+  return apiFetch(`/notifications/announcements/${id}/`, { method: 'DELETE', token, body: reason ? { reason } : undefined })
 }
 
 // -- Messages (conversation-based) -------------------------------------
@@ -145,8 +145,8 @@ export function createDiscussionTopic(body, token) {
   return apiFetch('/discussions/', { method: 'POST', body, token })
 }
 
-export function deleteDiscussionTopic(id, token) {
-  return apiFetch(`/discussions/${id}/`, { method: 'DELETE', token })
+export function deleteDiscussionTopic(id, token, reason) {
+  return apiFetch(`/discussions/${id}/`, { method: 'DELETE', token, body: reason ? { reason } : undefined })
 }
 
 export function getDiscussionTopic(id, token) {
@@ -177,8 +177,8 @@ export function updateExam(id, body, token) {
   return apiFetch(`/exams/${id}/`, { method: 'PATCH', body, token })
 }
 
-export function deleteExam(id, token) {
-  return apiFetch(`/exams/${id}/`, { method: 'DELETE', token })
+export function deleteExam(id, token, reason) {
+  return apiFetch(`/exams/${id}/`, { method: 'DELETE', token, body: reason ? { reason } : undefined })
 }
 
 export function getExamQuestions(examId, token) {

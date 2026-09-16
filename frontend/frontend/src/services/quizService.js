@@ -4,7 +4,8 @@ export const getQuizzes = (params) => api.get('/quizzes/', { params }).then((r) 
 export const getQuiz = (id) => api.get(`/quizzes/${id}/`).then((r) => r.data)
 export const createQuiz = (data) => api.post('/quizzes/', data).then((r) => r.data)
 export const updateQuiz = (id, data) => api.patch(`/quizzes/${id}/`, data).then((r) => r.data)
-export const deleteQuiz = (id) => api.delete(`/quizzes/${id}/`).then((r) => r.data)
+export const deleteQuiz = (id, reason) =>
+  api.delete(`/quizzes/${id}/`, reason ? { data: { reason } } : undefined).then((r) => r.data)
 export const publishQuiz = (id) => api.post(`/quizzes/${id}/publish/`).then((r) => r.data)
 
 export const getQuestions = (quizId) => api.get(`/quizzes/${quizId}/questions/`).then((r) => r.data)

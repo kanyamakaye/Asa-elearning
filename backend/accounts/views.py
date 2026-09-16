@@ -499,6 +499,9 @@ class UserViewSet(viewsets.ModelViewSet):
         if role:
             roles = [r for r in role.split(',') if r]
             qs = qs.filter(user_type__in=roles) if len(roles) > 1 else qs.filter(user_type=roles[0])
+        status_param = self.request.query_params.get('status')
+        if status_param:
+            qs = qs.filter(status=status_param)
         return qs
 
     @action(detail=False, methods=['post'], url_path='create-instructor', throttle_classes=[ScopedRateThrottle])
@@ -548,6 +551,7 @@ class LoginHistoryViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = LoginHistory.objects.select_related('user').all()
     serializer_class = LoginHistorySerializer
     permission_classes = [IsAdmin]
+    search_fields = ['user__username', 'user__email', 'ip_address', 'device_information']
 
     def get_queryset(self):
         qs = super().get_queryset()

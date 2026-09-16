@@ -14,23 +14,28 @@ export default function RefundsList() {
   const [refunds, setRefunds] = useState([])
   const [count, setCount] = useState(0)
   const [page, setPage] = useState(1)
+  const [search, setSearch] = useState('')
+  const [status, setStatus] = useState('')
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState(null)
 
-  async function load() {
+  function load() {
     setLoading(true)
-    try {
-      const data = await listRefunds(accessToken, { page })
-      setRefunds(data.results ?? data)
-      setCount(data.count ?? (data.results ?? data).length)
-    } catch {
-      // handled by empty state
-    } finally {
-      setLoading(false)
-    }
+    listRefunds(accessToken, { page, ...(status ? { status } : {}), ...(search.trim() ? { search: search.trim() } : {}) })
+      .then((data) => {
+        setRefunds(data.results ?? data)
+        setCount(data.count ?? (data.results ?? data).length)
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false))
   }
 
-  useEffect(() => { load() }, [accessToken, page]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { setPage(1) }, [status, search])
+  useEffect(() => {
+    const timer = setTimeout(load, search ? 300 : 0)
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accessToken, page, status, search])
 
   async function handleProcess(id, status) {
     setBusyId(id)
@@ -55,12 +60,29 @@ export default function RefundsList() {
         total={count}
         onPageChange={setPage}
         emptyMessage="No refund requests."
+        search={{ value: search, onChange: setSearch, placeholder: 'Search by reference or student…' }}
+        filters={[
+          {
+            label: 'Status',
+            value: status,
+            onChange: setStatus,
+            options: [
+              { value: '', label: 'All statuses' },
+              { value: 'pending', label: 'Pending' },
+              { value: 'approved', label: 'Approved' },
+              { value: 'rejected', label: 'Rejected' },
+              { value: 'completed', label: 'Completed' },
+            ],
+          },
+        ]}
+        exportFilename="refunds"
+        exportTitle="Refunds"
         columns={[
-          { key: 'id', label: 'Ref', render: (r) => `#${r.id}` },
-          { key: 'student', label: 'Student', render: (r) => r.student?.full_name ?? r.student ?? '—' },
+          { key: 'id', label: 'Ref', render: (r) => `#${r.id}`, exportValue: (r) => `#${r.id}` },
+          { key: 'student', label: 'Student', render: (r) => r.student?.full_name ?? r.student ?? '—', exportValue: (r) => r.student?.full_name ?? r.student ?? '' },
           { key: 'refund_amount', label: 'Amount', render: (r) => formatCurrency(r.refund_amount) },
-          { key: 'refund_reason', label: 'Reason', render: (r) => <span className="max-w-xs truncate">{r.refund_reason || '—'}</span> },
-          { key: 'refund_status', label: 'Status', render: (r) => <Badge tone={statusTone[r.refund_status]}>{r.refund_status}</Badge> },
+          { key: 'refund_reason', label: 'Reason', render: (r) => <span className="max-w-xs truncate">{r.refund_reason || '—'}</span>, exportValue: (r) => r.refund_reason ?? '' },
+          { key: 'refund_status', label: 'Status', render: (r) => <Badge tone={statusTone[r.refund_status]}>{r.refund_status}</Badge>, exportValue: (r) => r.refund_status },
           {
             key: 'actions',
             label: '',

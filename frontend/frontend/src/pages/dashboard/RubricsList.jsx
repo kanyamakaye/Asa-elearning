@@ -19,6 +19,7 @@ const EMPTY_FORM = { title: '', description: '', criteria: [emptyCriterion(), em
 export default function RubricsList() {
   const confirm = useConfirm()
   const [rubrics, setRubrics] = useState([])
+  const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState(null)
   const [modalOpen, setModalOpen] = useState(false)
@@ -80,15 +81,21 @@ export default function RubricsList() {
   }
 
   async function handleDelete(rubric) {
-    if (!(await confirm(`Delete rubric "${rubric.title}"? Assignments using it will lose their rubric.`))) return
+    const { confirmed, reason } = await confirm(`Delete rubric "${rubric.title}"? Assignments using it will lose their rubric.`)
+    if (!confirmed) return
     setBusyId(rubric.id)
     try {
-      await deleteRubric(rubric.id)
+      await deleteRubric(rubric.id, reason)
       load()
     } finally {
       setBusyId(null)
     }
   }
+
+  const filteredRubrics = rubrics.filter((r) => {
+    const term = search.trim().toLowerCase()
+    return !term || r.title?.toLowerCase().includes(term)
+  })
 
   return (
     <div className="space-y-4">
@@ -100,8 +107,11 @@ export default function RubricsList() {
 
       <DataTable
         loading={loading}
-        rows={rubrics}
+        rows={filteredRubrics}
         emptyMessage="No rubrics yet. Create your first one."
+        search={{ value: search, onChange: setSearch, placeholder: 'Search by title…' }}
+        exportFilename="rubrics"
+        exportTitle="Rubrics"
         columns={[
           { key: 'title', label: 'Title', render: (r) => <span className="font-semibold text-navy-900">{r.title}</span> },
           { key: 'criteria', label: 'Criteria', render: (r) => r.criteria?.length ?? 0 },

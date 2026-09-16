@@ -37,6 +37,7 @@ class AnnouncementViewSet(viewsets.ModelViewSet):
     queryset = Announcement.objects.all()
     serializer_class = AnnouncementSerializer
     permission_classes = [IsInstructorOrReadOnly]
+    search_fields = ['title', 'message']
 
     def get_queryset(self):
         qs = super().get_queryset()

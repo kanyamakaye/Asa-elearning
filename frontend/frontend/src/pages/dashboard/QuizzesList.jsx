@@ -17,6 +17,8 @@ export default function QuizzesList() {
   const confirm = useConfirm()
   const [allQuizzes, setAllQuizzes] = useState([])
   const [page, setPage] = useState(1)
+  const [search, setSearch] = useState('')
+  const [status, setStatus] = useState('')
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState(null)
   const isManager = user?.user_type === 'admin' || user?.user_type === 'academic_manager'
@@ -38,7 +40,13 @@ export default function QuizzesList() {
 
   useEffect(() => { load() }, [user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const quizzes = allQuizzes.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+  const filteredQuizzes = allQuizzes.filter((q) => {
+    if (status && q.status !== status) return false
+    const term = search.trim().toLowerCase()
+    return !term || q.title?.toLowerCase().includes(term)
+  })
+  useEffect(() => { setPage(1) }, [search, status])
+  const quizzes = filteredQuizzes.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   async function handlePublish(id) {
     setBusyId(id)
@@ -53,10 +61,11 @@ export default function QuizzesList() {
   }
 
   async function handleDelete(quiz) {
-    if (!(await confirm(`Delete quiz "${quiz.title}"? This cannot be undone.`))) return
+    const { confirmed, reason } = await confirm(`Delete quiz "${quiz.title}"? This cannot be undone.`)
+    if (!confirmed) return
     setBusyId(quiz.id)
     try {
-      await deleteQuiz(quiz.id)
+      await deleteQuiz(quiz.id, reason)
       await load()
     } finally {
       setBusyId(null)
@@ -75,15 +84,32 @@ export default function QuizzesList() {
         loading={loading}
         rows={quizzes}
         page={page}
-        total={allQuizzes.length}
+        total={filteredQuizzes.length}
         onPageChange={setPage}
         emptyMessage="No quizzes yet. Create your first one."
+        search={{ value: search, onChange: setSearch, placeholder: 'Search by title…' }}
+        filters={[
+          {
+            label: 'Status',
+            value: status,
+            onChange: setStatus,
+            options: [
+              { value: '', label: 'All statuses' },
+              { value: 'draft', label: 'Draft' },
+              { value: 'published', label: 'Published' },
+              { value: 'closed', label: 'Closed' },
+            ],
+          },
+        ]}
+        exportRows={filteredQuizzes}
+        exportFilename="quizzes"
+        exportTitle="Quizzes"
         columns={[
           { key: 'title', label: 'Title', render: (q) => <span className="font-semibold text-navy-900">{q.title}</span> },
           { key: 'question_count', label: 'Questions' },
           { key: 'attempt_limit', label: 'Max Attempts' },
           { key: 'passing_marks', label: 'Passing', render: (q) => `${q.passing_marks}/${q.total_marks}` },
-          { key: 'status', label: 'Status', render: (q) => <Badge tone={statusTone[q.status]}>{q.status}</Badge> },
+          { key: 'status', label: 'Status', render: (q) => <Badge tone={statusTone[q.status]}>{q.status}</Badge>, exportValue: (q) => q.status },
           {
             key: 'actions',
             label: '',

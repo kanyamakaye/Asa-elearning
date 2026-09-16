@@ -166,8 +166,9 @@ export default function SubmoduleEditor() {
   }
 
   async function removeSection(section) {
-    if (!(await confirm(`Delete section "${section.title}"?`))) return
-    await deleteSection(section.id)
+    const { confirmed, reason } = await confirm(`Delete section "${section.title}"?`)
+    if (!confirmed) return
+    await deleteSection(section.id, reason)
     const data = await getSections(lessonId)
     setSections(data.results ?? data)
   }
