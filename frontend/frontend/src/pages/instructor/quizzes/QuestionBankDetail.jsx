@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { useConfirm } from '../../../context/ConfirmContext'
 import { deleteBankQuestion, getQuestionBank } from '../../../services/questionBankService'
 import Alert from '../../../components/ui/Alert'
 import Badge from '../../../components/ui/Badge'
@@ -20,6 +21,7 @@ const DIFFICULTY_TONE = { easy: 'success', medium: 'warning', hard: 'danger' }
  * not an inline card here — same pattern as course submodules. */
 export default function QuestionBankDetail() {
   const { id } = useParams()
+  const confirm = useConfirm()
   const [bank, setBank] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -37,7 +39,7 @@ export default function QuestionBankDetail() {
   useEffect(() => { load() }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function removeQuestion(q) {
-    if (!window.confirm('Delete this question from the bank?')) return
+    if (!(await confirm('Delete this question from the bank?'))) return
     setBusyId(q.id)
     try {
       await deleteBankQuestion(q.id)

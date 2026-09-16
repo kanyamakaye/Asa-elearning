@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import {
   createBankQuestion, deleteBankQuestion, getBankQuestion, getQuestionBank, updateBankQuestion,
 } from '../../../services/questionBankService'
+import { useConfirm } from '../../../context/ConfirmContext'
 import useUnsavedChanges from '../../../hooks/useUnsavedChanges'
 import QuestionEditor, { emptyOption } from '../../../components/quizzes/QuestionEditor'
 import Alert from '../../../components/ui/Alert'
@@ -34,6 +35,7 @@ function emptyQuestion() {
 export default function BankQuestionEditor() {
   const { bankId, questionId } = useParams()
   const navigate = useNavigate()
+  const confirm = useConfirm()
   const isEdit = Boolean(questionId)
 
   const [bank, setBank] = useState(null)
@@ -88,7 +90,7 @@ export default function BankQuestionEditor() {
   }
 
   async function handleDelete() {
-    if (!window.confirm('Delete this question from the bank?')) return
+    if (!(await confirm('Delete this question from the bank?'))) return
     setDeleting(true)
     try {
       await deleteBankQuestion(questionId)

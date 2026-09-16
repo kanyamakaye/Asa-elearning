@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { useConfirm } from '../../context/ConfirmContext'
 import { createUser, deleteUser, listUsers, updateUser } from '../../lib/dashboardApi'
 import DataTable from '../../components/dashboard/DataTable'
 import { ROLE_LABELS } from '../../components/dashboard/navConfig'
@@ -93,6 +94,7 @@ function UserForm({ initial, isEdit, onSave, onCancel, saving }) {
 
 export default function UsersList() {
   const { accessToken, user: currentUser } = useAuth()
+  const confirm = useConfirm()
   const isAdmin = currentUser?.user_type === 'admin'
   const [params] = useSearchParams()
   const role = params.get('role')
@@ -132,7 +134,7 @@ export default function UsersList() {
   }
 
   async function remove(u) {
-    if (!window.confirm(`Delete user "${u.full_name || u.username}"? This cannot be undone.`)) return
+    if (!(await confirm(`Delete user "${u.full_name || u.username}"? This cannot be undone.`))) return
     setBusyId(u.id)
     try {
       await deleteUser(u.id, accessToken)

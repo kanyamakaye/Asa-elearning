@@ -5,6 +5,7 @@ import { getUnits, createUnit, updateUnit, deleteUnit } from '../../../services/
 import { getModules, createModule, updateModule, deleteModule } from '../../../services/moduleService'
 import { getLessons, deleteLesson, updateLesson } from '../../../services/lessonService'
 import { getSections } from '../../../services/sectionService'
+import { useConfirm } from '../../../context/ConfirmContext'
 import Alert from '../../../components/ui/Alert'
 import Badge from '../../../components/ui/Badge'
 import Breadcrumb from '../../../components/ui/Breadcrumb'
@@ -100,6 +101,7 @@ function ModuleForm({ initial, onSave, onCancel, saving }) {
 
 export default function ManageContent() {
   const { slug } = useParams()
+  const confirm = useConfirm()
   const [course, setCourse] = useState(null)
   const [units, setUnits] = useState([])
   const [expandedUnits, setExpandedUnits] = useState({})
@@ -183,7 +185,7 @@ export default function ManageContent() {
   }
 
   async function removeUnit(u) {
-    if (!window.confirm(`Delete lesson "${u.title}" and everything inside it?`)) return
+    if (!(await confirm(`Delete lesson "${u.title}" and everything inside it?`))) return
     await deleteUnit(u.id)
     await loadAll()
   }
@@ -215,7 +217,7 @@ export default function ManageContent() {
   }
 
   async function removeModule(m) {
-    if (!window.confirm(`Delete module "${m.title}" and all its submodules?`)) return
+    if (!(await confirm(`Delete module "${m.title}" and all its submodules?`))) return
     await deleteModule(m.id)
     await loadAll()
   }
@@ -231,7 +233,7 @@ export default function ManageContent() {
   }
 
   async function removeLesson(lesson) {
-    if (!window.confirm(`Delete submodule "${lesson.title}" and its sections?`)) return
+    if (!(await confirm(`Delete submodule "${lesson.title}" and its sections?`))) return
     await deleteLesson(lesson.id)
     await loadAll()
   }

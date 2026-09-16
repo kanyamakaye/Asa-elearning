@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { getModule } from '../../../services/moduleService'
 import { getLesson, createLesson, updateLesson } from '../../../services/lessonService'
 import { getSections, createSection, updateSection, deleteSection } from '../../../services/sectionService'
+import { useConfirm } from '../../../context/ConfirmContext'
 import useUnsavedChanges from '../../../hooks/useUnsavedChanges'
 import Alert from '../../../components/ui/Alert'
 import Breadcrumb from '../../../components/ui/Breadcrumb'
@@ -82,6 +83,7 @@ function SectionForm({ initial, onSave, onCancel, saving }) {
 export default function SubmoduleEditor() {
   const { slug, moduleId, lessonId } = useParams()
   const navigate = useNavigate()
+  const confirm = useConfirm()
   const isEdit = Boolean(lessonId)
 
   const [module, setModule] = useState(null)
@@ -164,7 +166,7 @@ export default function SubmoduleEditor() {
   }
 
   async function removeSection(section) {
-    if (!window.confirm(`Delete section "${section.title}"?`)) return
+    if (!(await confirm(`Delete section "${section.title}"?`))) return
     await deleteSection(section.id)
     const data = await getSections(lessonId)
     setSections(data.results ?? data)

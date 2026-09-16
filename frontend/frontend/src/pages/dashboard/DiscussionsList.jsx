@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { useConfirm } from '../../context/ConfirmContext'
 import { createDiscussionTopic, deleteDiscussionTopic, listDiscussionTopics } from '../../lib/dashboardApi'
 import useCourseOptions from '../../hooks/useCourseOptions'
 import Alert from '../../components/ui/Alert'
@@ -18,6 +19,7 @@ const MODERATOR_ROLES = ['admin', 'academic_manager', 'instructor', 'content_man
 
 export default function DiscussionsList() {
   const { accessToken, user } = useAuth()
+  const confirm = useConfirm()
   const { courses } = useCourseOptions()
   const [topics, setTopics] = useState([])
   const [loading, setLoading] = useState(true)
@@ -41,7 +43,7 @@ export default function DiscussionsList() {
   useEffect(() => { load() }, [accessToken]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function remove(topic) {
-    if (!window.confirm(`Delete discussion topic "${topic.title}"? This removes all its replies too.`)) return
+    if (!(await confirm(`Delete discussion topic "${topic.title}"? This removes all its replies too.`))) return
     await deleteDiscussionTopic(topic.id, accessToken)
     await load()
   }

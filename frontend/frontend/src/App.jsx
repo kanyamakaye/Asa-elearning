@@ -39,6 +39,7 @@ import ManageContent from './pages/instructor/courses/ManageContent'
 import SubmoduleEditor from './pages/instructor/courses/SubmoduleEditor'
 import CreateQuiz from './pages/instructor/quizzes/CreateQuiz'
 import QuestionBanksList from './pages/instructor/quizzes/QuestionBanksList'
+import CreateQuestionBank from './pages/instructor/quizzes/CreateQuestionBank'
 import QuestionBankDetail from './pages/instructor/quizzes/QuestionBankDetail'
 import BankQuestionEditor from './pages/instructor/quizzes/BankQuestionEditor'
 import CreateAssignment from './pages/instructor/assignments/CreateAssignment'
@@ -56,6 +57,7 @@ import AuditLogsList from './pages/dashboard/AuditLogsList'
 import ExamsList from './pages/dashboard/ExamsList'
 import GradingQueue from './pages/instructor/GradingQueue'
 import GroupsList from './pages/dashboard/GroupsList'
+import CreateGroup from './pages/dashboard/CreateGroup'
 import GroupDetail from './pages/dashboard/GroupDetail'
 import RubricsList from './pages/dashboard/RubricsList'
 import ManageExamQuestions from './pages/dashboard/ManageExamQuestions'
@@ -141,6 +143,10 @@ function App() {
 
           <Route path="question-banks" element={<RequireRole roles={MANAGER_ROLES}><QuestionBanksList /></RequireRole>} />
           <Route
+            path="question-banks/create"
+            element={<RequireRole roles={MANAGER_ROLES}><CreateQuestionBank /></RequireRole>}
+          />
+          <Route
             path="question-banks/:id"
             element={<RequireRole roles={MANAGER_ROLES}><QuestionBankDetail /></RequireRole>}
           />
@@ -188,6 +194,7 @@ function App() {
           <Route path="exams/:id/take" element={<TakeExam />} />
           <Route path="grading" element={<RequireRole roles={MANAGER_ROLES}><GradingQueue /></RequireRole>} />
           <Route path="groups" element={<RequireRole roles={MANAGER_ROLES}><GroupsList /></RequireRole>} />
+          <Route path="groups/create" element={<RequireRole roles={MANAGER_ROLES}><CreateGroup /></RequireRole>} />
           <Route path="groups/:id" element={<RequireRole roles={MANAGER_ROLES}><GroupDetail /></RequireRole>} />
           <Route path="rubrics" element={<RequireRole roles={MANAGER_ROLES}><RubricsList /></RequireRole>} />
           <Route path="refunds" element={<RequireRole roles={['admin']}><RefundsList /></RequireRole>} />

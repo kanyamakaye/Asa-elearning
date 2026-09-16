@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { useConfirm } from '../../context/ConfirmContext'
 import { cancelLiveClass, completeLiveClass, deleteLiveClass, getLiveClasses } from '../../services/liveClassService'
 import DataTable from '../../components/dashboard/DataTable'
 import Badge from '../../components/ui/Badge'
@@ -13,6 +14,7 @@ const MANAGER_ROLES = ['admin', 'academic_manager', 'instructor']
 
 export default function LiveClassesList() {
   const { user } = useAuth()
+  const confirm = useConfirm()
   const canManage = MANAGER_ROLES.includes(user?.user_type)
   const [sessions, setSessions] = useState([])
   const [count, setCount] = useState(0)
@@ -36,7 +38,7 @@ export default function LiveClassesList() {
   useEffect(() => { load() }, [page]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleCancel(session) {
-    if (!window.confirm(`Cancel "${session.title}"?`)) return
+    if (!(await confirm({ message: `Cancel "${session.title}"?`, tone: 'default', confirmLabel: 'Cancel Class', cancelLabel: 'Keep It' }))) return
     setBusyId(session.id)
     try {
       await cancelLiveClass(session.id)
@@ -57,7 +59,7 @@ export default function LiveClassesList() {
   }
 
   async function handleDelete(session) {
-    if (!window.confirm(`Delete "${session.title}"? This cannot be undone.`)) return
+    if (!(await confirm(`Delete "${session.title}"? This cannot be undone.`))) return
     setBusyId(session.id)
     try {
       await deleteLiveClass(session.id)

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { useConfirm } from '../../context/ConfirmContext'
 import { deleteQuiz, getQuizzes, publishQuiz } from '../../services/quizService'
 import DataTable from '../../components/dashboard/DataTable'
 import Badge from '../../components/ui/Badge'
@@ -13,6 +14,7 @@ const PAGE_SIZE = 20
 
 export default function QuizzesList() {
   const { user } = useAuth()
+  const confirm = useConfirm()
   const [allQuizzes, setAllQuizzes] = useState([])
   const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(true)
@@ -51,7 +53,7 @@ export default function QuizzesList() {
   }
 
   async function handleDelete(quiz) {
-    if (!window.confirm(`Delete quiz "${quiz.title}"? This cannot be undone.`)) return
+    if (!(await confirm(`Delete quiz "${quiz.title}"? This cannot be undone.`))) return
     setBusyId(quiz.id)
     try {
       await deleteQuiz(quiz.id)

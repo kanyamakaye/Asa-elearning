@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { useConfirm } from '../../context/ConfirmContext'
 import { deleteAssignment, getAssignments, publishAssignment } from '../../services/assignmentService'
 import DataTable from '../../components/dashboard/DataTable'
 import Badge from '../../components/ui/Badge'
@@ -13,6 +14,7 @@ const PAGE_SIZE = 20
 
 export default function AssignmentsList() {
   const { user } = useAuth()
+  const confirm = useConfirm()
   const [allAssignments, setAllAssignments] = useState([])
   const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(true)
@@ -51,7 +53,7 @@ export default function AssignmentsList() {
   }
 
   async function handleDelete(assignment) {
-    if (!window.confirm(`Delete assignment "${assignment.title}"? This cannot be undone.`)) return
+    if (!(await confirm(`Delete assignment "${assignment.title}"? This cannot be undone.`))) return
     setBusyId(assignment.id)
     try {
       await deleteAssignment(assignment.id)

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useConfirm } from '../../context/ConfirmContext'
 import { createRubric, deleteRubric, getRubrics } from '../../services/rubricService'
 import DataTable from '../../components/dashboard/DataTable'
 import Button from '../../components/ui/Button'
@@ -16,6 +17,7 @@ function emptyCriterion() {
 const EMPTY_FORM = { title: '', description: '', criteria: [emptyCriterion(), emptyCriterion()] }
 
 export default function RubricsList() {
+  const confirm = useConfirm()
   const [rubrics, setRubrics] = useState([])
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState(null)
@@ -78,7 +80,7 @@ export default function RubricsList() {
   }
 
   async function handleDelete(rubric) {
-    if (!window.confirm(`Delete rubric "${rubric.title}"? Assignments using it will lose their rubric.`)) return
+    if (!(await confirm(`Delete rubric "${rubric.title}"? Assignments using it will lose their rubric.`))) return
     setBusyId(rubric.id)
     try {
       await deleteRubric(rubric.id)

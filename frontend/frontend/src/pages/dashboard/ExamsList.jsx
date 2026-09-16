@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { useConfirm } from '../../context/ConfirmContext'
 import { createExam, deleteExam, listExams, updateExam } from '../../lib/dashboardApi'
 import useCourseOptions from '../../hooks/useCourseOptions'
 import DataTable from '../../components/dashboard/DataTable'
@@ -119,6 +120,7 @@ function toFormShape(exam) {
 
 export default function ExamsList() {
   const { accessToken, user } = useAuth()
+  const confirm = useConfirm()
   const canManage = MANAGER_ROLES.includes(user?.user_type)
   const { courses } = useCourseOptions()
   const [exams, setExams] = useState([])
@@ -145,7 +147,7 @@ export default function ExamsList() {
   useEffect(() => { load() }, [accessToken, page]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function remove(exam) {
-    if (!window.confirm(`Delete exam "${exam.title}"?`)) return
+    if (!(await confirm(`Delete exam "${exam.title}"?`))) return
     setBusyId(exam.id)
     try {
       await deleteExam(exam.id, accessToken)

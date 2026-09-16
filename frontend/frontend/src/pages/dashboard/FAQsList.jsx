@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
+import { useConfirm } from '../../context/ConfirmContext'
 import { apiFetch } from '../../lib/api'
 import Alert from '../../components/ui/Alert'
 import Button from '../../components/ui/Button'
@@ -49,6 +50,7 @@ function FAQForm({ initial, onSave, onCancel, saving }) {
 
 export default function FAQsList() {
   const { accessToken, user } = useAuth()
+  const confirm = useConfirm()
   const canManage = user?.user_type === 'admin'
   const [faqs, setFaqs] = useState([])
   const [loading, setLoading] = useState(true)
@@ -81,7 +83,7 @@ export default function FAQsList() {
   }
 
   async function remove(faq) {
-    if (!window.confirm(`Delete FAQ "${faq.question}"?`)) return
+    if (!(await confirm(`Delete FAQ "${faq.question}"?`))) return
     await apiFetch(`/support/faqs/${faq.id}/`, { method: 'DELETE', token: accessToken })
     load()
   }

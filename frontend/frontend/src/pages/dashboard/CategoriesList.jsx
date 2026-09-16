@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
+import { useConfirm } from '../../context/ConfirmContext'
 import { apiFetch } from '../../lib/api'
 import Alert from '../../components/ui/Alert'
 import Button from '../../components/ui/Button'
@@ -47,6 +48,7 @@ function CategoryForm({ initial, onSave, onCancel, saving }) {
 
 export default function CategoriesList() {
   const { accessToken, user } = useAuth()
+  const confirm = useConfirm()
   const canManage = MANAGER_ROLES.includes(user?.user_type)
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
@@ -79,7 +81,7 @@ export default function CategoriesList() {
   }
 
   async function remove(cat) {
-    if (!window.confirm(`Delete category "${cat.name}"? Courses in this category will be uncategorized.`)) return
+    if (!(await confirm(`Delete category "${cat.name}"? Courses in this category will be uncategorized.`))) return
     await apiFetch(`/courses/categories/${cat.slug}/`, { method: 'DELETE', token: accessToken })
     load()
   }

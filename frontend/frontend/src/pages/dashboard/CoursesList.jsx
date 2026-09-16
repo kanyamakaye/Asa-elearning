@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { useConfirm } from '../../context/ConfirmContext'
 import { apiFetch } from '../../lib/api'
 import { deleteCourse } from '../../services/courseService'
 import { formatCurrency } from '../../lib/currency'
@@ -23,6 +24,7 @@ const PAGE_SIZE = 20
 
 export default function CoursesList() {
   const { accessToken, user } = useAuth()
+  const confirm = useConfirm()
   const [allCourses, setAllCourses] = useState([])
   const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(true)
@@ -45,7 +47,7 @@ export default function CoursesList() {
   useEffect(() => { setPage(1); load() }, [accessToken, isInstructor]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleDelete(course) {
-    if (!window.confirm(`Delete course "${course.title}"? This cannot be undone.`)) return
+    if (!(await confirm(`Delete course "${course.title}"? This cannot be undone.`))) return
     setBusySlug(course.slug)
     try {
       await deleteCourse(course.slug)

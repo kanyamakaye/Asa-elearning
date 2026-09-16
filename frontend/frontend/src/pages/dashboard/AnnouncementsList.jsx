@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
+import { useConfirm } from '../../context/ConfirmContext'
 import { createAnnouncement, deleteAnnouncement, listAnnouncements } from '../../lib/dashboardApi'
 import Alert from '../../components/ui/Alert'
 import Badge from '../../components/ui/Badge'
@@ -18,6 +19,7 @@ const MANAGER_ROLES = ['admin', 'instructor']
 
 export default function AnnouncementsList() {
   const { accessToken, user } = useAuth()
+  const confirm = useConfirm()
   const canManage = MANAGER_ROLES.includes(user?.user_type)
   const [announcements, setAnnouncements] = useState([])
   const [loading, setLoading] = useState(true)
@@ -60,7 +62,7 @@ export default function AnnouncementsList() {
   }
 
   async function remove(a) {
-    if (!window.confirm(`Delete announcement "${a.title}"?`)) return
+    if (!(await confirm(`Delete announcement "${a.title}"?`))) return
     await deleteAnnouncement(a.id, accessToken)
     await load()
   }
