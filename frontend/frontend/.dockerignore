@@ -1,0 +1,11 @@
+node_modules/
+dist/
+dist-ssr/
+
+.git/
+.gitignore
+.dockerignore
+Dockerfile
+
+*.local
+npm-debug.log*

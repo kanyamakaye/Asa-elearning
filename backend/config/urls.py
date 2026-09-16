@@ -5,10 +5,10 @@ All application endpoints live under /api/v1/, split by domain to match the
 Django app structure (see project stack.md).
 """
 from django.conf import settings
-from django.conf.urls.static import static
 from django.contrib import admin
 from django.http import JsonResponse
-from django.urls import include, path
+from django.urls import include, path, re_path
+from django.views.static import serve as serve_static
 
 
 def api_root(request):
@@ -48,5 +48,10 @@ urlpatterns = [
     path('api/v1/groups/', include('groups.urls')),
 ]
 
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# Served unconditionally (not just in DEBUG) — the backend container has no
+# separate web server in front of it, so this is what actually serves course
+# thumbnails, certificates, etc. in production. Fine at this project's scale;
+# swap for S3/a CDN if that ever changes.
+urlpatterns += [
+    re_path(r'^media/(?P<path>.*)$', serve_static, {'document_root': settings.MEDIA_ROOT}),
+]
