@@ -10,7 +10,7 @@ const steps = [
 
 export default function CareerOutcomes() {
   return (
-    <section className="bg-navy-50/60 py-16">
+    <section id="outcomes" className="bg-navy-50/60 py-16">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
           <p className="text-sm font-semibold uppercase tracking-wide text-brand-500">

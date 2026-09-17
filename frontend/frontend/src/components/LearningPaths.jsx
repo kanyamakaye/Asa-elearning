@@ -27,7 +27,7 @@ export default function LearningPaths() {
   if (!loading && categories.length === 0) return null
 
   return (
-    <section className="bg-white py-16">
+    <section id="paths" className="bg-white py-16">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
           <p className="text-sm font-semibold uppercase tracking-wide text-brand-500">
