@@ -17,7 +17,7 @@ export const getCategories = () => api.get('/courses/categories/').then((r) => r
 // JSONField parses them without a manual JSON.stringify step.
 function toRequestBody(data) {
   if (!(data.thumbnail instanceof File)) {
-    const { thumbnail, ...rest } = data
+    const { thumbnail: _thumbnail, ...rest } = data
     return rest
   }
   const formData = new FormData()

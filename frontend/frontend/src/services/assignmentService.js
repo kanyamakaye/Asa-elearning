@@ -3,7 +3,7 @@ import api from './api'
 // Same multipart-when-a-File-is-present strategy as courseService — see there for why.
 function toRequestBody(data) {
   if (!(data.attachment instanceof File)) {
-    const { attachment, ...rest } = data
+    const { attachment: _attachment, ...rest } = data
     return rest
   }
   const formData = new FormData()

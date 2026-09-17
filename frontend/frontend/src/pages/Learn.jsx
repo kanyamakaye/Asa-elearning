@@ -279,7 +279,9 @@ export default function Learn() {
   // Lets the delayed auto-quiz-open below check where the student actually
   // is by the time its timer fires, instead of the stale value it closed over.
   const activeItemRef = useRef(activeItem)
-  activeItemRef.current = activeItem
+  useEffect(() => {
+    activeItemRef.current = activeItem
+  }, [activeItem])
   // The scrollable lesson-content pane — watched to auto-complete a lesson
   // once the student scrolls to the end of it.
   const mainRef = useRef(null)
@@ -402,7 +404,9 @@ export default function Learn() {
   // whatever the latest version is at that moment, instead of a version
   // frozen back when the lesson first became active.
   const handleMarkCompleteRef = useRef(handleMarkComplete)
-  handleMarkCompleteRef.current = handleMarkComplete
+  useEffect(() => {
+    handleMarkCompleteRef.current = handleMarkComplete
+  })
 
   // Auto-complete a lesson once the student scrolls to the end of its
   // content, instead of requiring the "Mark as complete" click. Also fires
@@ -429,7 +433,7 @@ export default function Learn() {
       el.removeEventListener('scroll', checkIfAtBottom)
       clearTimeout(initialCheck)
     }
-  }, [activeLesson?.id, isActiveDone])
+  }, [activeLesson?.id, isActiveDone]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function toggleModule(moduleId) {
     setCollapsedModules((prev) => {
