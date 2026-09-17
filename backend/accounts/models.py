@@ -44,7 +44,7 @@ class User(AbstractUser):
     status = models.CharField(max_length=25, choices=Status.choices, default=Status.ACTIVE)
     email_verified = models.BooleanField(default=False)
     two_factor_enabled = models.BooleanField(
-        default=True, help_text='Whether email-based 2FA is required at login for this account.'
+        default=False, help_text='Whether email-based 2FA is required at login for this account.'
     )
     created_by = models.ForeignKey(
         'self', on_delete=models.SET_NULL, null=True, blank=True, related_name='created_users',

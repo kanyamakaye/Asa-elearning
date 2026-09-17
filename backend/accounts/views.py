@@ -183,8 +183,10 @@ def _issue_login_challenge(user, request):
 class LoginView(APIView):
     """Authentication.md §11, §16, §23 — step 1 of login. Validates the
     password and account status, then always issues an email 2FA challenge
-    instead of tokens (two_factor_enabled effectively defaults on for every
-    account, per the spec's login flow)."""
+    instead of tokens — unconditionally, per the spec's login flow, not
+    based on the account's two_factor_enabled value (that field isn't
+    read here; it's stored for a future per-account opt-out but doesn't
+    gate anything yet)."""
 
     permission_classes = [permissions.AllowAny]
     throttle_scope = 'auth_login'
