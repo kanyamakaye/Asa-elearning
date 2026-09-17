@@ -40,8 +40,16 @@ const columns = [
 const contactDetails = [
   { icon: IconMail, label: 'support@asaacademy.com', href: 'mailto:support@asaacademy.com' },
   { icon: IconPhone, label: '+254 700 123 456', href: 'tel:+254700123456' },
-  { icon: IconMapPin, label: 'Westlands Business Park, Nairobi', href: '/contact' },
+  {
+    icon: IconMapPin,
+    label: 'Nyagasambu, Rwamagana, Eastern Province, Rwanda',
+    href: 'https://maps.app.goo.gl/E1tJitEXNYidETnt6',
+    external: true,
+  },
 ]
+
+const MAP_EMBED_SRC = 'https://www.google.com/maps?q=-1.886829,30.276593&z=15&output=embed'
+const MAP_LINK = 'https://maps.app.goo.gl/E1tJitEXNYidETnt6'
 
 const socials = [
   { name: 'Facebook', href: '#', path: 'M13.5 21v-7.5h2.5l.4-3H13.5V8.4c0-.87.24-1.46 1.5-1.46h1.6V4.3A21 21 0 0 0 14.2 4c-2.24 0-3.77 1.37-3.77 3.88V10.5H8v3h2.43V21Z' },
@@ -65,7 +73,7 @@ export default function Footer() {
   return (
     <footer className="bg-navy-950 pt-20 text-navy-100/70">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
-        <div className="grid gap-12 pb-16 lg:grid-cols-[1.3fr_1fr_1fr_1fr]">
+        <div className="grid gap-12 pb-16 sm:grid-cols-2 lg:grid-cols-[1.2fr_0.85fr_0.85fr_0.85fr_1fr]">
           <div>
             <Link to="/" className="flex items-center gap-2.5">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white p-1.5 shadow-sm">
@@ -80,16 +88,18 @@ export default function Footer() {
             </p>
 
             <ul className="mt-6 space-y-2.5">
-              {contactDetails.map(({ icon: Icon, label, href }) => (
+              {contactDetails.map(({ icon: Icon, label, href, external }) => (
                 <li key={label}>
                   <a
                     href={href}
-                    className="inline-flex items-center gap-2.5 text-sm transition-colors hover:text-white"
+                    target={external ? '_blank' : undefined}
+                    rel={external ? 'noreferrer' : undefined}
+                    className="inline-flex items-start gap-2.5 text-sm transition-colors hover:text-white"
                   >
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/5 ring-1 ring-white/10">
                       <Icon className="h-3.5 w-3.5" />
                     </span>
-                    {label}
+                    <span className="pt-1.5">{label}</span>
                   </a>
                 </li>
               ))}
@@ -109,6 +119,30 @@ export default function Footer() {
                 </a>
               ))}
             </div>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-semibold text-white">Find Us</h3>
+            <div className="mt-4 overflow-hidden rounded-2xl ring-1 ring-white/10">
+              <iframe
+                title="Asa Academy location"
+                src={MAP_EMBED_SRC}
+                width="100%"
+                height="180"
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                className="block grayscale-[0.3] invert-[0.92] hue-rotate-180 contrast-[0.9]"
+              />
+            </div>
+            <a
+              href={MAP_LINK}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-brand-400 transition-colors hover:text-white"
+            >
+              Get directions
+              <IconArrowRight className="h-3.5 w-3.5" />
+            </a>
           </div>
 
           {columns.map((col) => (
