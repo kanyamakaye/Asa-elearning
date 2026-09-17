@@ -2,8 +2,11 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import logo from '../assets/logo.png'
 import { useAuth } from '../context/AuthContext'
+import CoursesMegaMenu from './CoursesMegaMenu'
 import { IconClose, IconMenu } from './icons'
 
+// The desktop nav swaps "Courses" for <CoursesMegaMenu /> (below) — kept
+// here too so the mobile menu still gets a plain link to the same anchor.
 const links = [
   { label: 'Home', to: '/#home' },
   { label: 'Courses', to: '/#courses' },
@@ -35,15 +38,19 @@ export default function Navbar() {
         </Link>
 
         <nav className="hidden items-center gap-8 lg:flex">
-          {links.map((link) => (
-            <Link
-              key={link.label}
-              to={link.to}
-              className="text-sm font-medium text-navy-700/80 transition-colors hover:text-brand-500"
-            >
-              {link.label}
-            </Link>
-          ))}
+          {links.map((link) =>
+            link.label === 'Courses' ? (
+              <CoursesMegaMenu key={link.label} />
+            ) : (
+              <Link
+                key={link.label}
+                to={link.to}
+                className="text-sm font-medium text-navy-700/80 transition-colors hover:text-brand-500"
+              >
+                {link.label}
+              </Link>
+            )
+          )}
         </nav>
 
         <div className="hidden items-center gap-3 lg:flex">

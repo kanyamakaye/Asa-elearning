@@ -10,13 +10,13 @@ const steps = [
 
 export default function CareerOutcomes() {
   return (
-    <section className="bg-navy-900 py-16">
+    <section className="bg-navy-50/60 py-16">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
-          <p className="text-sm font-semibold uppercase tracking-wide text-brand-300">
+          <p className="text-sm font-semibold uppercase tracking-wide text-brand-500">
             Career outcomes
           </p>
-          <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+          <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-navy-900 sm:text-4xl">
             Learning should lead somewhere.
           </h2>
         </div>
@@ -25,13 +25,13 @@ export default function CareerOutcomes() {
           {steps.map((step, i) => (
             <div key={step.label} className="animate-fade-up relative text-center" style={{ animationDelay: `${i * 100}ms` }}>
               {i < steps.length - 1 && (
-                <div className="absolute left-1/2 top-7 hidden h-px w-full bg-white/10 lg:block" />
+                <div className="absolute left-1/2 top-7 hidden h-px w-full bg-navy-900/10 lg:block" />
               )}
-              <div className="relative mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white/10 text-white ring-1 ring-white/15 transition-transform duration-300 hover:scale-110">
+              <div className="relative mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white text-brand-500 shadow-sm ring-1 ring-navy-900/8 transition-transform duration-300 hover:scale-110">
                 <step.icon className="h-6 w-6" />
               </div>
-              <h3 className="mt-4 text-sm font-bold text-white">{step.label}</h3>
-              <p className="mt-1.5 text-xs leading-relaxed text-navy-100/60">{step.description}</p>
+              <h3 className="mt-4 text-sm font-bold text-navy-900">{step.label}</h3>
+              <p className="mt-1.5 text-xs leading-relaxed text-navy-700/55">{step.description}</p>
             </div>
           ))}
         </div>

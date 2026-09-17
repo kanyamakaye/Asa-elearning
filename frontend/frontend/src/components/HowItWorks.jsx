@@ -23,13 +23,13 @@ const steps = [
 
 export default function HowItWorks() {
   return (
-    <section id="about" className="bg-navy-900 py-16">
+    <section id="about" className="bg-navy-50/60 py-16">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
-          <p className="text-sm font-semibold uppercase tracking-wide text-brand-300">
+          <p className="text-sm font-semibold uppercase tracking-wide text-brand-500">
             How it works
           </p>
-          <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+          <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-navy-900 sm:text-4xl">
             Start learning in four simple steps
           </h2>
         </div>
@@ -38,13 +38,13 @@ export default function HowItWorks() {
           {steps.map((step, i) => (
             <div key={step.number} className="animate-fade-up relative" style={{ animationDelay: `${i * 100}ms` }}>
               {i < steps.length - 1 && (
-                <div className="absolute left-6 top-6 hidden h-px w-full -translate-x-0 bg-white/10 lg:block" />
+                <div className="absolute left-6 top-6 hidden h-px w-full -translate-x-0 bg-navy-900/10 lg:block" />
               )}
-              <div className="relative flex h-12 w-12 items-center justify-center rounded-full bg-brand-500 text-sm font-bold text-white transition-transform duration-300 hover:scale-110">
+              <div className="relative flex h-12 w-12 items-center justify-center rounded-full bg-brand-500 text-sm font-bold text-white shadow-sm shadow-brand-500/30 transition-transform duration-300 hover:scale-110">
                 {step.number}
               </div>
-              <h3 className="mt-5 text-lg font-bold text-white">{step.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-navy-100/60">
+              <h3 className="mt-5 text-lg font-bold text-navy-900">{step.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-navy-700/60">
                 {step.description}
               </p>
             </div>

@@ -1,4 +1,5 @@
 import CareerOutcomes from '../components/CareerOutcomes'
+import CategoryExplorer from '../components/CategoryExplorer'
 import Courses from '../components/Courses'
 import CTA from '../components/CTA'
 import FAQ from '../components/FAQ'
@@ -18,6 +19,7 @@ export default function Home() {
     <>
       <Hero />
       <TrustStrip />
+      <Reveal><CategoryExplorer /></Reveal>
       <Reveal><Features /></Reveal>
       <Reveal><HowItWorks /></Reveal>
       <Reveal><Courses /></Reveal>

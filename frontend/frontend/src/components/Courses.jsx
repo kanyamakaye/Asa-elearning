@@ -20,8 +20,8 @@ const badgeStyles = {
 
 export default function Courses() {
   const [categories, setCategories] = useState([])
-  const [activeCategory, setActiveCategory] = useState('all')
   const [searchParams, setSearchParams] = useSearchParams()
+  const [activeCategory, setActiveCategory] = useState(() => searchParams.get('category') || 'all')
   const query = searchParams.get('q') || ''
 
   const [courses, setCourses] = useState([])
@@ -36,6 +36,16 @@ export default function Courses() {
       .then((data) => setCategories(data.results ?? data))
       .catch(() => {})
   }, [])
+
+  // Picks up a ?category= link (e.g. from CategoryExplorer) even when it's
+  // just a search-param change on the same route — React Router doesn't
+  // remount this component for that, so useState's lazy initializer alone
+  // only catches the very first page load.
+  useEffect(() => {
+    const urlCategory = searchParams.get('category')
+    if (urlCategory) setActiveCategory(urlCategory)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams])
 
   useEffect(() => {
     let cancelled = false

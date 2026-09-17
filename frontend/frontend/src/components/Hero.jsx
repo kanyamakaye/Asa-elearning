@@ -66,32 +66,32 @@ export default function Hero() {
   }
 
   return (
-    <section id="home" className="relative overflow-hidden bg-navy-900">
+    <section id="home" className="relative overflow-hidden bg-white">
       <div
-        className="pointer-events-none absolute inset-0 opacity-30"
+        className="pointer-events-none absolute inset-0"
         style={{
           backgroundImage:
-            'radial-gradient(circle at 15% 20%, rgba(59,107,255,0.35), transparent 40%), radial-gradient(circle at 85% 0%, rgba(111,143,255,0.3), transparent 45%)',
+            'radial-gradient(circle at 15% 20%, rgba(47,95,255,0.10), transparent 40%), radial-gradient(circle at 85% 0%, rgba(124,58,237,0.08), transparent 45%)',
         }}
       />
 
       <div className="relative mx-auto grid max-w-7xl gap-16 px-6 pt-20 lg:grid-cols-2 lg:items-center lg:px-8 lg:pt-28">
         {/* Left: message + conversion */}
         <div className="text-center lg:text-left">
-          <div className="animate-fade-up inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-sm font-medium text-brand-100 ring-1 ring-white/15">
-            <IconStar className="h-4 w-4 text-brand-300" />
+          <div className="animate-fade-up inline-flex items-center gap-2 rounded-full bg-brand-50 px-4 py-1.5 text-sm font-medium text-brand-600 ring-1 ring-navy-900/8">
+            <IconStar className="h-4 w-4 text-brand-500" />
             Learn skills. Build your future.
           </div>
 
-          <h1 className="animate-fade-up mt-6 text-4xl font-extrabold leading-[1.1] tracking-tight text-white [animation-delay:80ms] sm:text-5xl lg:text-6xl">
+          <h1 className="animate-fade-up mt-6 text-4xl font-extrabold leading-[1.1] tracking-tight text-navy-900 [animation-delay:80ms] sm:text-5xl lg:text-6xl">
             Master the skills that
-            <span className="bg-gradient-to-r from-brand-300 via-violet-300 to-brand-500 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-brand-600 via-violet-600 to-brand-500 bg-clip-text text-transparent">
               {' '}
               move your career forward
             </span>
           </h1>
 
-          <p className="animate-fade-up mx-auto mt-6 max-w-xl text-lg leading-relaxed text-navy-100/70 [animation-delay:160ms] lg:mx-0">
+          <p className="animate-fade-up mx-auto mt-6 max-w-xl text-lg leading-relaxed text-navy-700/70 [animation-delay:160ms] lg:mx-0">
             Learn practical, industry-relevant skills from experienced instructors, build
             real-world projects, and turn what you learn into career opportunities.
           </p>
@@ -99,14 +99,14 @@ export default function Hero() {
           <div className="animate-fade-up mx-auto mt-8 flex max-w-xl flex-wrap items-center justify-center gap-3 [animation-delay:220ms] lg:mx-0 lg:justify-start">
             <Link
               to="/signup"
-              className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3.5 text-sm font-semibold text-navy-900 shadow-lg shadow-black/20 transition-all hover:-translate-y-0.5 hover:shadow-xl"
+              className="inline-flex items-center gap-2 rounded-full bg-navy-900 px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-navy-900/20 transition-all hover:-translate-y-0.5 hover:bg-brand-500 hover:shadow-xl"
             >
               Start Learning
               <IconArrowRight className="h-4 w-4" />
             </Link>
             <a
               href="#courses"
-              className="inline-flex items-center gap-2 rounded-full px-6 py-3.5 text-sm font-semibold text-white ring-1 ring-white/25 transition-colors hover:bg-white/10"
+              className="inline-flex items-center gap-2 rounded-full px-6 py-3.5 text-sm font-semibold text-navy-800 ring-1 ring-navy-900/15 transition-colors hover:bg-navy-50"
             >
               Explore Courses
             </a>
@@ -114,7 +114,7 @@ export default function Hero() {
 
           <form
             onSubmit={handleSubmit}
-            className="animate-fade-up mx-auto mt-6 flex max-w-xl flex-col gap-2 rounded-2xl bg-white p-2 shadow-xl shadow-black/20 [animation-delay:280ms] sm:flex-row sm:rounded-full lg:mx-0"
+            className="animate-fade-up mx-auto mt-6 flex max-w-xl flex-col gap-2 rounded-2xl bg-white p-2 shadow-xl shadow-navy-900/10 ring-1 ring-navy-900/8 [animation-delay:280ms] sm:flex-row sm:rounded-full lg:mx-0"
           >
             <div className="flex flex-1 items-center gap-2 px-3 py-2">
               <IconSearch className="h-5 w-5 shrink-0 text-navy-700/40" />
@@ -135,13 +135,13 @@ export default function Hero() {
           </form>
 
           <div className="animate-fade-up mx-auto mt-5 flex max-w-xl flex-wrap items-center justify-center gap-2 text-xs [animation-delay:320ms] lg:mx-0 lg:justify-start">
-            <span className="text-navy-100/50">Popular:</span>
+            <span className="text-navy-700/45">Popular:</span>
             {popularSearches.map((term) => (
               <button
                 key={term}
                 type="button"
                 onClick={() => handlePopularSearch(term)}
-                className="rounded-full px-3 py-1 font-medium text-navy-100/70 ring-1 ring-white/15 transition-colors hover:bg-white/10 hover:text-white"
+                className="rounded-full px-3 py-1 font-medium text-navy-700/70 ring-1 ring-navy-900/10 transition-colors hover:bg-navy-50 hover:text-navy-900"
               >
                 {term}
               </button>
@@ -151,8 +151,8 @@ export default function Hero() {
 
         {/* Right: product visual — a stylized composition of the actual app, not a stock photo */}
         <div className="animate-fade-up relative mx-auto hidden w-full max-w-md [animation-delay:200ms] lg:block">
-          <div className="rounded-2xl bg-white/[0.03] p-3 ring-1 ring-white/10">
-            <div className="rounded-xl bg-white p-5 shadow-2xl shadow-black/40">
+          <div className="rounded-2xl bg-gradient-to-br from-brand-50 to-white p-3 ring-1 ring-navy-900/8">
+            <div className="rounded-xl bg-white p-5 shadow-2xl shadow-navy-900/10 ring-1 ring-navy-900/5">
               <div className="flex items-center gap-1.5">
                 <span className="h-2.5 w-2.5 rounded-full bg-red-400" />
                 <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
@@ -199,7 +199,7 @@ export default function Hero() {
             </div>
           </div>
 
-          <div className="animate-float absolute -left-8 -top-6 w-48 rounded-2xl bg-white p-4 shadow-2xl shadow-black/30">
+          <div className="animate-float absolute -left-8 -top-6 w-48 rounded-2xl bg-white p-4 shadow-2xl shadow-navy-900/15 ring-1 ring-navy-900/5">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-500">
                 <IconAward className="h-5 w-5" />
@@ -211,7 +211,7 @@ export default function Hero() {
             </div>
           </div>
 
-          <div className="animate-float absolute -bottom-8 -right-6 w-48 rounded-2xl bg-white p-4 shadow-2xl shadow-black/30 [animation-delay:1.5s]">
+          <div className="animate-float absolute -bottom-8 -right-6 w-48 rounded-2xl bg-white p-4 shadow-2xl shadow-navy-900/15 ring-1 ring-navy-900/5 [animation-delay:1.5s]">
             <div className="flex items-center gap-2.5">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-50 text-violet-500">
                 <IconTrendingUp className="h-4 w-4" />
@@ -228,12 +228,12 @@ export default function Hero() {
       </div>
 
       <div className="relative mx-auto max-w-7xl px-6 pb-16 lg:px-8">
-        <dl className="animate-fade-up mx-auto grid max-w-3xl grid-cols-2 gap-x-6 gap-y-8 border-t border-white/10 pt-8 text-center [animation-delay:360ms] sm:grid-cols-4">
+        <dl className="animate-fade-up mx-auto grid max-w-3xl grid-cols-2 gap-x-6 gap-y-8 border-t border-navy-900/8 pt-8 text-center [animation-delay:360ms] sm:grid-cols-4">
           {stats.map((s) => (
             <div key={s.label}>
               <dt className="sr-only">{s.label}</dt>
-              <dd className="text-2xl font-bold text-white sm:text-3xl">{s.value}</dd>
-              <div className="mt-1 text-sm text-navy-100/60">{s.label}</div>
+              <dd className="text-2xl font-bold text-navy-900 sm:text-3xl">{s.value}</dd>
+              <div className="mt-1 text-sm text-navy-700/55">{s.label}</div>
             </div>
           ))}
         </dl>
