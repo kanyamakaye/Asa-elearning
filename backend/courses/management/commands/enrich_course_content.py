@@ -13,46 +13,90 @@ PLACEHOLDER_PREFIX = 'Lesson content for'
 PLACEHOLDER_ASSIGNMENT_DESC_PREFIX = 'Apply what you learned in'
 
 
+INTRO_TEMPLATES = {
+    Lesson.LessonType.VIDEO: [
+        "In this video, you'll explore **{lesson}**, part of {module} in {course}.{lang}",
+        "This video walks through **{lesson}**, building on what you've covered so far in {module}.{lang}",
+        "Press play and follow along as we break down **{lesson}** — a core piece of {module} in {course}.{lang}",
+    ],
+    Lesson.LessonType.LIVE_SESSION: [
+        "This live session covers **{lesson}**, part of {module}. Come ready to ask questions and apply what "
+        "you've learned so far in {course}.{lang}",
+        "Join this session on **{lesson}** for real-time discussion and Q&A around {module} in {course}.{lang}",
+    ],
+    Lesson.LessonType.AUDIO: [
+        "This audio lesson walks through **{lesson}**, continuing the {module} module of {course}.{lang}",
+        "Listen in as we unpack **{lesson}**, part of {module} in {course}.{lang}",
+    ],
+    'link': [
+        "This resource covers **{lesson}**, supporting the {module} module of {course}.{lang}",
+        "Use this resource to go deeper on **{lesson}**, part of {module} in {course}.{lang}",
+    ],
+    'default': [
+        "This lesson covers **{lesson}**, part of {module} in {course}.{lang}",
+        "Let's dig into **{lesson}**, the next step in {module} within {course}.{lang}",
+        "Here's what you need to know about **{lesson}**, part of {module} in {course}.{lang}",
+    ],
+}
+
+LIST_HEADINGS = {
+    Lesson.LessonType.VIDEO: ['What To Watch For', 'Key Moments'],
+    Lesson.LessonType.LIVE_SESSION: ['Session Agenda', "What We'll Cover"],
+    Lesson.LessonType.AUDIO: ['Episode Notes', 'What To Listen For'],
+    'link': ['What This Covers', 'Key Takeaways'],
+    'default': ['Key Concepts', 'What You Need To Know'],
+}
+
+WHY_HEADINGS = ['Why It Matters', 'Why This Is Worth Knowing', 'The Bigger Picture']
+RECAP_HEADINGS = ['Quick Recap', 'Before You Move On', 'Takeaway']
+
+TRY_IT_PROMPTS = [
+    "Before moving on, take five minutes to explain **{concept}** out loud, in your own words, as if teaching "
+    "a colleague — it's the fastest way to spot gaps in your understanding.",
+    "As a quick check, jot down one real situation from your own work or studies where **{concept}** would apply.",
+    "Pause here and try to think of a counter-example — a case where ignoring **{concept}** would cause a "
+    "real problem. It'll make the idea stick.",
+]
+
+
 def build_lesson_content(lesson, module, course, concepts, language):
-    """Structured, category-aware lesson content: an intro (varies by lesson
-    type), a short concept list, a "why it matters" note, and a recap —
-    instead of one boilerplate sentence."""
+    """Structured, category-aware lesson content: a varied intro (picked from
+    several phrasings per lesson type), a concept list, a "why it matters"
+    note, an optional practice prompt, and a recap — instead of one fixed
+    boilerplate template repeated for every lesson."""
     rng = random.Random(f'lesson-content-{lesson.id}')
-    bullets = rng.sample(concepts, k=min(3, len(concepts)))
+    num_bullets = rng.choice([2, 3, 3, 4])
+    bullets = rng.sample(concepts, k=min(num_bullets, len(concepts)))
     why_lead, why_text = rng.choice(concepts)
 
     lang_note = f" You'll build practical {language} skills you can use right away." if language else ''
 
-    if lesson.lesson_type == Lesson.LessonType.VIDEO:
-        intro = f"In this video, you'll explore **{lesson.title}**, part of {module.title} in {course.title}.{lang_note}"
-        list_heading = 'What To Watch For'
-    elif lesson.lesson_type == Lesson.LessonType.LIVE_SESSION:
-        intro = (
-            f"This live session covers **{lesson.title}**, part of {module.title}. Come ready to ask questions "
-            f"and apply what you've learned so far in {course.title}.{lang_note}"
-        )
-        list_heading = 'Session Agenda'
-    elif lesson.lesson_type == Lesson.LessonType.AUDIO:
-        intro = f"This audio lesson walks through **{lesson.title}**, continuing the {module.title} module of {course.title}.{lang_note}"
-        list_heading = 'Episode Notes'
-    elif lesson.lesson_type in (Lesson.LessonType.EXTERNAL_LINK, Lesson.LessonType.PRESENTATION):
-        intro = f"This resource covers **{lesson.title}**, supporting the {module.title} module of {course.title}.{lang_note}"
-        list_heading = 'What This Covers'
-    else:
-        intro = f"This lesson covers **{lesson.title}**, part of {module.title} in {course.title}.{lang_note}"
-        list_heading = 'Key Concepts'
+    template_key = lesson.lesson_type if lesson.lesson_type in INTRO_TEMPLATES else (
+        'link' if lesson.lesson_type in (Lesson.LessonType.EXTERNAL_LINK, Lesson.LessonType.PRESENTATION) else 'default'
+    )
+    intro_template = rng.choice(INTRO_TEMPLATES[template_key])
+    intro = intro_template.format(lesson=lesson.title, module=module.title, course=course.title, lang=lang_note)
+    list_heading = rng.choice(LIST_HEADINGS[template_key])
 
     bullet_lines = '\n'.join(f'- **{lead}.** {text}' for lead, text in bullets)
 
-    return (
-        f"{intro}\n\n"
-        f"## {list_heading}\n\n"
-        f"{bullet_lines}\n\n"
-        f"## Why It Matters\n\n"
-        f"{why_text}\n\n"
-        f"## Quick Recap\n\n"
-        f"By the end of **{lesson.title}**, you should be able to apply {why_lead.lower()} within the context of {module.title}."
+    sections = [
+        intro,
+        f"## {list_heading}\n\n{bullet_lines}",
+        f"## {rng.choice(WHY_HEADINGS)}\n\n{why_text}",
+    ]
+
+    if rng.random() < 0.5:
+        practice_concept, _ = rng.choice(bullets)
+        sections.append(f"## Try It Yourself\n\n{rng.choice(TRY_IT_PROMPTS).format(concept=practice_concept)}")
+
+    recap_lead = bullets[0][0] if bullets else why_lead
+    sections.append(
+        f"## {rng.choice(RECAP_HEADINGS)}\n\n"
+        f"By the end of **{lesson.title}**, you should be able to apply {recap_lead.lower()} within the context of {module.title}."
     )
+
+    return '\n\n'.join(sections)
 
 
 class Command(BaseCommand):

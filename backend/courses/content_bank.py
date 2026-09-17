@@ -492,3 +492,33 @@ LANGUAGE_BY_COURSE_TITLE = {
     'Business English Communication': 'English',
     'Conversational French for Travel & Work': 'French',
 }
+
+# Real, freely-embeddable YouTube videos from well-known free-education
+# channels (freeCodeCamp.org, Intellipaat) — each ID was resolved from a real
+# freeCodeCamp.org/news article or YouTube watch page (not guessed), so
+# lesson video players actually show relevant, working content instead of one
+# reused placeholder link. See add_real_media management command.
+VIDEOS_BY_CATEGORY = {
+    'Software Development': ['rfscVS0vtbw', 'PkZNo7MFNFg', 'mU6anWqZJcc'],
+    'Information Technology': ['fQbBPa0ADvs', 'ug8W0sFiVJo'],
+    'Data Science': ['-fW2X7fh7Yg', 'pqNCD_5r0IU'],
+    'Business': ['UEngvxZ11sw', 'EJHPltmAULA'],
+    'Accounting': ['Vl0H-qTclOg', 'EJHPltmAULA'],
+    'Digital Marketing': ['vFfV2E6jo6A'],
+    'Languages': ['bp9OZoQu3A0'],
+    'Professional Development': ['C_jQahOnGUU', 'vT5pcc30Ffw'],
+}
+
+# Real reference resources per category — official docs, standards bodies,
+# and well-known free learning hubs — used as the content_url for "pdf"-type
+# lessons so they link somewhere genuinely useful instead of nowhere.
+RESOURCES_BY_CATEGORY = {
+    'Software Development': 'https://developer.mozilla.org/en-US/docs/Web',
+    'Information Technology': 'https://www.nist.gov/cyberframework',
+    'Data Science': 'https://www.kaggle.com/learn',
+    'Business': 'https://www.sba.gov/business-guide',
+    'Accounting': 'https://www.accountingcoach.com/',
+    'Digital Marketing': 'https://academy.hubspot.com/',
+    'Languages': 'https://www.bbc.co.uk/languages',
+    'Professional Development': 'https://www.mindtools.com/',
+}
