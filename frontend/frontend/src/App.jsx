@@ -59,6 +59,7 @@ import GradingQueue from './pages/instructor/GradingQueue'
 import GroupsList from './pages/dashboard/GroupsList'
 import CreateGroup from './pages/dashboard/CreateGroup'
 import GroupDetail from './pages/dashboard/GroupDetail'
+import CreateRubric from './pages/dashboard/CreateRubric'
 import RubricsList from './pages/dashboard/RubricsList'
 import ManageExamQuestions from './pages/dashboard/ManageExamQuestions'
 import TakeExam from './pages/dashboard/TakeExam'
@@ -197,6 +198,7 @@ function App() {
           <Route path="groups/create" element={<RequireRole roles={MANAGER_ROLES}><CreateGroup /></RequireRole>} />
           <Route path="groups/:id" element={<RequireRole roles={MANAGER_ROLES}><GroupDetail /></RequireRole>} />
           <Route path="rubrics" element={<RequireRole roles={MANAGER_ROLES}><RubricsList /></RequireRole>} />
+          <Route path="rubrics/create" element={<RequireRole roles={MANAGER_ROLES}><CreateRubric /></RequireRole>} />
           <Route path="refunds" element={<RequireRole roles={['admin']}><RefundsList /></RequireRole>} />
           <Route path="audit-logs" element={<RequireRole roles={['admin']}><AuditLogsList /></RequireRole>} />
         </Route>
