@@ -1,4 +1,4 @@
-import { formatCurrency } from '../../lib/currency'
+import useCurrency from '../../hooks/useCurrency'
 
 const KPI_META = [
   { key: 'total_revenue', label: 'Total Revenue', accent: 'border-t-brand-500', money: true },
@@ -7,11 +7,12 @@ const KPI_META = [
   { key: 'active_students', label: 'Active Students', accent: 'border-t-navy-700', money: false },
 ]
 
-function formatValue(value, money) {
+function formatValue(value, money, formatCurrency) {
   return money ? formatCurrency(value) : (Number(value) || 0).toLocaleString()
 }
 
 export default function ExecutiveKpis({ data }) {
+  const formatCurrency = useCurrency()
   if (!data) return null
 
   return (
@@ -34,7 +35,7 @@ export default function ExecutiveKpis({ data }) {
                   {positive ? '↑' : '↓'} {Math.abs(kpi.change_percent)}%
                 </span>
               </div>
-              <p className="mt-3 font-display text-2xl font-extrabold text-navy-900">{formatValue(kpi.value, money)}</p>
+              <p className="mt-3 font-display text-2xl font-extrabold text-navy-900">{formatValue(kpi.value, money, formatCurrency)}</p>
             </div>
           )
         })}

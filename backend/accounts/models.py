@@ -258,3 +258,51 @@ class AuditLog(models.Model):
 
     def __str__(self):
         return f'{self.event_type} @ {self.created_at}'
+
+
+class PlatformSettings(models.Model):
+    """Singleton row (always pk=1) for platform-wide configuration editable
+    by admins from the Settings page — currently just the display currency.
+    Changing it only relabels prices; it does not convert existing numeric
+    amounts between currencies."""
+
+    class Currency(models.TextChoices):
+        RWF = 'RWF', 'Rwandan Franc (RWF)'
+        USD = 'USD', 'US Dollar ($)'
+        EUR = 'EUR', 'Euro (€)'
+        GBP = 'GBP', 'British Pound (£)'
+        KES = 'KES', 'Kenyan Shilling (KSh)'
+        UGX = 'UGX', 'Ugandan Shilling (USh)'
+        TZS = 'TZS', 'Tanzanian Shilling (TSh)'
+        NGN = 'NGN', 'Nigerian Naira (₦)'
+        ZAR = 'ZAR', 'South African Rand (R)'
+        GHS = 'GHS', 'Ghanaian Cedi (GH₵)'
+
+    CURRENCY_SYMBOLS = {
+        'RWF': 'RWF', 'USD': '$', 'EUR': '€', 'GBP': '£', 'KES': 'KSh',
+        'UGX': 'USh', 'TZS': 'TSh', 'NGN': '₦', 'ZAR': 'R', 'GHS': 'GH₵',
+    }
+
+    currency_code = models.CharField(max_length=3, choices=Currency.choices, default=Currency.RWF)
+    updated_at = models.DateTimeField(auto_now=True)
+    updated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+
+    class Meta:
+        verbose_name = 'Platform Settings'
+        verbose_name_plural = 'Platform Settings'
+
+    def save(self, *args, **kwargs):
+        self.pk = 1
+        super().save(*args, **kwargs)
+
+    @property
+    def currency_symbol(self):
+        return self.CURRENCY_SYMBOLS.get(self.currency_code, self.currency_code)
+
+    @classmethod
+    def load(cls):
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj
+
+    def __str__(self):
+        return f'Platform Settings ({self.currency_code})'

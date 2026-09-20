@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { listPayments } from '../../lib/dashboardApi'
-import { formatCurrency } from '../../lib/currency'
+import useCurrency from '../../hooks/useCurrency'
 import DataTable from '../../components/dashboard/DataTable'
 
 const statusStyles = {
@@ -13,6 +13,7 @@ const statusStyles = {
 }
 
 export default function PaymentsList() {
+  const formatCurrency = useCurrency()
   const { accessToken } = useAuth()
   const [payments, setPayments] = useState([])
   const [count, setCount] = useState(0)

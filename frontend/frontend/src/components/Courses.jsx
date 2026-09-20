@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { getCategories, getCourses } from '../lib/queries'
-import { formatCurrency } from '../lib/currency'
+import useCurrency from '../hooks/useCurrency'
 import {
   IconArrowRight,
   IconBook,
@@ -19,6 +19,7 @@ const badgeStyles = {
 }
 
 export default function Courses() {
+  const formatCurrency = useCurrency()
   const [categories, setCategories] = useState([])
   const [searchParams, setSearchParams] = useSearchParams()
   const [activeCategory, setActiveCategory] = useState(() => searchParams.get('category') || 'all')

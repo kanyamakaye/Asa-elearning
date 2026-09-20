@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { getDashboard } from '../../lib/dashboardApi'
-import { formatCurrency } from '../../lib/currency'
+import useCurrency from '../../hooks/useCurrency'
 import ChartCard from '../../components/dashboard/ChartCard'
 import DashboardFilterBar from '../../components/dashboard/DashboardFilterBar'
 import DashboardHero from '../../components/dashboard/DashboardHero'
@@ -29,6 +29,7 @@ import {
 const EMPTY_FILTERS = { category: '', level: '', instructor: '', date_from: '', date_to: '' }
 
 export default function AdminDashboard() {
+  const formatCurrency = useCurrency()
   const { accessToken } = useAuth()
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)

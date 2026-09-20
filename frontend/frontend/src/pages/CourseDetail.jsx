@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { API_BASE_URL } from '../lib/api'
-import { formatCurrency } from '../lib/currency'
+import useCurrency from '../hooks/useCurrency'
 import { enrollInCourse, getCourse, getCourseReviews, getMyEnrollmentForCourse } from '../lib/queries'
 import LoadingSpinner from '../components/ui/LoadingSpinner'
 import {
@@ -107,6 +107,7 @@ function ModuleAccordion({ unit }) {
 }
 
 export default function CourseDetail() {
+  const formatCurrency = useCurrency()
   const { slug } = useParams()
   const { isAuthenticated, accessToken } = useAuth()
   const navigate = useNavigate()

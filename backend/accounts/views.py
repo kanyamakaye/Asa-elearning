@@ -15,7 +15,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from . import emails
 from .audit import log_event
 from .invitations import build_activation_url, generate_invitation, resolve_invitation
-from .models import InstructorInvitation, InstructorProfile, LoginChallenge, LoginHistory, OTP, StudentProfile
+from .models import InstructorInvitation, InstructorProfile, LoginChallenge, LoginHistory, OTP, PlatformSettings, StudentProfile
 from .otp import (
     OTPVerificationError, issue_otp, seconds_until_resend_allowed, verify_otp,
 )
@@ -32,6 +32,7 @@ from .serializers import (
     LoginSerializer,
     PasswordResetConfirmSerializer,
     PasswordResetRequestSerializer,
+    PlatformSettingsSerializer,
     RegisterSerializer,
     ResendOTPSerializer,
     StudentProfileSerializer,
@@ -544,6 +545,28 @@ class UserViewSet(viewsets.ModelViewSet):
         log_event('INSTRUCTOR_INVITATION_SENT', user=user, request=request, resend=True)
 
         return Response({'detail': 'A new invitation has been sent.'})
+
+
+class PlatformSettingsView(APIView):
+    """Platform-wide configuration (currently just the display currency).
+    Reading is public — course pricing needs it before login — but only
+    admins can change it."""
+
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [permissions.AllowAny()]
+        return [IsAdmin()]
+
+    def get(self, request):
+        return Response(PlatformSettingsSerializer(PlatformSettings.load()).data)
+
+    def patch(self, request):
+        obj = PlatformSettings.load()
+        serializer = PlatformSettingsSerializer(obj, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(updated_by=request.user)
+        log_event('PLATFORM_SETTINGS_UPDATED', user=request.user, request=request, **serializer.validated_data)
+        return Response(serializer.data)
 
 
 class LoginHistoryViewSet(viewsets.ReadOnlyModelViewSet):

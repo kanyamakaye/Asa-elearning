@@ -5,6 +5,11 @@ import './index.css'
 import App from './App.jsx'
 import { AuthProvider } from './context/AuthContext.jsx'
 import { ConfirmProvider } from './context/ConfirmContext.jsx'
+import { loadCurrency } from './lib/currency'
+
+// Fire-and-forget — the RWF fallback in currency.js covers the brief window
+// before this resolves, so it doesn't need to block the app's first paint.
+loadCurrency()
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { listRefunds, processRefund } from '../../lib/dashboardApi'
-import { formatCurrency } from '../../lib/currency'
+import useCurrency from '../../hooks/useCurrency'
 import DataTable from '../../components/dashboard/DataTable'
 import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
@@ -10,6 +10,7 @@ import PageHeader from '../../components/ui/PageHeader'
 const statusTone = { pending: 'warning', approved: 'brand', rejected: 'danger', completed: 'success' }
 
 export default function RefundsList() {
+  const formatCurrency = useCurrency()
   const { accessToken } = useAuth()
   const [refunds, setRefunds] = useState([])
   const [count, setCount] = useState(0)

@@ -2,10 +2,11 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { enrollInCourse, getCategories, getCourses, getMyEnrollments } from '../../lib/queries'
-import { formatCurrency } from '../../lib/currency'
+import useCurrency from '../../hooks/useCurrency'
 import { IconArrowRight, IconBook, IconCheck, IconClipboard, IconSearch, IconStar, IconUsers } from '../../components/icons'
 
 export default function BrowseCourses() {
+  const formatCurrency = useCurrency()
   const { accessToken } = useAuth()
 
   const [categories, setCategories] = useState([])

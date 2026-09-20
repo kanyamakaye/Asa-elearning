@@ -27,6 +27,8 @@ urlpatterns = [
 
     path('instructors/', views.InstructorListView.as_view(), name='instructor-list'),
 
+    path('settings/platform/', views.PlatformSettingsView.as_view(), name='platform-settings'),
+
     path('users/me/', views.MeView.as_view(), name='user-me'),
     path('users/me/student-profile/', views.MyStudentProfileView.as_view(), name='user-me-student-profile'),
     path('users/me/instructor-profile/', views.MyInstructorProfileView.as_view(), name='user-me-instructor-profile'),

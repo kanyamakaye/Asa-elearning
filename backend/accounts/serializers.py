@@ -3,7 +3,7 @@ from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from .models import InstructorProfile, LoginHistory, OTP, StudentProfile
+from .models import InstructorProfile, LoginHistory, OTP, PlatformSettings, StudentProfile
 
 User = get_user_model()
 
@@ -329,3 +329,16 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
             raise serializers.ValidationError('The verification code is invalid or has expired.')
         self.context['user'] = user
         return value
+
+
+class PlatformSettingsSerializer(serializers.ModelSerializer):
+    currency_symbol = serializers.ReadOnlyField()
+    currency_choices = serializers.SerializerMethodField()
+
+    class Meta:
+        model = PlatformSettings
+        fields = ['currency_code', 'currency_symbol', 'currency_choices', 'updated_at']
+        read_only_fields = ['currency_symbol', 'currency_choices', 'updated_at']
+
+    def get_currency_choices(self, obj):
+        return [{'code': code, 'label': label} for code, label in PlatformSettings.Currency.choices]

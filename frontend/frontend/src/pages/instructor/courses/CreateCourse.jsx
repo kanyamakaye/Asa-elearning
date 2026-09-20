@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { createCourse, getCourse, getCourses, getCategories, publishCourse, updateCourse } from '../../../services/courseService'
-import { formatCurrency } from '../../../lib/currency'
+import useCurrency from '../../../hooks/useCurrency'
 import useUnsavedChanges from '../../../hooks/useUnsavedChanges'
 import Alert from '../../../components/ui/Alert'
 import Badge from '../../../components/ui/Badge'
@@ -112,6 +112,7 @@ function toFormShape(course) {
 }
 
 export default function CreateCourse() {
+  const formatCurrency = useCurrency()
   const navigate = useNavigate()
   const { slug } = useParams()
   const isEdit = Boolean(slug)

@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext'
 import { useConfirm } from '../../context/ConfirmContext'
 import { apiFetch } from '../../lib/api'
 import { deleteCourse } from '../../services/courseService'
-import { formatCurrency } from '../../lib/currency'
+import useCurrency from '../../hooks/useCurrency'
 import DataTable from '../../components/dashboard/DataTable'
 import { IconClipboard, IconEdit, IconTrash } from '../../components/icons'
 
@@ -23,6 +23,7 @@ const statusStyles = {
 const PAGE_SIZE = 20
 
 export default function CoursesList() {
+  const formatCurrency = useCurrency()
   const { accessToken, user } = useAuth()
   const confirm = useConfirm()
   const [allCourses, setAllCourses] = useState([])
