@@ -54,6 +54,7 @@ import MessagesInbox from './pages/dashboard/MessagesInbox'
 import DiscussionsList from './pages/dashboard/DiscussionsList'
 import RefundsList from './pages/dashboard/RefundsList'
 import AuditLogsList from './pages/dashboard/AuditLogsList'
+import CreateExam from './pages/dashboard/CreateExam'
 import ExamsList from './pages/dashboard/ExamsList'
 import GradingQueue from './pages/instructor/GradingQueue'
 import GroupsList from './pages/dashboard/GroupsList'
@@ -188,6 +189,7 @@ function App() {
           <Route path="messages" element={<MessagesInbox />} />
           <Route path="discussions" element={<DiscussionsList />} />
           <Route path="exams" element={<ExamsList />} />
+          <Route path="exams/create" element={<RequireRole roles={MANAGER_ROLES}><CreateExam /></RequireRole>} />
           <Route
             path="exams/:id/questions"
             element={<RequireRole roles={MANAGER_ROLES}><ManageExamQuestions /></RequireRole>}
