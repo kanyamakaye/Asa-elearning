@@ -1,51 +1,44 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { getCategories } from '../lib/queries'
 import logo from '../assets/logo.png'
-import { IconArrowRight, IconCheck, IconMail, IconMapPin, IconPhone } from './icons'
+import { IconArrowRight, IconCheck, IconHelpCircle, IconLifeBuoy } from './icons'
 
-const columns = [
-  {
-    title: 'Platform',
-    links: [
-      { label: 'Home', to: '/' },
-      { label: 'Courses', to: '/#courses' },
-      { label: 'Instructors', to: '/#instructors' },
-      { label: 'About Us', to: '/#about' },
-      { label: 'Pricing', to: '/#pricing' },
-    ],
-  },
-  {
-    title: 'Categories',
-    links: [
-      { label: 'Information Technology', to: '/#courses' },
-      { label: 'Software Development', to: '/#courses' },
-      { label: 'Data Science', to: '/#courses' },
-      { label: 'Business', to: '/#courses' },
-      { label: 'View all courses', to: '/#courses', emphasis: true },
-    ],
-  },
-  {
-    title: 'Company',
-    links: [
-      { label: 'Contact Us', to: '/contact' },
-      { label: 'FAQ', to: '/#faq' },
-      { label: 'Support Center', to: '/contact' },
-      { label: 'Privacy Policy', to: '/contact' },
-    ],
-  },
+// Mirrors sampleUI.md's reference footer (Alison.com): a wide top grid of
+// link columns, then a bottom bar with brand/socials on one side and a
+// secondary block (their Trustpilot rating + app badges, ours a location
+// card) on the other. Content below is kept honest to what Asa Academy
+// actually has — no fabricated pages (no blog, no mobile app, no investor
+// pages) — rather than a 1:1 content copy of Alison's own footer.
+const platformLinks = [
+  { label: 'Home', to: '/' },
+  { label: 'Courses', to: '/#courses' },
+  { label: 'Instructors', to: '/#instructors' },
+  { label: 'About Us', to: '/#about' },
+  { label: 'Pricing', to: '/#pricing' },
 ]
 
-// Same canonical contact details as the Contact page — keep them in one
-// place if those ever change.
-const contactDetails = [
-  { icon: IconMail, label: 'support@asaacademy.com', href: 'mailto:support@asaacademy.com' },
-  { icon: IconPhone, label: '+254 700 123 456', href: 'tel:+254700123456' },
-  {
-    icon: IconMapPin,
-    label: 'Nyagasambu, Rwamagana, Eastern Province, Rwanda',
-    href: 'https://maps.app.goo.gl/E1tJitEXNYidETnt6',
-    external: true,
-  },
+const studentLinks = [
+  { label: 'Browse Courses', to: '/#courses' },
+  { label: 'Learning Paths', to: '/#paths' },
+  { label: 'Career Outcomes', to: '/#outcomes' },
+  { label: 'Verify a Certificate', to: '/verify-certificate' },
+  { label: 'Create an Account', to: '/signup' },
+  { label: 'Log In', to: '/login' },
+]
+
+const instructorLinks = [
+  { label: 'Become an Instructor', to: '/signup?role=instructor' },
+  { label: 'Meet Our Instructors', to: '/#instructors' },
+  { label: 'Instructor Pricing & Plans', to: '/#pricing' },
+]
+
+const supportLinks = [
+  { label: 'Contact Us', to: '/contact' },
+  { label: 'FAQ', to: '/#faq' },
+  { label: 'Help Center', to: '/contact' },
+  { label: 'Privacy Policy', to: '/contact' },
+  { label: 'Terms of Service', to: '/contact' },
 ]
 
 const MAP_EMBED_SRC = 'https://www.google.com/maps?q=-1.886829,30.276593&z=15&output=embed'
@@ -57,9 +50,35 @@ const socials = [
   { name: 'LinkedIn', href: '#', path: 'M6.5 9.5v9M6.5 6.5v.01M11 18.5v-5.2c0-1.5 1-2.6 2.5-2.6s2.5 1 2.5 2.6v5.2M11 9.5v9' },
 ]
 
+function FooterColumn({ title, children }) {
+  return (
+    <div>
+      <h3 className="text-xs font-bold uppercase tracking-wide text-white">{title}</h3>
+      <ul className="mt-4 space-y-3">{children}</ul>
+    </div>
+  )
+}
+
+function FooterLink({ to, children }) {
+  return (
+    <li>
+      <Link to={to} className="text-sm text-navy-100/70 transition-colors hover:text-white">
+        {children}
+      </Link>
+    </li>
+  )
+}
+
 export default function Footer() {
+  const [categories, setCategories] = useState([])
   const [email, setEmail] = useState('')
   const [subscribed, setSubscribed] = useState(false)
+
+  useEffect(() => {
+    getCategories()
+      .then((data) => setCategories((data.results ?? data).slice(0, 8)))
+      .catch(() => {})
+  }, [])
 
   function handleSubscribe(e) {
     e.preventDefault()
@@ -71,41 +90,63 @@ export default function Footer() {
   }
 
   return (
-    <footer className="bg-navy-950 pt-20 text-navy-100/70">
+    <footer className="bg-navy-950 pt-16 text-navy-100/70">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
-        <div className="grid gap-12 pb-16 sm:grid-cols-2 lg:grid-cols-[1.2fr_0.85fr_0.85fr_0.85fr_1fr]">
+        {/* Top: wide link grid, matching sampleUI.md's 5-column layout */}
+        <div className="grid grid-cols-2 gap-x-6 gap-y-10 pb-14 sm:grid-cols-3 lg:grid-cols-5">
+          <FooterColumn title="Platform">
+            {platformLinks.map((l) => <FooterLink key={l.label} to={l.to}>{l.label}</FooterLink>)}
+          </FooterColumn>
+
+          <FooterColumn title="Categories">
+            {categories.map((c) => (
+              <FooterLink key={c.id} to={`/?category=${c.slug}#courses`}>{c.name}</FooterLink>
+            ))}
+            <FooterLink to="/#courses">
+              <span className="font-semibold text-brand-400">View all courses</span>
+            </FooterLink>
+          </FooterColumn>
+
+          <FooterColumn title="For Students">
+            {studentLinks.map((l) => <FooterLink key={l.label} to={l.to}>{l.label}</FooterLink>)}
+          </FooterColumn>
+
+          <FooterColumn title="For Instructors">
+            {instructorLinks.map((l) => <FooterLink key={l.label} to={l.to}>{l.label}</FooterLink>)}
+          </FooterColumn>
+
+          <FooterColumn title="Support">
+            {supportLinks.map((l) => <FooterLink key={l.label} to={l.to}>{l.label}</FooterLink>)}
+          </FooterColumn>
+        </div>
+
+        {/* Middle: brand + quick links + socials on one side, location on the other */}
+        <div className="grid gap-10 border-t border-white/10 py-10 lg:grid-cols-2">
           <div>
             <Link to="/" className="flex items-center gap-2.5">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white p-1.5 shadow-sm">
                 <img src={logo} alt="Asa Academy" className="h-full w-full object-contain" />
               </span>
-              <span className="font-display text-lg font-bold text-white">Asa Academy</span>
+              <div>
+                <span className="block font-display text-lg font-bold leading-tight text-white">Asa Academy</span>
+                <span className="block text-[11px] font-semibold uppercase tracking-widest text-navy-100/45">
+                  Learn Without Limits
+                </span>
+              </div>
             </Link>
-            <p className="mt-4 max-w-xs text-sm leading-relaxed">
-              An integrated e-learning platform for courses, live classes,
-              assessments, and certification &mdash; built for students,
-              instructors, and administrators.
-            </p>
 
-            <ul className="mt-6 space-y-2.5">
-              {contactDetails.map(({ icon: Icon, label, href, external }) => (
-                <li key={label}>
-                  <a
-                    href={href}
-                    target={external ? '_blank' : undefined}
-                    rel={external ? 'noreferrer' : undefined}
-                    className="inline-flex items-start gap-2.5 text-sm transition-colors hover:text-white"
-                  >
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/5 ring-1 ring-white/10">
-                      <Icon className="h-3.5 w-3.5" />
-                    </span>
-                    <span className="pt-1.5">{label}</span>
-                  </a>
-                </li>
-              ))}
-            </ul>
+            <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-3">
+              <Link to="/#faq" className="inline-flex items-center gap-1.5 text-sm font-semibold text-white hover:text-brand-300">
+                <IconHelpCircle className="h-4 w-4" />
+                FAQs
+              </Link>
+              <Link to="/contact" className="inline-flex items-center gap-1.5 text-sm font-semibold text-white hover:text-brand-300">
+                <IconLifeBuoy className="h-4 w-4" />
+                Customer Support
+              </Link>
+            </div>
 
-            <div className="mt-6 flex gap-3">
+            <div className="mt-5 flex gap-3">
               {socials.map((s) => (
                 <a
                   key={s.name}
@@ -121,14 +162,14 @@ export default function Footer() {
             </div>
           </div>
 
-          <div>
-            <h3 className="text-sm font-semibold text-white">Find Us</h3>
-            <div className="mt-4 overflow-hidden rounded-2xl ring-1 ring-white/10">
+          <div className="lg:max-w-sm lg:justify-self-end">
+            <h3 className="text-xs font-bold uppercase tracking-wide text-white">Find Us</h3>
+            <div className="mt-3 overflow-hidden rounded-2xl ring-1 ring-white/10">
               <iframe
                 title="Asa Academy location"
                 src={MAP_EMBED_SRC}
                 width="100%"
-                height="180"
+                height="140"
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
                 className="block grayscale-[0.3] invert-[0.92] hue-rotate-180 contrast-[0.9]"
@@ -138,39 +179,23 @@ export default function Footer() {
               href={MAP_LINK}
               target="_blank"
               rel="noreferrer"
-              className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-brand-400 transition-colors hover:text-white"
+              className="mt-2.5 inline-flex items-center gap-1.5 text-xs font-semibold text-brand-400 transition-colors hover:text-white"
             >
               Get directions
               <IconArrowRight className="h-3.5 w-3.5" />
             </a>
           </div>
-
-          {columns.map((col) => (
-            <div key={col.title}>
-              <h3 className="text-sm font-semibold text-white">{col.title}</h3>
-              <ul className="mt-4 space-y-3">
-                {col.links.map((link) => (
-                  <li key={link.label}>
-                    <Link
-                      to={link.to}
-                      className={`text-sm transition-colors hover:text-white ${
-                        link.emphasis ? 'font-semibold text-brand-400' : ''
-                      }`}
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
         </div>
 
-        <div className="border-t border-white/10 py-8">
+        {/* Bottom-most: legal + copyright, small newsletter signup */}
+        <div className="border-t border-white/10 py-6">
           <div className="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
-            <p className="text-xs">
-              &copy; {new Date().getFullYear()} Asa Academy. All rights reserved.
-            </p>
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs">
+              <span>&copy; {new Date().getFullYear()} Asa Academy. All rights reserved.</span>
+              <Link to="/contact" className="transition-colors hover:text-white">Privacy</Link>
+              <Link to="/contact" className="transition-colors hover:text-white">Terms</Link>
+              <Link to="/contact" className="transition-colors hover:text-white">Cookie Policy</Link>
+            </div>
 
             <form onSubmit={handleSubscribe} className="w-full max-w-sm sm:w-auto">
               {subscribed ? (
@@ -178,26 +203,23 @@ export default function Footer() {
                   <IconCheck className="h-4 w-4" /> Thanks — you&apos;re on the list.
                 </p>
               ) : (
-                <>
-                  <p className="text-xs font-semibold text-white">Stay in the loop</p>
-                  <div className="mt-2 flex w-full items-center gap-2 sm:w-72">
-                    <input
-                      type="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="Your email"
-                      className="w-full rounded-full bg-white/5 px-4 py-2 text-sm text-white placeholder:text-navy-100/40 ring-1 ring-white/10 focus:outline-none focus:ring-brand-400"
-                    />
-                    <button
-                      type="submit"
-                      aria-label="Subscribe"
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-500 text-white transition-colors hover:bg-brand-400"
-                    >
-                      <IconArrowRight className="h-4 w-4" />
-                    </button>
-                  </div>
-                </>
+                <div className="flex w-full items-center gap-2 sm:w-72">
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Get updates by email"
+                    className="w-full rounded-full bg-white/5 px-4 py-2 text-sm text-white placeholder:text-navy-100/40 ring-1 ring-white/10 focus:outline-none focus:ring-brand-400"
+                  />
+                  <button
+                    type="submit"
+                    aria-label="Subscribe"
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-500 text-white transition-colors hover:bg-brand-400"
+                  >
+                    <IconArrowRight className="h-4 w-4" />
+                  </button>
+                </div>
               )}
             </form>
           </div>

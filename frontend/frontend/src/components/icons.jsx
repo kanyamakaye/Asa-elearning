@@ -358,6 +358,16 @@ export function IconLifeBuoy(props) {
   )
 }
 
+export function IconHelpCircle(props) {
+  return (
+    <svg {...base} {...props}>
+      <circle cx="12" cy="12" r="9.5" />
+      <path d="M9.2 9a2.8 2.8 0 1 1 3.8 2.6c-.8.35-1 .9-1 1.65V13.5" />
+      <path d="M12 17h.01" />
+    </svg>
+  )
+}
+
 export function IconLock(props) {
   return (
     <svg {...base} {...props}>
