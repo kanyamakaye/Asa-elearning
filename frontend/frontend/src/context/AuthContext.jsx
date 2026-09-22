@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { apiFetch } from '../lib/api'
+import { connectSocket, disconnectSocket } from '../lib/socket'
 
 const AuthContext = createContext(null)
 
@@ -19,6 +20,14 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     if (tokens) localStorage.setItem('asa_tokens', JSON.stringify(tokens))
     else localStorage.removeItem('asa_tokens')
+  }, [tokens])
+
+  // Real-time (see Realtime.md) — one socket per session, opened whenever a
+  // token becomes available (login, or already-logged-in on page load) and
+  // closed on logout.
+  useEffect(() => {
+    if (tokens) connectSocket()
+    else disconnectSocket()
   }, [tokens])
 
   useEffect(() => {

@@ -14,6 +14,18 @@ services:
       timeout: 5s
       retries: 10
 
+  # Channel layer for real-time (see Realtime.md) — pub/sub bus only, no
+  # durable data lives here. If this is down, plain HTTP create/read of
+  # messages and notifications keeps working; only the live push is lost.
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   backend:
     build: ./backend
     restart: unless-stopped
@@ -36,12 +48,15 @@ services:
       EMAIL_USE_TLS: ${EMAIL_USE_TLS:-True}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
     volumes:
       - ./backend/media:/app/media
     ports:
       - "8000:8000"
     depends_on:
       db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
 
   frontend:

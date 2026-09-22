@@ -7,6 +7,7 @@ import {
   sendConversationMessage,
 } from '../../lib/dashboardApi'
 import { MESSAGES_CHANGED_EVENT } from '../../hooks/useUnreadMessages'
+import { subscribeToEvent } from '../../lib/socket'
 import { Avatar, ROLE_LABELS } from '../../components/dashboard/NewConversationModal'
 import NewConversationModal from '../../components/dashboard/NewConversationModal'
 import { IconArrowRight, IconChat, IconChevronLeft, IconPlus, IconSearch } from '../../components/icons'
@@ -168,6 +169,34 @@ export default function MessagesInbox() {
       cancelled = true
     }
   }, [activeConversation?.id, accessToken]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Live push (see Realtime.md #11/#13.2) — appends to the open conversation
+  // instantly and re-sorts/updates the preview for every conversation in the
+  // list, including ones not currently open.
+  useEffect(() => {
+    const unsubMessage = subscribeToEvent('message.new', (data) => {
+      if (data.conversation_id !== activeConversation?.id) return
+      setMessages((prev) => (prev.some((m) => m.id === data.message.id) ? prev : [...prev, data.message]))
+      shouldScrollToBottomRef.current = true
+    })
+
+    const unsubConversation = subscribeToEvent('conversation.updated', (data) => {
+      setConversations((prev) => {
+        const updated = prev.map((c) =>
+          c.id === data.conversation_id
+            ? { ...c, last_message: { ...c.last_message, content: data.last_message_preview }, updated_at: data.updated_at }
+            : c,
+        )
+        const moved = updated.find((c) => c.id === data.conversation_id)
+        return moved ? [moved, ...updated.filter((c) => c.id !== data.conversation_id)] : updated
+      })
+    })
+
+    return () => {
+      unsubMessage()
+      unsubConversation()
+    }
+  }, [activeConversation?.id])
 
   useEffect(() => {
     if (!shouldScrollToBottomRef.current) return

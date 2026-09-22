@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from notifications.models import Notification
+from realtime.events import publish_to_user
 
 from .authorization import can_message, get_allowed_contacts
 from .models import Conversation, ConversationParticipant, Message
@@ -19,7 +20,7 @@ User = get_user_model()
 def _notify_new_message(conversation, sender, content):
     others = conversation.participants.exclude(user=sender).select_related('user')
     for participant in others:
-        Notification.objects.create(
+        notification = Notification.objects.create(
             user=participant.user,
             notification_type='message',
             title=f'New message from {sender.full_name}',
@@ -27,6 +28,29 @@ def _notify_new_message(conversation, sender, content):
             reference_type='conversation',
             reference_id=conversation.id,
         )
+        publish_to_user(participant.user_id, 'notification.new', {
+            'id': notification.id,
+            'notification_type': notification.notification_type,
+            'title': notification.title,
+            'message': notification.message,
+            'reference_type': notification.reference_type,
+            'reference_id': notification.reference_id,
+            'created_at': notification.created_at.isoformat(),
+        })
+
+
+def _publish_message(conversation, message):
+    # See Realtime.md #11/#12 — pushed to EVERY participant including the
+    # sender, so a second open tab for the same user stays in sync too.
+    payload = MessageSerializer(message).data
+    conversation_payload = {
+        'conversation_id': conversation.id,
+        'last_message_preview': message.content[:140],
+        'updated_at': conversation.updated_at.isoformat(),
+    }
+    for participant_id in conversation.participants.values_list('user_id', flat=True):
+        publish_to_user(participant_id, 'message.new', {'conversation_id': conversation.id, 'message': payload})
+        publish_to_user(participant_id, 'conversation.updated', conversation_payload)
 
 
 class ConversationViewSet(viewsets.ModelViewSet):
@@ -81,12 +105,13 @@ class ConversationViewSet(viewsets.ModelViewSet):
             ConversationParticipant.objects.create(conversation=conversation, user=request.user, last_read_at=timezone.now())
             ConversationParticipant.objects.create(conversation=conversation, user=recipient)
 
-        Message.objects.create(conversation=conversation, sender=request.user, content=content)
+        message = Message.objects.create(conversation=conversation, sender=request.user, content=content)
         conversation.save()  # bump updated_at
         ConversationParticipant.objects.filter(conversation=conversation, user=request.user).update(last_read_at=timezone.now())
         _notify_new_message(conversation, request.user, content)
 
         conversation.refresh_from_db()
+        _publish_message(conversation, message)
         out = self.get_serializer(conversation)
         return Response(out.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
 
@@ -128,6 +153,7 @@ class ConversationMessagesView(APIView):
         conversation.save()  # bump updated_at so the conversation list re-sorts
         ConversationParticipant.objects.filter(conversation=conversation, user=request.user).update(last_read_at=timezone.now())
         _notify_new_message(conversation, request.user, content)
+        _publish_message(conversation, message)
 
         return Response(MessageSerializer(message).data, status=status.HTTP_201_CREATED)
 

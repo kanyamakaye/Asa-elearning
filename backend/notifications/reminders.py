@@ -24,6 +24,8 @@ from live_classes.models import LiveSession
 from payments.models import Payment
 from progress.models import LessonProgress
 
+from realtime.events import publish_to_user
+
 from . import emails
 from .models import Notification
 
@@ -50,7 +52,7 @@ def _remind(user, *, notification_type, title, message, reference_type, referenc
     if already_sent:
         return False
 
-    Notification.objects.create(
+    notification = Notification.objects.create(
         user=user,
         notification_type=notification_type,
         title=title,
@@ -58,6 +60,15 @@ def _remind(user, *, notification_type, title, message, reference_type, referenc
         reference_type=reference_type,
         reference_id=reference_id,
     )
+    publish_to_user(user.id, 'notification.new', {
+        'id': notification.id,
+        'notification_type': notification.notification_type,
+        'title': notification.title,
+        'message': notification.message,
+        'reference_type': notification.reference_type,
+        'reference_id': notification.reference_id,
+        'created_at': notification.created_at.isoformat(),
+    })
     email_fn(user)
     return True
 

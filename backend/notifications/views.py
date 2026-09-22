@@ -4,6 +4,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from accounts.permissions import IsInstructorOrReadOnly
+from realtime.events import publish_to_user
 
 from .models import Announcement, Notification
 from .serializers import AnnouncementSerializer, NotificationSerializer
@@ -25,11 +26,17 @@ class NotificationViewSet(viewsets.ReadOnlyModelViewSet):
         notification.is_read = True
         notification.read_at = timezone.now()
         notification.save(update_fields=['is_read', 'read_at'])
+        # Syncs the badge on this user's OTHER open tabs/devices (see Realtime.md #11) —
+        # the tab that made this request already updates itself from the HTTP response.
+        publish_to_user(request.user.id, 'notification.read', {'id': notification.id})
         return Response(NotificationSerializer(notification).data)
 
     @action(detail=False, methods=['post'], url_path='mark-all-read')
     def mark_all_read(self, request):
+        ids = list(self.get_queryset().filter(is_read=False).values_list('id', flat=True))
         self.get_queryset().filter(is_read=False).update(is_read=True, read_at=timezone.now())
+        for notification_id in ids:
+            publish_to_user(request.user.id, 'notification.read', {'id': notification_id})
         return Response({'detail': 'All notifications marked as read.'})
 
 

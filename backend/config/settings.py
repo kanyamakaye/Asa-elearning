@@ -33,6 +33,8 @@ ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 # Application definition
 
 INSTALLED_APPS = [
+    "channels",
+
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -62,6 +64,7 @@ INSTALLED_APPS = [
     "support",
     "reports",
     "groups",
+    "realtime",
 ]
 
 AUTH_USER_MODEL = 'accounts.User'
@@ -274,3 +277,29 @@ CORS_ALLOWED_ORIGINS = os.getenv(
     'http://localhost:5175,http://127.0.0.1:5175',
 ).split(',')
 CORS_ALLOW_CREDENTIALS = True
+
+# Real-time (see Realtime.md) — config.asgi routes both plain HTTP (unchanged
+# DRF views) and WebSocket connections through this one ASGI app.
+ASGI_APPLICATION = 'config.asgi.application'
+
+# The WebSocket handshake has no Origin-based CORS concept of its own, so
+# config/asgi.py wraps the router in OriginValidator using this same
+# allowlist rather than introducing a second, separately-maintained one.
+CHANNELS_ALLOWED_ORIGINS = CORS_ALLOWED_ORIGINS
+
+# channels-redis is required once more than one worker process is running
+# (the default in the Docker image — see Realtime.md #14); REDIS_URL is unset
+# in local/dev by default, which falls back to the single-process in-memory
+# layer so `manage.py test`/local daphne runs need no Redis at all.
+REDIS_URL = os.getenv('REDIS_URL')
+if REDIS_URL:
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels_redis.core.RedisChannelLayer',
+            'CONFIG': {'hosts': [REDIS_URL]},
+        },
+    }
+else:
+    CHANNEL_LAYERS = {
+        'default': {'BACKEND': 'channels.layers.InMemoryChannelLayer'},
+    }

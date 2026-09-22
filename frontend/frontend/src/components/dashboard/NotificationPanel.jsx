@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { listNotifications, markAllNotificationsRead, markNotificationRead } from '../../lib/dashboardApi'
+import { subscribeToEvent } from '../../lib/socket'
 import { timeAgo } from './RecentActivity'
 import { IconBell, IconCheck } from '../icons'
 
@@ -27,6 +28,23 @@ export default function NotificationPanel() {
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [open, accessToken])
+
+  // Live push (see Realtime.md #11) — updates the badge/list the moment a
+  // notification arrives, whether or not the panel is currently open;
+  // opening the panel still does its own authoritative fetch above.
+  useEffect(() => {
+    if (!accessToken) return undefined
+    const unsubNew = subscribeToEvent('notification.new', (data) => {
+      setNotifications((prev) => (prev.some((n) => n.id === data.id) ? prev : [data, ...prev]))
+    })
+    const unsubRead = subscribeToEvent('notification.read', (data) => {
+      setNotifications((prev) => prev.filter((n) => n.id !== data.id))
+    })
+    return () => {
+      unsubNew()
+      unsubRead()
+    }
+  }, [accessToken])
 
   const unreadCount = notifications.length
 
