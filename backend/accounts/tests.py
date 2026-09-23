@@ -1,4 +1,5 @@
 from datetime import timedelta
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.core import mail
@@ -429,3 +430,112 @@ class ProfilePictureUrlTests(TestCase):
 
         data = UserPublicSerializer(self.user).data
         self.assertIsNone(data['profile_picture'])
+
+
+def google_payload(**overrides):
+    payload = {
+        'sub': 'google-sub-123',
+        'email': 'googleuser@example.com',
+        'email_verified': True,
+        'given_name': 'Ada',
+        'family_name': 'Lovelace',
+    }
+    payload.update(overrides)
+    return payload
+
+
+@override_settings(GOOGLE_CLIENT_ID='test-client-id')
+class GoogleAuthTests(TestCase):
+    """google-login.md — 'Continue with Google' for students. Every test
+    mocks verify_oauth2_token directly rather than hitting Google, since the
+    ID token's *contents* (not its cryptographic validity) are what this
+    view's own logic needs to be correct about."""
+
+    def setUp(self):
+        cache.clear()
+        self.client = APIClient()
+        self.url = reverse('auth-google')
+
+    @patch('accounts.serializers.google_id_token.verify_oauth2_token')
+    def test_new_credential_creates_active_student(self, mock_verify):
+        mock_verify.return_value = google_payload()
+        res = self.client.post(self.url, {'credential': 'token'}, format='json')
+        self.assertEqual(res.status_code, 200, res.data)
+        self.assertIn('access', res.data)
+        self.assertIn('refresh', res.data)
+
+        user = User.objects.get(email='googleuser@example.com')
+        self.assertEqual(user.user_type, User.UserType.STUDENT)
+        self.assertEqual(user.status, User.Status.ACTIVE)
+        self.assertTrue(user.email_verified)
+        self.assertEqual(user.google_id, 'google-sub-123')
+        self.assertEqual(user.auth_provider, User.AuthProvider.GOOGLE)
+        self.assertFalse(user.has_usable_password())
+        self.assertTrue(hasattr(user, 'student_profile'))
+
+    @patch('accounts.serializers.google_id_token.verify_oauth2_token')
+    def test_replaying_same_sub_logs_in_existing_linked_user(self, mock_verify):
+        mock_verify.return_value = google_payload()
+        self.client.post(self.url, {'credential': 'token'}, format='json')
+        user_count = User.objects.count()
+
+        res = self.client.post(self.url, {'credential': 'token'}, format='json')
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(User.objects.count(), user_count)
+
+    @patch('accounts.serializers.google_id_token.verify_oauth2_token')
+    def test_matching_email_links_existing_unlinked_student(self, mock_verify):
+        student = User.objects.create_user(
+            username='existingstudent', email='googleuser@example.com', password=VALID_PASSWORD,
+            user_type=User.UserType.STUDENT, status=User.Status.ACTIVE, email_verified=False,
+        )
+        mock_verify.return_value = google_payload()
+
+        res = self.client.post(self.url, {'credential': 'token'}, format='json')
+        self.assertEqual(res.status_code, 200, res.data)
+
+        student.refresh_from_db()
+        self.assertEqual(student.google_id, 'google-sub-123')
+        self.assertTrue(student.email_verified)
+        self.assertEqual(User.objects.filter(email='googleuser@example.com').count(), 1)
+
+    @patch('accounts.serializers.google_id_token.verify_oauth2_token')
+    def test_matching_email_on_non_student_account_is_rejected(self, mock_verify):
+        User.objects.create_user(
+            username='existinginstructor', email='googleuser@example.com', password=VALID_PASSWORD,
+            user_type=User.UserType.INSTRUCTOR, status=User.Status.ACTIVE,
+        )
+        mock_verify.return_value = google_payload()
+
+        res = self.client.post(self.url, {'credential': 'token'}, format='json')
+        self.assertEqual(res.status_code, 400)
+        self.assertNotIn('access', res.data)
+
+    @patch('accounts.serializers.google_id_token.verify_oauth2_token')
+    def test_unverified_google_email_rejected(self, mock_verify):
+        mock_verify.return_value = google_payload(email_verified=False)
+        res = self.client.post(self.url, {'credential': 'token'}, format='json')
+        self.assertEqual(res.status_code, 400)
+        self.assertFalse(User.objects.filter(email='googleuser@example.com').exists())
+
+    @patch('accounts.serializers.google_id_token.verify_oauth2_token')
+    def test_invalid_token_rejected(self, mock_verify):
+        mock_verify.side_effect = ValueError('Token used too late')
+        res = self.client.post(self.url, {'credential': 'bad-token'}, format='json')
+        self.assertEqual(res.status_code, 400)
+
+    @patch('accounts.serializers.google_id_token.verify_oauth2_token')
+    def test_suspended_linked_account_cannot_login(self, mock_verify):
+        User.objects.create_user(
+            username='suspendedstudent', email='googleuser@example.com', password=VALID_PASSWORD,
+            user_type=User.UserType.STUDENT, status=User.Status.SUSPENDED, google_id='google-sub-123',
+        )
+        mock_verify.return_value = google_payload()
+        res = self.client.post(self.url, {'credential': 'token'}, format='json')
+        self.assertEqual(res.status_code, 400)
+        self.assertNotIn('access', res.data)
+
+    def test_missing_client_id_configuration_rejected(self):
+        with override_settings(GOOGLE_CLIENT_ID=''):
+            res = self.client.post(self.url, {'credential': 'token'}, format='json')
+        self.assertEqual(res.status_code, 400)

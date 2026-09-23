@@ -2,11 +2,13 @@ import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import AuthBrandPanel from '../components/auth/AuthBrandPanel'
+import GoogleDivider from '../components/auth/GoogleDivider'
+import GoogleSignInButton from '../components/GoogleSignInButton'
 import { IconAward, IconChevronLeft, IconEye, IconEyeOff, IconLock, IconMail } from '../components/icons'
 import logo from '../assets/logo.png'
 
 export default function Login() {
-  const { login } = useAuth()
+  const { login, loginWithGoogle } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -15,6 +17,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
 
   const from = location.state?.from?.pathname || '/dashboard'
   const justVerified = location.state?.verified
@@ -33,6 +36,21 @@ export default function Login() {
       setError(err.message || 'Unable to log in. Please check your credentials.')
     } finally {
       setLoading(false)
+    }
+  }
+
+  // google-login.md — a verified Google identity skips the 2FA challenge
+  // entirely and signs the user in immediately.
+  async function handleGoogleCredential(credential) {
+    setError('')
+    setGoogleLoading(true)
+    try {
+      await loginWithGoogle(credential)
+      navigate(from, { replace: true })
+    } catch (err) {
+      setError(err.message || 'Unable to sign in with Google. Please try again.')
+    } finally {
+      setGoogleLoading(false)
     }
   }
 
@@ -164,6 +182,11 @@ export default function Login() {
                 {loading ? 'Logging in…' : 'Log In'}
               </button>
             </form>
+
+            <GoogleDivider />
+            <div className={googleLoading ? 'pointer-events-none opacity-60' : ''}>
+              <GoogleSignInButton onCredential={handleGoogleCredential} text="signin_with" />
+            </div>
           </div>
 
           <p className="mt-6 text-center text-sm text-navy-700/60">

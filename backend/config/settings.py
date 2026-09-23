@@ -204,6 +204,11 @@ EMAIL_BACKEND = os.getenv(
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'no-reply@asaacademy.com')
 FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:5173')
 
+# Google Sign-In (see google-login.md) — same OAuth client ID the frontend
+# uses (VITE_GOOGLE_CLIENT_ID). Verification is skipped with a clear error
+# if this is unset, rather than silently trusting an unpinned audience.
+GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID', '')
+
 # Only read when EMAIL_BACKEND is an SMTP backend — the console backend
 # (the dev default) ignores these entirely, so they're safe to leave unset
 # locally. Never hardcode real values here; supply them via .env / the

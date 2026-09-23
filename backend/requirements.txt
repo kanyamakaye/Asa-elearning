@@ -18,3 +18,7 @@ whitenoise==6.11.0
 channels==4.3.2
 channels-redis==4.3.0
 daphne==4.2.3
+
+# Google Sign-In (see google-login.md) — verifies GIS ID tokens server-side.
+google-auth==2.35.0
+requests==2.32.3

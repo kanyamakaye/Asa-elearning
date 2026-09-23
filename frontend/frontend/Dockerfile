@@ -13,6 +13,8 @@ COPY . .
 # origin has to be supplied as a build arg rather than a runtime env var.
 ARG VITE_API_URL=http://localhost:8000/api/v1
 ENV VITE_API_URL=$VITE_API_URL
+ARG VITE_GOOGLE_CLIENT_ID=
+ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
 
 RUN npm run build
 

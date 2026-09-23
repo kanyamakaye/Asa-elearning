@@ -24,6 +24,7 @@ from .serializers import (
     AdminUserSerializer,
     ChangePasswordSerializer,
     CustomTokenObtainPairSerializer,
+    GoogleAuthSerializer,
     InstructorActivateSerializer,
     InstructorCreateSerializer,
     InstructorProfileSerializer,
@@ -279,6 +280,41 @@ class Verify2FAView(APIView):
             login_status=LoginHistory.LoginStatus.SUCCESSFUL,
         )
         log_event('LOGIN_SUCCESS', user=user, request=request)
+
+        return Response({
+            'access': str(token.access_token),
+            'refresh': str(token),
+            'user': UserSerializer(user).data,
+        })
+
+
+class GoogleLoginView(APIView):
+    """google-login.md — "Continue with Google" for students. Verifies a
+    Google Identity Services ID token server-side and issues tokens
+    directly, skipping the email 2FA challenge that password login requires
+    — Google's own sign-in already provides strong assurance for a verified
+    email, so there's nothing left to challenge."""
+
+    permission_classes = [permissions.AllowAny]
+    throttle_scope = 'auth_login'
+    throttle_classes = [ScopedRateThrottle]
+
+    def post(self, request):
+        serializer = GoogleAuthSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.resolve_user()
+
+        if user.status != User.Status.ACTIVE:
+            log_event('LOGIN_FAILED', user=user, request=request, result='failure', reason=user.status)
+            raise ValidationError({'detail': STATUS_LOGIN_MESSAGES.get(user.status, 'This account cannot log in right now.')})
+
+        token = CustomTokenObtainPairSerializer.get_token(user)
+        LoginHistory.objects.create(
+            user=user, ip_address=client_ip(request),
+            device_information=request.META.get('HTTP_USER_AGENT', '')[:255],
+            login_status=LoginHistory.LoginStatus.SUCCESSFUL,
+        )
+        log_event('LOGIN_SUCCESS', user=user, request=request, method='google')
 
         return Response({
             'access': str(token.access_token),

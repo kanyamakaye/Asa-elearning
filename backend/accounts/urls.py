@@ -15,6 +15,7 @@ urlpatterns = [
 
     path('auth/login/', views.LoginView.as_view(), name='auth-login'),
     path('auth/verify-2fa/', views.Verify2FAView.as_view(), name='auth-verify-2fa'),
+    path('auth/google/', views.GoogleLoginView.as_view(), name='auth-google'),
     path('auth/refresh/', TokenRefreshView.as_view(), name='auth-refresh'),
     path('auth/logout/', views.LogoutView.as_view(), name='auth-logout'),
 

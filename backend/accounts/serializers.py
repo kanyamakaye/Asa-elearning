@@ -1,5 +1,9 @@
+from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.password_validation import validate_password
+from django.utils.text import slugify
+from google.auth.transport import requests as google_requests
+from google.oauth2 import id_token as google_id_token
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
@@ -241,6 +245,81 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         data = super().validate(attrs)
         data['user'] = UserSerializer(self.user).data
         return data
+
+
+class GoogleAuthSerializer(serializers.Serializer):
+    """google-login.md — verifies a Google Identity Services ID token
+    server-side and resolves it to a user. Only ever creates or links a
+    STUDENT account; an email match against a non-student account is
+    rejected rather than silently taking over a staff/instructor login."""
+
+    credential = serializers.CharField(write_only=True)
+
+    def validate_credential(self, value):
+        if not settings.GOOGLE_CLIENT_ID:
+            raise serializers.ValidationError('Google Sign-In is not configured on this server.')
+        try:
+            payload = google_id_token.verify_oauth2_token(
+                value, google_requests.Request(), settings.GOOGLE_CLIENT_ID,
+            )
+        except ValueError as exc:
+            raise serializers.ValidationError('This Google credential is invalid or has expired.') from exc
+
+        if not payload.get('email_verified'):
+            raise serializers.ValidationError('Your Google account email is not verified.')
+
+        self._payload = payload
+        return value
+
+    def resolve_user(self):
+        """Called after is_valid() — get-or-creates the student User this
+        credential belongs to. Not part of validate() itself so the view can
+        decide what to do (e.g. status checks) with a plain User back."""
+        payload = self._payload
+        google_sub = payload['sub']
+        email = payload['email']
+
+        user = User.objects.filter(google_id=google_sub).first()
+        if user:
+            return user
+
+        user = User.objects.filter(email__iexact=email).first()
+        if user:
+            if user.user_type != User.UserType.STUDENT:
+                raise serializers.ValidationError(
+                    'This email is linked to a non-student account. Please use standard login instead.'
+                )
+            user.google_id = google_sub
+            user.email_verified = True
+            user.save(update_fields=['google_id', 'email_verified'])
+            return user
+
+        username = self._generate_username(email)
+        user = User(
+            username=username,
+            email=email,
+            first_name=payload.get('given_name', '') or '',
+            last_name=payload.get('family_name', '') or '',
+            user_type=User.UserType.STUDENT,
+            status=User.Status.ACTIVE,
+            email_verified=True,
+            google_id=google_sub,
+            auth_provider=User.AuthProvider.GOOGLE,
+        )
+        user.set_unusable_password()
+        user.save()
+        StudentProfile.objects.create(user=user)
+        return user
+
+    @staticmethod
+    def _generate_username(email):
+        base = slugify(email.split('@')[0]) or 'user'
+        username = base
+        i = 1
+        while User.objects.filter(username=username).exists():
+            i += 1
+            username = f'{base}{i}'
+        return username
 
 
 class ChangePasswordSerializer(serializers.Serializer):

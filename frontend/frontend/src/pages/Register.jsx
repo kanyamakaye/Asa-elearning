@@ -2,13 +2,16 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import AuthBrandPanel from '../components/auth/AuthBrandPanel'
+import GoogleDivider from '../components/auth/GoogleDivider'
+import GoogleSignInButton from '../components/GoogleSignInButton'
 import { PASSWORD_RULES } from '../lib/passwordRules'
 import { IconArrowRight, IconCheck, IconChevronLeft, IconEye, IconEyeOff, IconLock, IconMail } from '../components/icons'
 import logo from '../assets/logo.png'
 
 export default function Register() {
-  const { register } = useAuth()
+  const { register, loginWithGoogle } = useAuth()
   const navigate = useNavigate()
+  const [googleLoading, setGoogleLoading] = useState(false)
 
   const [form, setForm] = useState({
     firstName: '',
@@ -57,6 +60,22 @@ export default function Register() {
       setError(err.message || 'Unable to create your account. Please try again.')
     } finally {
       setLoading(false)
+    }
+  }
+
+  // google-login.md — a Google account is created already-verified and
+  // already-active, so unlike password registration this signs the learner
+  // straight in instead of sending them to the OTP verification screen.
+  async function handleGoogleCredential(credential) {
+    setError('')
+    setGoogleLoading(true)
+    try {
+      await loginWithGoogle(credential)
+      navigate('/dashboard', { replace: true })
+    } catch (err) {
+      setError(err.message || 'Unable to sign up with Google. Please try again.')
+    } finally {
+      setGoogleLoading(false)
     }
   }
 
@@ -252,6 +271,11 @@ export default function Register() {
                 {!loading && <IconArrowRight className="h-4 w-4" />}
               </button>
             </form>
+
+            <GoogleDivider />
+            <div className={googleLoading ? 'pointer-events-none opacity-60' : ''}>
+              <GoogleSignInButton onCredential={handleGoogleCredential} text="signup_with" />
+            </div>
           </div>
 
           <p className="mt-6 text-center text-sm text-navy-700/60">

@@ -28,6 +28,10 @@ class User(AbstractUser):
         OTHER = 'other', 'Other'
         UNSPECIFIED = 'unspecified', 'Prefer not to say'
 
+    class AuthProvider(models.TextChoices):
+        PASSWORD = 'password', 'Password'
+        GOOGLE = 'google', 'Google'
+
     email = models.EmailField(unique=True)
     middle_name = models.CharField(max_length=150, blank=True)
     phone_number = models.CharField(max_length=20, blank=True)
@@ -43,6 +47,11 @@ class User(AbstractUser):
     user_type = models.CharField(max_length=20, choices=UserType.choices, default=UserType.STUDENT)
     status = models.CharField(max_length=25, choices=Status.choices, default=Status.ACTIVE)
     email_verified = models.BooleanField(default=False)
+    google_id = models.CharField(
+        max_length=64, unique=True, null=True, blank=True,
+        help_text="Google's `sub` claim — set once this account is linked to a Google Sign-In identity.",
+    )
+    auth_provider = models.CharField(max_length=20, choices=AuthProvider.choices, default=AuthProvider.PASSWORD)
     two_factor_enabled = models.BooleanField(
         default=False, help_text='Whether email-based 2FA is required at login for this account.'
     )

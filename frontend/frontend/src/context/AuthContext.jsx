@@ -57,6 +57,19 @@ export function AuthProvider({ children }) {
     return data.user
   }
 
+  // google-login.md — a Google Identity Services ID token is enough on its
+  // own (Google already establishes a verified identity), so this skips
+  // the email 2FA challenge entirely and logs the user in directly.
+  async function loginWithGoogle(credential) {
+    const data = await apiFetch('/auth/google/', {
+      method: 'POST',
+      body: { credential },
+    })
+    setTokens({ access: data.access, refresh: data.refresh })
+    setUser(data.user)
+    return data.user
+  }
+
   // Public self-registration always creates a Student/Learner account —
   // the backend ignores any role hint the client might send. Does not log
   // the user in; the account is PENDING_VERIFICATION until they enter the
@@ -110,6 +123,7 @@ export function AuthProvider({ children }) {
         isAuthenticated: Boolean(tokens),
         login,
         completeLogin,
+        loginWithGoogle,
         register,
         verifyEmail,
         verifyInstructorEmail,
