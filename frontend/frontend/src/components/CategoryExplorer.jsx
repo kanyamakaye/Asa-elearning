@@ -70,7 +70,7 @@ export default function CategoryExplorer() {
                 return (
                   <Link
                     key={cat.id}
-                    to={`/?category=${cat.slug}#courses`}
+                    to={`/courses?category=${cat.slug}`}
                     className="group animate-fade-up flex flex-col items-start rounded-2xl border border-navy-900/8 p-6 transition-all duration-300 hover:-translate-y-1 hover:border-brand-300 hover:shadow-xl hover:shadow-navy-900/5"
                     style={{ animationDelay: `${i * 60}ms` }}
                   >
@@ -86,7 +86,7 @@ export default function CategoryExplorer() {
 
         <div className="mt-10 text-center">
           <Link
-            to="/#courses"
+            to="/courses"
             className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-500 hover:text-navy-900"
           >
             View all courses

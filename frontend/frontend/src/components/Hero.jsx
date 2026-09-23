@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { getPlatformStats } from '../lib/queries'
-import { IconArrowRight, IconAward, IconBook, IconCheck, IconSearch, IconStar, IconTrendingUp, IconUsers } from './icons'
+import HeroIllustration from './HeroIllustration'
+import { IconArrowRight, IconAward, IconSearch, IconStar, IconTrendingUp, IconUsers } from './icons'
 
 // Shown immediately, before the real numbers load — never negative-of-truth
 // (rounded down, "+"-suffixed) so a flash of stale copy never overstates.
@@ -24,8 +25,6 @@ const popularSearches = [
   'Accounting',
   'French',
 ]
-
-const activity = [30, 55, 40, 70, 50, 85, 60]
 
 export default function Hero() {
   const [query, setQuery] = useState('')
@@ -52,7 +51,7 @@ export default function Hero() {
 
   function runSearch(term) {
     const q = term.trim()
-    navigate(q ? `/?q=${encodeURIComponent(q)}#courses` : '/#courses')
+    navigate(q ? `/courses?q=${encodeURIComponent(q)}` : '/courses')
   }
 
   function handleSubmit(e) {
@@ -118,7 +117,11 @@ export default function Hero() {
           >
             <div className="flex flex-1 items-center gap-2 px-3 py-2">
               <IconSearch className="h-5 w-5 shrink-0 text-navy-700/40" />
+              <label htmlFor="hero-course-search" className="sr-only">
+                Search courses
+              </label>
               <input
+                id="hero-course-search"
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
@@ -149,55 +152,10 @@ export default function Hero() {
           </div>
         </div>
 
-        {/* Right: product visual — a stylized composition of the actual app, not a stock photo */}
+        {/* Right: product visual — a custom illustration plus two floating
+            stat cards drawn from the real product, not a stock photo */}
         <div className="animate-fade-up relative mx-auto hidden w-full max-w-md [animation-delay:200ms] lg:block">
-          <div className="rounded-2xl bg-gradient-to-br from-brand-50 to-white p-3 ring-1 ring-navy-900/8">
-            <div className="rounded-xl bg-white p-5 shadow-2xl shadow-navy-900/10 ring-1 ring-navy-900/5">
-              <div className="flex items-center gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-full bg-red-400" />
-                <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
-                <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
-                <span className="ml-3 text-[11px] font-semibold text-navy-700/40">My Dashboard</span>
-              </div>
-
-              <div className="mt-4 flex items-center justify-between rounded-xl bg-navy-50 p-3">
-                <div className="flex items-center gap-2.5">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-navy-900 text-white">
-                    <IconBook className="h-4 w-4" />
-                  </span>
-                  <div>
-                    <p className="text-xs font-bold text-navy-900">Full-Stack Web Development</p>
-                    <p className="text-[11px] text-navy-700/50">Module 4 of 6 &middot; React APIs</p>
-                  </div>
-                </div>
-                <span className="text-xs font-bold text-brand-500">72%</span>
-              </div>
-              <div className="mt-2 h-1.5 w-full rounded-full bg-navy-900/8">
-                <div className="h-1.5 w-[72%] rounded-full bg-gradient-to-r from-brand-500 to-violet-400" />
-              </div>
-
-              <div className="mt-5 flex items-end gap-1.5">
-                {activity.map((h, i) => (
-                  <div
-                    key={i}
-                    className="flex-1 rounded-t-sm bg-gradient-to-t from-brand-500 to-violet-300"
-                    style={{ height: `${h}px` }}
-                  />
-                ))}
-              </div>
-              <p className="mt-2 text-[10px] uppercase tracking-wide text-navy-700/40">This week&rsquo;s learning activity</p>
-
-              <div className="mt-5 flex items-center gap-2 rounded-xl bg-emerald-50 p-3">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white">
-                  <IconCheck className="h-4 w-4" />
-                </span>
-                <div>
-                  <p className="text-xs font-bold text-navy-900">Quiz submitted</p>
-                  <p className="text-[11px] text-navy-700/50">React State Management &middot; 92%</p>
-                </div>
-              </div>
-            </div>
-          </div>
+          <HeroIllustration className="w-full" />
 
           <div className="animate-float absolute -left-8 -top-6 w-48 rounded-2xl bg-white p-4 shadow-2xl shadow-navy-900/15 ring-1 ring-navy-900/5">
             <div className="flex items-center gap-3">

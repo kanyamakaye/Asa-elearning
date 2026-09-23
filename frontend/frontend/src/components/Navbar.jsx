@@ -9,7 +9,7 @@ import { IconClose, IconMenu } from './icons'
 // here too so the mobile menu still gets a plain link to the same anchor.
 const links = [
   { label: 'Home', to: '/#home' },
-  { label: 'Courses', to: '/#courses' },
+  { label: 'Courses', to: '/courses' },
   { label: 'Instructors', to: '/#instructors' },
   { label: 'Pricing', to: '/#pricing' },
   { label: 'About', to: '/#about' },

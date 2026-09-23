@@ -57,17 +57,25 @@ export default function Instructors() {
                   className="group animate-fade-up rounded-2xl p-6 text-center ring-1 ring-navy-900/8 transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-navy-900/5"
                   style={{ animationDelay: `${i * 80}ms` }}
                 >
-                  {person.profile_picture ? (
-                    <img
-                      src={person.profile_picture}
-                      alt={person.full_name}
-                      className="mx-auto h-20 w-20 rounded-full object-cover ring-1 ring-navy-900/8"
-                    />
-                  ) : (
-                    <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-navy-900 text-xl font-bold text-white">
+                  {/* Fallback initials avatar sits underneath and always renders —
+                      if profile_picture 404s or is blocked, onError hides the <img>
+                      and this shows through instead of a blank circle. */}
+                  <div className="relative mx-auto h-20 w-20">
+                    <div className="absolute inset-0 flex items-center justify-center rounded-full bg-navy-900 text-xl font-bold text-white">
                       {person.full_name?.[0] ?? '?'}
                     </div>
-                  )}
+                    {person.profile_picture && (
+                      <img
+                        src={person.profile_picture}
+                        alt={person.full_name}
+                        loading="lazy"
+                        className="absolute inset-0 h-20 w-20 rounded-full object-cover ring-1 ring-navy-900/8"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none'
+                        }}
+                      />
+                    )}
+                  </div>
                   <h3 className="mt-4 text-base font-bold text-navy-900">{person.full_name}</h3>
                   <p className="mt-1 text-xs text-navy-700/55">{person.title}</p>
 

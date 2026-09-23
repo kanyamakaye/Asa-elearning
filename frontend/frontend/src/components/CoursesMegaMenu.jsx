@@ -15,7 +15,7 @@ import {
 // Quick-link shortcuts shown in the first column — Alison's "Goals" column,
 // adapted to what Asa Academy actually offers (see sample.md).
 const quickLinks = [
-  { label: 'Explore Courses', to: '/#courses', icon: IconTarget, active: true },
+  { label: 'Explore Courses', to: '/courses', icon: IconTarget, active: true },
   { label: 'Explore Instructors', to: '/#instructors', icon: IconUsers },
   { label: 'Learning Paths', to: '/#paths', icon: IconAward },
   { label: 'Get Certified', to: '/#outcomes', icon: IconAward },
@@ -74,7 +74,7 @@ export default function CoursesMegaMenu() {
   return (
     <div className="relative" onMouseEnter={handleEnter} onMouseLeave={handleLeave}>
       <Link
-        to="/#courses"
+        to="/courses"
         className="flex items-center gap-1 text-sm font-medium text-navy-700/80 transition-colors hover:text-brand-500"
       >
         Courses
@@ -113,7 +113,7 @@ export default function CoursesMegaMenu() {
                   Course Categories
                 </p>
                 <Link
-                  to="/#courses"
+                  to="/courses"
                   onClick={() => setOpen(false)}
                   className="shrink-0 text-xs font-semibold text-brand-500 hover:text-navy-900"
                 >
@@ -157,7 +157,7 @@ export default function CoursesMegaMenu() {
             <div className="bg-navy-50/40 p-3">
               <div className="flex items-center justify-between px-2 pb-2 pt-1">
                 <Link
-                  to={`/?category=${activeSlug}#courses`}
+                  to={`/courses?category=${activeSlug}`}
                   onClick={() => setOpen(false)}
                   className="text-sm font-bold text-brand-600 hover:text-navy-900"
                 >
@@ -185,7 +185,7 @@ export default function CoursesMegaMenu() {
                 )}
               </div>
               <Link
-                to={`/?category=${activeSlug}#courses`}
+                to={`/courses?category=${activeSlug}`}
                 onClick={() => setOpen(false)}
                 className="mt-2 inline-flex items-center gap-1.5 px-3 text-xs font-semibold text-brand-500 hover:text-navy-900"
               >

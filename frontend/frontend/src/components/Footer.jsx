@@ -12,14 +12,14 @@ import { IconArrowRight, IconCheck, IconHelpCircle, IconLifeBuoy } from './icons
 // pages) — rather than a 1:1 content copy of Alison's own footer.
 const platformLinks = [
   { label: 'Home', to: '/' },
-  { label: 'Courses', to: '/#courses' },
+  { label: 'Courses', to: '/courses' },
   { label: 'Instructors', to: '/#instructors' },
   { label: 'About Us', to: '/#about' },
   { label: 'Pricing', to: '/#pricing' },
 ]
 
 const studentLinks = [
-  { label: 'Browse Courses', to: '/#courses' },
+  { label: 'Browse Courses', to: '/courses' },
   { label: 'Learning Paths', to: '/#paths' },
   { label: 'Career Outcomes', to: '/#outcomes' },
   { label: 'Verify a Certificate', to: '/verify-certificate' },
@@ -100,9 +100,9 @@ export default function Footer() {
 
           <FooterColumn title="Categories">
             {categories.map((c) => (
-              <FooterLink key={c.id} to={`/?category=${c.slug}#courses`}>{c.name}</FooterLink>
+              <FooterLink key={c.id} to={`/courses?category=${c.slug}`}>{c.name}</FooterLink>
             ))}
-            <FooterLink to="/#courses">
+            <FooterLink to="/courses">
               <span className="font-semibold text-brand-400">View all courses</span>
             </FooterLink>
           </FooterColumn>
@@ -204,7 +204,11 @@ export default function Footer() {
                 </p>
               ) : (
                 <div className="flex w-full items-center gap-2 sm:w-72">
+                  <label htmlFor="footer-newsletter-email" className="sr-only">
+                    Email address
+                  </label>
                   <input
+                    id="footer-newsletter-email"
                     type="email"
                     required
                     value={email}

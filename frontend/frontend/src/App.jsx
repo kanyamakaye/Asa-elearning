@@ -5,6 +5,7 @@ import DashboardLayout from './components/dashboard/DashboardLayout'
 import MainLayout from './layouts/MainLayout'
 import Contact from './pages/Contact'
 import CourseDetail from './pages/CourseDetail'
+import CoursesCatalog from './pages/CoursesCatalog'
 import ForgotPassword from './pages/ForgotPassword'
 import Home from './pages/Home'
 import InstructorActivate from './pages/InstructorActivate'
@@ -76,6 +77,7 @@ function App() {
       <Route element={<MainLayout />}>
         <Route path="/" element={<Home />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/courses" element={<CoursesCatalog />} />
         <Route path="/courses/:slug" element={<CourseDetail />} />
         <Route path="/verify-certificate" element={<VerifyCertificate />} />
       </Route>

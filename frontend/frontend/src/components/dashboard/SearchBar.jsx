@@ -9,7 +9,7 @@ export default function SearchBar({ className = '' }) {
   function handleSubmit(e) {
     e.preventDefault()
     const q = query.trim()
-    navigate(q ? `/?q=${encodeURIComponent(q)}#courses` : '/#courses')
+    navigate(q ? `/courses?q=${encodeURIComponent(q)}` : '/courses')
   }
 
   return (

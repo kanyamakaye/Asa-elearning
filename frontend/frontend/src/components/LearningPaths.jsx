@@ -50,7 +50,7 @@ export default function LearningPaths() {
             : categories.map((cat, i) => (
                 <Link
                   key={cat.id}
-                  to="/#courses"
+                  to="/courses"
                   className="group animate-fade-up flex flex-col rounded-2xl border border-navy-900/8 p-6 transition-all hover:-translate-y-1 hover:border-brand-300 hover:shadow-xl hover:shadow-navy-900/5"
                   style={{ animationDelay: `${i * 80}ms` }}
                 >

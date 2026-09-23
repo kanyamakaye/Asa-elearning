@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: Arial, Helvetica, system-ui, sans-serif;
-  --font-display: Arial, Helvetica, system-ui, sans-serif;
+  --font-sans: 'Inter', Arial, Helvetica, system-ui, sans-serif;
+  --font-display: 'Sora', Arial, Helvetica, system-ui, sans-serif;
 
   --color-navy-950: #050b1f;
   --color-navy-900: #0a1440;
@@ -56,6 +56,13 @@
 
 html {
   scroll-behavior: smooth;
+}
+
+/* Every homepage section jumped to via a nav anchor (#about, #courses, etc.)
+   needs this — otherwise the sticky header lands on top of the section and
+   covers its eyebrow/heading, reading as a blank gap right under the nav. */
+section[id] {
+  scroll-margin-top: 5rem;
 }
 
 body {

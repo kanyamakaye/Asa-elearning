@@ -9,9 +9,34 @@
       content="Asa Academy is an integrated online e-learning platform for courses, live classes, assessments, and certification."
     />
     <title>Asa Academy | E-Learning Platform</title>
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Asa Academy" />
+    <meta property="og:title" content="Asa Academy | E-Learning Platform" />
+    <meta
+      property="og:description"
+      content="Master the skills that move your career forward. Learn practical, industry-relevant skills from experienced instructors and earn verified certificates."
+    />
+    <meta property="og:image" content="/logo.png" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Asa Academy | E-Learning Platform" />
+    <meta
+      name="twitter:description"
+      content="Master the skills that move your career forward. Learn practical, industry-relevant skills from experienced instructors and earn verified certificates."
+    />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body>
     <div id="root"></div>
+    <!-- google-login.md — Google Identity Services, loaded once globally so
+         GoogleSignInButton.jsx can render on either Login or Register. -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

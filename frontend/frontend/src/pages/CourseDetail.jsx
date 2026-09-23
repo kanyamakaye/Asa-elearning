@@ -203,7 +203,7 @@ export default function CourseDetail() {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 text-center">
         <p className="text-navy-700/60">{error || 'Course not found.'}</p>
-        <Link to="/#courses" className="font-semibold text-brand-500 hover:text-navy-900">
+        <Link to="/courses" className="font-semibold text-brand-500 hover:text-navy-900">
           Back to courses
         </Link>
       </div>
@@ -232,7 +232,7 @@ export default function CourseDetail() {
             <nav className="flex flex-wrap items-center gap-2 text-xs font-medium text-navy-100/50">
               <Link to="/" className="hover:text-white">Home</Link>
               <span>/</span>
-              <Link to="/#courses" className="hover:text-white">Courses</Link>
+              <Link to="/courses" className="hover:text-white">Courses</Link>
               <span>/</span>
               <span className="text-navy-100/80">{course.title}</span>
             </nav>
