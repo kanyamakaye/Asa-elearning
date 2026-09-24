@@ -124,7 +124,10 @@ export default function LiveClassesList() {
             label: '',
             render: (s) => (
               <div className="flex items-center justify-end gap-2">
-                {s.meeting_url && s.status !== 'cancelled' && (
+                {s.status !== 'cancelled' && s.meeting_platform === 'in_app' && (
+                  <Link to={`/dashboard/live-classes/${s.id}/room`} className="text-xs font-semibold text-brand-500 hover:text-navy-900">Join</Link>
+                )}
+                {s.status !== 'cancelled' && s.meeting_platform !== 'in_app' && s.meeting_url && (
                   <a href={s.meeting_url} target="_blank" rel="noreferrer" className="text-xs font-semibold text-brand-500 hover:text-navy-900">Join</a>
                 )}
                 {canManage && s.status === 'scheduled' && (

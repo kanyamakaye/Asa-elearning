@@ -7,16 +7,20 @@ from .models import Attendance, LiveSession
 
 class LiveSessionSerializer(serializers.ModelSerializer):
     instructor = UserPublicSerializer(read_only=True)
-    meeting_url = serializers.URLField(required=True)
+    # Required for every platform except IN_APP, where a private Jitsi room
+    # is generated automatically instead (see LiveSession.save()) — enforced
+    # in validate() below rather than here, since that decision depends on
+    # another field's value.
+    meeting_url = serializers.URLField(required=False, allow_blank=True)
 
     class Meta:
         model = LiveSession
         fields = [
             'id', 'course', 'instructor', 'title', 'description', 'meeting_platform', 'meeting_url',
-            'meeting_id', 'meeting_password', 'scheduled_date', 'start_time', 'end_time', 'timezone',
-            'capacity', 'status', 'recording_url', 'created_at',
+            'meeting_id', 'meeting_password', 'jitsi_room', 'scheduled_date', 'start_time', 'end_time',
+            'timezone', 'capacity', 'status', 'recording_url', 'created_at',
         ]
-        read_only_fields = ['id', 'instructor', 'created_at']
+        read_only_fields = ['id', 'instructor', 'jitsi_room', 'created_at']
 
     def validate_title(self, value):
         if not value.strip():
@@ -24,6 +28,10 @@ class LiveSessionSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, attrs):
+        platform = attrs.get('meeting_platform', getattr(self.instance, 'meeting_platform', None))
+        if platform != LiveSession.Platform.IN_APP and not attrs.get('meeting_url', getattr(self.instance, 'meeting_url', '')):
+            raise serializers.ValidationError({'meeting_url': 'This field is required.'})
+
         start = attrs.get('start_time', getattr(self.instance, 'start_time', None))
         end = attrs.get('end_time', getattr(self.instance, 'end_time', None))
         if not start:

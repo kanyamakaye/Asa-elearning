@@ -1,4 +1,5 @@
 import { Route, Routes } from 'react-router-dom'
+import useContentProtection from './hooks/useContentProtection'
 import RequireAuth from './components/RequireAuth'
 import RequireRole from './components/RequireRole'
 import DashboardLayout from './components/dashboard/DashboardLayout'
@@ -50,6 +51,7 @@ import ScheduleLiveClass from './pages/instructor/live-classes/ScheduleLiveClass
 import QuizzesList from './pages/dashboard/QuizzesList'
 import AssignmentsList from './pages/dashboard/AssignmentsList'
 import LiveClassesList from './pages/dashboard/LiveClassesList'
+import LiveClassRoom from './pages/dashboard/LiveClassRoom'
 import AnnouncementsList from './pages/dashboard/AnnouncementsList'
 import MessagesInbox from './pages/dashboard/MessagesInbox'
 import DiscussionsList from './pages/dashboard/DiscussionsList'
@@ -72,6 +74,8 @@ const MANAGER_ROLES = ['admin', 'academic_manager', 'instructor']
 const CONTENT_ROLES = [...MANAGER_ROLES, 'content_manager']
 
 function App() {
+  useContentProtection()
+
   return (
     <Routes>
       <Route element={<MainLayout />}>
@@ -90,9 +94,10 @@ function App() {
       <Route path="/instructor/activate" element={<InstructorActivate />} />
 
       <Route element={<RequireAuth />}>
-        {/* Full-screen, distraction-free lesson player — deliberately outside
-            DashboardLayout's sidebar chrome. */}
+        {/* Full-screen, distraction-free lesson player / live class room —
+            deliberately outside DashboardLayout's sidebar chrome. */}
         <Route path="/learn/:slug" element={<Learn />} />
+        <Route path="/dashboard/live-classes/:id/room" element={<LiveClassRoom />} />
 
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<DashboardIndex />} />

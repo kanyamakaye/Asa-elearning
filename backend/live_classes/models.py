@@ -1,3 +1,5 @@
+import uuid
+
 from django.conf import settings
 from django.db import models
 
@@ -11,6 +13,7 @@ class LiveSession(models.Model):
         POSTPONED = 'postponed', 'Postponed'
 
     class Platform(models.TextChoices):
+        IN_APP = 'in_app', 'In-App (Asa Academy)'
         ZOOM = 'zoom', 'Zoom'
         GOOGLE_MEET = 'google_meet', 'Google Meet'
         TEAMS = 'teams', 'Microsoft Teams'
@@ -24,6 +27,13 @@ class LiveSession(models.Model):
     meeting_url = models.URLField(blank=True)
     meeting_id = models.CharField(max_length=100, blank=True)
     meeting_password = models.CharField(max_length=100, blank=True)
+    # An unguessable Jitsi room name, auto-generated only for IN_APP sessions
+    # — meet.jit.si has no access control of its own, so keeping this out of
+    # any list/browse response and unguessable is the only thing standing
+    # between "enrolled in the course" and "can join the room". See
+    # LiveSessionViewSet.get_queryset for the enrollment scoping that keeps
+    # it out of the wrong hands in the first place.
+    jitsi_room = models.CharField(max_length=64, unique=True, null=True, blank=True)
     scheduled_date = models.DateField(null=True, blank=True)
     start_time = models.TimeField(null=True, blank=True)
     end_time = models.TimeField(null=True, blank=True)
@@ -35,6 +45,11 @@ class LiveSession(models.Model):
 
     class Meta:
         ordering = ['-scheduled_date', '-start_time']
+
+    def save(self, *args, **kwargs):
+        if self.meeting_platform == self.Platform.IN_APP and not self.jitsi_room:
+            self.jitsi_room = f'asa-academy-{uuid.uuid4().hex}'
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.title

@@ -25,7 +25,7 @@ const INITIAL_FORM = {
   start_time: '',
   end_time: '',
   timezone: 'UTC',
-  meeting_platform: 'zoom',
+  meeting_platform: 'in_app',
   meeting_url: '',
   meeting_id: '',
   meeting_password: '',
@@ -89,12 +89,14 @@ export default function ScheduleLiveClass() {
     if (!form.start_time) next.start_time = 'This field is required.'
     if (!form.end_time) next.end_time = 'This field is required.'
     if (form.start_time && form.end_time && form.end_time <= form.start_time) next.end_time = 'Must be after the start time.'
-    if (!form.meeting_url.trim()) next.meeting_url = 'This field is required.'
-    else {
-      try {
-        new URL(form.meeting_url)
-      } catch {
-        next.meeting_url = 'Enter a valid URL.'
+    if (form.meeting_platform !== 'in_app') {
+      if (!form.meeting_url.trim()) next.meeting_url = 'This field is required.'
+      else {
+        try {
+          new URL(form.meeting_url)
+        } catch {
+          next.meeting_url = 'Enter a valid URL.'
+        }
       }
     }
     setErrors(next)
@@ -140,7 +142,7 @@ export default function ScheduleLiveClass() {
       <PageHeader
         breadcrumb={<Breadcrumb items={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Live Classes', to: '/dashboard/live-classes' }, { label: isEdit ? 'Edit Live Class' : 'Schedule Live Class' }]} />}
         title={isEdit ? 'Edit Live Class' : 'Schedule a Live Class'}
-        description="Set up a live session for your students. A meeting link is entered manually — no Zoom/Meet integration is required."
+        description="Set up a live session for your students — conduct it right here in Asa Academy, or link out to Zoom, Google Meet, or Teams."
       />
 
       {submitError && <Alert tone="error">{submitError}</Alert>}
@@ -188,23 +190,34 @@ export default function ScheduleLiveClass() {
 
       <Card title="Meeting Information">
         <div className="grid gap-5 sm:grid-cols-2">
-          <FormField label="Platform" required>
+          <FormField label="Platform" required className="sm:col-span-2">
             <Select value={form.meeting_platform} onChange={(e) => update('meeting_platform', e.target.value)}>
+              <option value="in_app">In-App (Asa Academy) — conduct the class right here</option>
               <option value="zoom">Zoom</option>
               <option value="google_meet">Google Meet</option>
               <option value="teams">Microsoft Teams</option>
               <option value="other">Other</option>
             </Select>
           </FormField>
-          <FormField label="Meeting URL" required error={errors.meeting_url}>
-            <Input value={form.meeting_url} onChange={(e) => update('meeting_url', e.target.value)} placeholder="https://" error={errors.meeting_url} />
-          </FormField>
-          <FormField label="Meeting ID" hint="Optional">
-            <Input value={form.meeting_id} onChange={(e) => update('meeting_id', e.target.value)} />
-          </FormField>
-          <FormField label="Meeting Password" hint="Optional">
-            <Input value={form.meeting_password} onChange={(e) => update('meeting_password', e.target.value)} />
-          </FormField>
+
+          {form.meeting_platform === 'in_app' ? (
+            <p className="sm:col-span-2 rounded-xl bg-brand-50 px-4 py-3 text-sm text-navy-700/75">
+              A private video room is created automatically for this session — no link to paste. Students
+              join from the live class list once it&rsquo;s time, right inside Asa Academy.
+            </p>
+          ) : (
+            <>
+              <FormField label="Meeting URL" required error={errors.meeting_url}>
+                <Input value={form.meeting_url} onChange={(e) => update('meeting_url', e.target.value)} placeholder="https://" error={errors.meeting_url} />
+              </FormField>
+              <FormField label="Meeting ID" hint="Optional">
+                <Input value={form.meeting_id} onChange={(e) => update('meeting_id', e.target.value)} />
+              </FormField>
+              <FormField label="Meeting Password" hint="Optional">
+                <Input value={form.meeting_password} onChange={(e) => update('meeting_password', e.target.value)} />
+              </FormField>
+            </>
+          )}
         </div>
       </Card>
 

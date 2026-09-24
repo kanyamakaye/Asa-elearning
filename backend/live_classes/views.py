@@ -5,6 +5,7 @@ from rest_framework.response import Response
 
 from accounts.permissions import CanScheduleLiveClass
 from common.responses import StandardResponseMixin, success_response
+from enrollments.models import Enrollment
 from notifications.services import notify_enrolled_students
 
 from .models import Attendance, LiveSession
@@ -22,6 +23,18 @@ class LiveSessionViewSet(StandardResponseMixin, viewsets.ModelViewSet):
 
     def get_queryset(self):
         qs = super().get_queryset()
+        user = self.request.user
+        # CanScheduleLiveClass opens every safe method to any authenticated
+        # user (see accounts/permissions.py) — the real read scoping happens
+        # here, same pattern as GroupPermission/get_queryset. Unscoped, a
+        # student could list any course's session and read its jitsi_room
+        # (the only thing gating who can join a public Jitsi room), not just
+        # ones they're enrolled in.
+        if user.is_authenticated and user.user_type == 'student' and not user.is_staff:
+            qs = qs.filter(
+                course__enrollments__student=user,
+                course__enrollments__status__in=[Enrollment.Status.ACTIVE, Enrollment.Status.COMPLETED],
+            ).distinct()
         course_id = self.request.query_params.get('course')
         if course_id:
             qs = qs.filter(course_id=course_id)
