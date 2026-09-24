@@ -58,6 +58,24 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Content-protection deterrent (see hooks/useContentProtection.js for the
+   copy/cut/right-click side of this) — everything is unselectable by
+   default, with form fields and anything explicitly opted in via
+   .selectable turned back on so typing, pasting into inputs, and password
+   managers keep working normally. */
+body {
+  -webkit-user-select: none;
+  user-select: none;
+}
+input,
+textarea,
+select,
+[contenteditable='true'],
+.selectable {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
 /* Every homepage section jumped to via a nav anchor (#about, #courses, etc.)
    needs this — otherwise the sticky header lands on top of the section and
    covers its eyebrow/heading, reading as a blank gap right under the nav. */
