@@ -1,10 +1,10 @@
 import { IconCheck, IconClose } from '../icons'
 
 const tones = {
-  success: 'bg-emerald-50 text-emerald-700 ring-emerald-600/15',
-  error: 'bg-red-50 text-red-600 ring-red-600/15',
-  info: 'bg-brand-50 text-brand-700 ring-brand-500/15',
-  warning: 'bg-amber-50 text-amber-700 ring-amber-600/15',
+  success: 'bg-emerald-50 text-emerald-700 ring-emerald-600/15 dark:bg-emerald-500/10 dark:text-emerald-400 dark:ring-emerald-400/20',
+  error: 'bg-red-50 text-red-600 ring-red-600/15 dark:bg-red-500/10 dark:text-red-400 dark:ring-red-400/20',
+  info: 'bg-brand-50 text-brand-700 ring-brand-500/15 dark:bg-brand-500/10 dark:text-brand-300 dark:ring-brand-400/20',
+  warning: 'bg-amber-50 text-amber-700 ring-amber-600/15 dark:bg-amber-500/10 dark:text-amber-400 dark:ring-amber-400/20',
 }
 
 export default function Alert({ tone = 'info', title, children, onDismiss, className = '' }) {

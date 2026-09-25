@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { useLanguage } from '../../../context/LanguageContext'
 import { getModule } from '../../../services/moduleService'
 import { getLesson, createLesson, updateLesson } from '../../../services/lessonService'
 import { getSections, createSection, updateSection, deleteSection } from '../../../services/sectionService'
@@ -19,13 +20,13 @@ import Textarea from '../../../components/ui/Textarea'
 import { IconArrowDown, IconArrowUp, IconEdit, IconPlus, IconTrash } from '../../../components/icons'
 
 const LESSON_TYPES = [
-  { value: 'video', label: 'Video' },
-  { value: 'text', label: 'Text' },
-  { value: 'audio', label: 'Audio' },
-  { value: 'pdf', label: 'PDF' },
-  { value: 'presentation', label: 'Presentation' },
-  { value: 'live_session', label: 'Live Session' },
-  { value: 'external_link', label: 'External Link' },
+  { value: 'video', labelKey: 'video' },
+  { value: 'text', labelKey: 'text' },
+  { value: 'audio', labelKey: 'audio' },
+  { value: 'pdf', labelKey: 'pdf' },
+  { value: 'presentation', labelKey: 'presentation' },
+  { value: 'live_session', labelKey: 'liveSession' },
+  { value: 'external_link', labelKey: 'externalLink' },
 ]
 
 const EMPTY_LESSON = {
@@ -43,11 +44,12 @@ function toFormShape(lesson) {
 }
 
 function SectionForm({ initial, onSave, onCancel, saving }) {
+  const { t } = useLanguage()
   const [form, setForm] = useState(initial)
   const [error, setError] = useState('')
 
   async function submit() {
-    if (!form.title.trim()) return setError('Section title is required.')
+    if (!form.title.trim()) return setError(t('dashboardInstructor.submoduleEditor.sectionTitleRequired'))
     setError('')
     try {
       await onSave(form)
@@ -59,18 +61,18 @@ function SectionForm({ initial, onSave, onCancel, saving }) {
   return (
     <div className="space-y-4">
       {error && <Alert tone="error">{error}</Alert>}
-      <FormField label="Section Title" required>
-        <Input value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} placeholder="e.g. Overview" autoFocus />
+      <FormField label={t('dashboardInstructor.submoduleEditor.sectionTitle')} required>
+        <Input value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} placeholder={t('dashboardInstructor.submoduleEditor.sectionTitlePlaceholder')} autoFocus />
       </FormField>
-      <FormField label="Content">
+      <FormField label={t('dashboardInstructor.submoduleEditor.content')}>
         <Textarea rows={5} value={form.content} onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))} />
       </FormField>
-      <FormField label="Video URL (optional)">
+      <FormField label={t('dashboardInstructor.submoduleEditor.videoUrlOptional')}>
         <Input value={form.video_url} onChange={(e) => setForm((f) => ({ ...f, video_url: e.target.value }))} placeholder="https://" />
       </FormField>
       <div className="flex justify-end gap-3 pt-2">
-        <Button variant="ghost" onClick={onCancel}>Cancel</Button>
-        <Button loading={saving} disabled={saving} onClick={submit}>{saving ? 'Saving…' : 'Save Section'}</Button>
+        <Button variant="ghost" onClick={onCancel}>{t('dashboardInstructor.submoduleEditor.cancel')}</Button>
+        <Button loading={saving} disabled={saving} onClick={submit}>{saving ? t('dashboardInstructor.submoduleEditor.saving') : t('dashboardInstructor.submoduleEditor.saveSection')}</Button>
       </div>
     </div>
   )
@@ -81,6 +83,7 @@ function SectionForm({ initial, onSave, onCancel, saving }) {
  * gives the content + settings fields room to breathe and lets sections be
  * managed right alongside the submodule that owns them. */
 export default function SubmoduleEditor() {
+  const { t } = useLanguage()
   const { slug, moduleId, lessonId } = useParams()
   const navigate = useNavigate()
   const confirm = useConfirm()
@@ -124,8 +127,8 @@ export default function SubmoduleEditor() {
   }
 
   async function handleSubmit() {
-    if (!form.title.trim()) return setError('Submodule title is required.')
-    if (form.lesson_type === 'video' && !form.video_url.trim()) return setError('A video URL is required for video submodules.')
+    if (!form.title.trim()) return setError(t('dashboardInstructor.submoduleEditor.submoduleTitleRequired'))
+    if (form.lesson_type === 'video' && !form.video_url.trim()) return setError(t('dashboardInstructor.submoduleEditor.videoUrlRequired'))
     setError('')
     setSaving(true)
     try {
@@ -166,7 +169,7 @@ export default function SubmoduleEditor() {
   }
 
   async function removeSection(section) {
-    const { confirmed, reason } = await confirm(`Delete section "${section.title}"?`)
+    const { confirmed, reason } = await confirm(t('dashboardInstructor.submoduleEditor.confirmDeleteSection', { title: section.title }))
     if (!confirmed) return
     await deleteSection(section.id, reason)
     const data = await getSections(lessonId)
@@ -184,12 +187,12 @@ export default function SubmoduleEditor() {
     setSections(data.results ?? data)
   }
 
-  if (loading) return <LoadingSpinner label="Loading submodule…" />
+  if (loading) return <LoadingSpinner label={t('dashboardInstructor.submoduleEditor.loadingSubmodule')} />
 
   if (success) {
     return (
       <div className="mx-auto max-w-xl py-16">
-        <Alert tone="success" title="Submodule saved successfully.">Redirecting…</Alert>
+        <Alert tone="success" title={t('dashboardInstructor.submoduleEditor.savedSuccess')}>{t('dashboardInstructor.submoduleEditor.redirecting')}</Alert>
       </div>
     )
   }
@@ -200,103 +203,103 @@ export default function SubmoduleEditor() {
         breadcrumb={
           <Breadcrumb
             items={[
-              { label: 'Dashboard', to: '/dashboard' },
-              { label: 'Courses', to: '/dashboard/courses' },
-              { label: 'Content', to: `/dashboard/courses/${slug}/content` },
-              { label: module?.title ?? 'Module' },
+              { label: t('dashboardInstructor.submoduleEditor.breadcrumbDashboard'), to: '/dashboard' },
+              { label: t('dashboardInstructor.submoduleEditor.breadcrumbCourses'), to: '/dashboard/courses' },
+              { label: t('dashboardInstructor.submoduleEditor.breadcrumbContent'), to: `/dashboard/courses/${slug}/content` },
+              { label: module?.title ?? t('dashboardInstructor.submoduleEditor.breadcrumbModuleFallback') },
             ]}
           />
         }
-        title={isEdit ? 'Edit Submodule' : 'Add Submodule'}
-        description={module ? `In module: ${module.title}` : undefined}
+        title={isEdit ? t('dashboardInstructor.submoduleEditor.editTitle') : t('dashboardInstructor.submoduleEditor.addTitle')}
+        description={module ? t('dashboardInstructor.submoduleEditor.inModule', { title: module.title }) : undefined}
       />
 
       {error && <Alert tone="error">{error}</Alert>}
 
-      <div className="space-y-5 rounded-2xl bg-white p-6 ring-1 ring-navy-900/8">
-        <h2 className="text-sm font-bold text-navy-900">Basic Information</h2>
-        <FormField label="Submodule Title" required>
-          <Input value={form.title} onChange={(e) => update('title', e.target.value)} placeholder="e.g. Introduction to Variables" autoFocus />
+      <div className="space-y-5 rounded-2xl bg-white p-6 ring-1 ring-navy-900/8 dark:bg-navy-800 dark:ring-white/10">
+        <h2 className="text-sm font-bold text-navy-900 dark:text-white">{t('dashboardInstructor.submoduleEditor.basicInformation')}</h2>
+        <FormField label={t('dashboardInstructor.submoduleEditor.submoduleTitle')} required>
+          <Input value={form.title} onChange={(e) => update('title', e.target.value)} placeholder={t('dashboardInstructor.submoduleEditor.submoduleTitlePlaceholder')} autoFocus />
         </FormField>
         <div className="grid gap-4 sm:grid-cols-3">
-          <FormField label="Type">
+          <FormField label={t('dashboardInstructor.submoduleEditor.type')}>
             <Select value={form.lesson_type} onChange={(e) => update('lesson_type', e.target.value)}>
-              {LESSON_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+              {LESSON_TYPES.map((lt) => <option key={lt.value} value={lt.value}>{t(`dashboardInstructor.submoduleEditor.lessonTypes.${lt.labelKey}`)}</option>)}
             </Select>
           </FormField>
-          <FormField label="Duration (minutes)">
+          <FormField label={t('dashboardInstructor.submoduleEditor.durationMinutes')}>
             <Input type="number" min="0" value={form.duration_minutes} onChange={(e) => update('duration_minutes', e.target.value)} />
           </FormField>
-          <FormField label="Status">
+          <FormField label={t('dashboardInstructor.submoduleEditor.status')}>
             <Select value={form.status} onChange={(e) => update('status', e.target.value)}>
-              <option value="draft">Draft</option>
-              <option value="published">Published</option>
-              <option value="hidden">Hidden</option>
+              <option value="draft">{t('dashboardInstructor.submoduleEditor.draft')}</option>
+              <option value="published">{t('dashboardInstructor.submoduleEditor.published')}</option>
+              <option value="hidden">{t('dashboardInstructor.submoduleEditor.hidden')}</option>
             </Select>
           </FormField>
         </div>
-        <FormField label="Description" hint="A short summary shown above the content.">
+        <FormField label={t('dashboardInstructor.submoduleEditor.description')} hint={t('dashboardInstructor.submoduleEditor.descriptionHint')}>
           <Textarea rows={2} value={form.description} onChange={(e) => update('description', e.target.value)} />
         </FormField>
-        <Checkbox label="Free preview (visible without enrollment)" checked={form.is_preview} onChange={(e) => update('is_preview', e.target.checked)} />
+        <Checkbox label={t('dashboardInstructor.submoduleEditor.freePreview')} checked={form.is_preview} onChange={(e) => update('is_preview', e.target.checked)} />
       </div>
 
-      <div className="space-y-5 rounded-2xl bg-white p-6 ring-1 ring-navy-900/8">
-        <h2 className="text-sm font-bold text-navy-900">Content</h2>
+      <div className="space-y-5 rounded-2xl bg-white p-6 ring-1 ring-navy-900/8 dark:bg-navy-800 dark:ring-white/10">
+        <h2 className="text-sm font-bold text-navy-900 dark:text-white">{t('dashboardInstructor.submoduleEditor.content')}</h2>
         {form.lesson_type === 'video' ? (
-          <FormField label="Video URL" required hint="YouTube or Vimeo links are embedded automatically.">
+          <FormField label={t('dashboardInstructor.submoduleEditor.videoUrl')} required hint={t('dashboardInstructor.submoduleEditor.videoUrlHint')}>
             <Input value={form.video_url} onChange={(e) => update('video_url', e.target.value)} placeholder="https://" />
           </FormField>
         ) : form.lesson_type === 'external_link' ? (
-          <FormField label="Content URL">
+          <FormField label={t('dashboardInstructor.submoduleEditor.contentUrl')}>
             <Input value={form.content_url} onChange={(e) => update('content_url', e.target.value)} placeholder="https://" />
           </FormField>
         ) : (
-          <FormField label="Content">
+          <FormField label={t('dashboardInstructor.submoduleEditor.content')}>
             <Textarea rows={8} value={form.content} onChange={(e) => update('content', e.target.value)} />
           </FormField>
         )}
       </div>
 
       {isEdit && (
-        <div className="space-y-4 rounded-2xl bg-white p-6 ring-1 ring-navy-900/8">
+        <div className="space-y-4 rounded-2xl bg-white p-6 ring-1 ring-navy-900/8 dark:bg-navy-800 dark:ring-white/10">
           <div>
-            <h2 className="text-sm font-bold text-navy-900">Sections</h2>
-            <p className="mt-1 text-xs text-navy-700/50">
-              Optional — break this submodule into pages the student steps through one at a time.
+            <h2 className="text-sm font-bold text-navy-900 dark:text-white">{t('dashboardInstructor.submoduleEditor.sections')}</h2>
+            <p className="mt-1 text-xs text-navy-700/50 dark:text-navy-100/50">
+              {t('dashboardInstructor.submoduleEditor.sectionsHint')}
             </p>
           </div>
           {sections.length === 0 ? (
-            <p className="rounded-xl bg-navy-50 p-4 text-center text-xs text-navy-700/45">No sections yet.</p>
+            <p className="rounded-xl bg-navy-50 p-4 text-center text-xs text-navy-700/45 dark:bg-white/5 dark:text-navy-100/45">{t('dashboardInstructor.submoduleEditor.noSectionsYet')}</p>
           ) : (
             <ul className="space-y-2">
               {[...sections].sort((a, b) => a.order - b.order).map((s, i, arr) => (
-                <li key={s.id} className="flex items-center gap-2.5 rounded-xl bg-navy-50/60 px-4 py-2.5">
-                  <span className="min-w-0 flex-1 truncate text-sm font-medium text-navy-800">{i + 1}. {s.title}</span>
+                <li key={s.id} className="flex items-center gap-2.5 rounded-xl bg-navy-50/60 px-4 py-2.5 dark:bg-white/5">
+                  <span className="min-w-0 flex-1 truncate text-sm font-medium text-navy-800 dark:text-navy-100">{i + 1}. {s.title}</span>
                   <div className="flex items-center gap-1">
-                    <button type="button" disabled={i === 0} onClick={() => moveSection(s, -1)} className="rounded-lg p-1.5 text-navy-700/40 hover:bg-white disabled:opacity-30" aria-label="Move up"><IconArrowUp className="h-3.5 w-3.5" /></button>
-                    <button type="button" disabled={i === arr.length - 1} onClick={() => moveSection(s, 1)} className="rounded-lg p-1.5 text-navy-700/40 hover:bg-white disabled:opacity-30" aria-label="Move down"><IconArrowDown className="h-3.5 w-3.5" /></button>
-                    <button type="button" onClick={() => setSectionModal({ mode: 'edit', section: s })} className="rounded-lg p-1.5 text-navy-700/40 hover:bg-white" aria-label="Edit section"><IconEdit className="h-3.5 w-3.5" /></button>
-                    <button type="button" onClick={() => removeSection(s)} className="rounded-lg p-1.5 text-red-500 hover:bg-red-50" aria-label="Delete section"><IconTrash className="h-3.5 w-3.5" /></button>
+                    <button type="button" disabled={i === 0} onClick={() => moveSection(s, -1)} className="rounded-lg p-1.5 text-navy-700/40 hover:bg-white disabled:opacity-30 dark:text-navy-100/40 dark:hover:bg-white/10" aria-label={t('dashboardInstructor.submoduleEditor.moveUp')}><IconArrowUp className="h-3.5 w-3.5" /></button>
+                    <button type="button" disabled={i === arr.length - 1} onClick={() => moveSection(s, 1)} className="rounded-lg p-1.5 text-navy-700/40 hover:bg-white disabled:opacity-30 dark:text-navy-100/40 dark:hover:bg-white/10" aria-label={t('dashboardInstructor.submoduleEditor.moveDown')}><IconArrowDown className="h-3.5 w-3.5" /></button>
+                    <button type="button" onClick={() => setSectionModal({ mode: 'edit', section: s })} className="rounded-lg p-1.5 text-navy-700/40 hover:bg-white dark:text-navy-100/40 dark:hover:bg-white/10" aria-label={t('dashboardInstructor.submoduleEditor.editSection')}><IconEdit className="h-3.5 w-3.5" /></button>
+                    <button type="button" onClick={() => removeSection(s)} className="rounded-lg p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10" aria-label={t('dashboardInstructor.submoduleEditor.deleteSection')}><IconTrash className="h-3.5 w-3.5" /></button>
                   </div>
                 </li>
               ))}
             </ul>
           )}
           <Button variant="secondary" size="sm" onClick={() => setSectionModal({ mode: 'create' })}>
-            <IconPlus className="h-3.5 w-3.5" /> Add Section
+            <IconPlus className="h-3.5 w-3.5" /> {t('dashboardInstructor.submoduleEditor.addSection')}
           </Button>
         </div>
       )}
 
       <div className="flex items-center justify-between gap-3">
-        <Button type="button" variant="ghost" onClick={() => navigate(`/dashboard/courses/${slug}/content`)}>Cancel</Button>
+        <Button type="button" variant="ghost" onClick={() => navigate(`/dashboard/courses/${slug}/content`)}>{t('dashboardInstructor.submoduleEditor.cancel')}</Button>
         <Button type="button" loading={saving} disabled={saving} onClick={handleSubmit}>
-          {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Create Submodule'}
+          {saving ? t('dashboardInstructor.submoduleEditor.saving') : isEdit ? t('dashboardInstructor.submoduleEditor.saveChanges') : t('dashboardInstructor.submoduleEditor.createSubmodule')}
         </Button>
       </div>
 
-      <Modal open={!!sectionModal} onClose={() => setSectionModal(null)} title={sectionModal?.mode === 'create' ? 'Add Section' : 'Edit Section'}>
+      <Modal open={!!sectionModal} onClose={() => setSectionModal(null)} title={sectionModal?.mode === 'create' ? t('dashboardInstructor.submoduleEditor.addSection') : t('dashboardInstructor.submoduleEditor.editSection')}>
         {sectionModal && (
           <SectionForm
             initial={sectionModal.mode === 'edit' ? { title: sectionModal.section.title, content: sectionModal.section.content, video_url: sectionModal.section.video_url } : EMPTY_SECTION}

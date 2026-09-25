@@ -1,0 +1,13 @@
+{
+  "dataTable": {
+    "export": "Kwohereza",
+    "exportExcel": "Ohereza muri Excel",
+    "exportPdf": "Ohereza muri PDF",
+    "searchPlaceholder": "Shakisha…",
+    "noRecords": "Nta bisohoka byabonetse.",
+    "showingRange": "Werekana {{from}}–{{to}} kuri {{total}}",
+    "previous": "Ibanziriza",
+    "pageOf": "Urupapuro {{page}} kuri {{totalPages}}",
+    "next": "Ikurikira"
+  }
+}

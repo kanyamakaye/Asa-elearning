@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useConfirm } from '../../context/ConfirmContext'
+import { useLanguage } from '../../context/LanguageContext'
 import { deleteQuiz, getQuizzes, publishQuiz } from '../../services/quizService'
 import DataTable from '../../components/dashboard/DataTable'
 import Badge from '../../components/ui/Badge'
@@ -15,6 +16,7 @@ const PAGE_SIZE = 20
 export default function QuizzesList() {
   const { user } = useAuth()
   const confirm = useConfirm()
+  const { t } = useLanguage()
   const [allQuizzes, setAllQuizzes] = useState([])
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
@@ -61,7 +63,7 @@ export default function QuizzesList() {
   }
 
   async function handleDelete(quiz) {
-    const { confirmed, reason } = await confirm(`Delete quiz "${quiz.title}"? This cannot be undone.`)
+    const { confirmed, reason } = await confirm(t('dashboardStudent.quizzesList.confirmDelete', { title: quiz.title }))
     if (!confirmed) return
     setBusyId(quiz.id)
     try {
@@ -75,9 +77,9 @@ export default function QuizzesList() {
   return (
     <div className="space-y-4">
       <PageHeader
-        title="Quizzes"
-        description={`${allQuizzes.length} quiz${allQuizzes.length === 1 ? '' : 'zes'}`}
-        actions={<Button as={Link} to="/dashboard/quizzes/create"><IconPlus className="h-4 w-4" /> Create Quiz</Button>}
+        title={t('dashboardStudent.quizzesList.heading')}
+        description={t('dashboardStudent.quizzesList.quizCount', { count: allQuizzes.length })}
+        actions={<Button as={Link} to="/dashboard/quizzes/create"><IconPlus className="h-4 w-4" /> {t('dashboardStudent.quizzesList.createQuiz')}</Button>}
       />
 
       <DataTable
@@ -86,30 +88,30 @@ export default function QuizzesList() {
         page={page}
         total={filteredQuizzes.length}
         onPageChange={setPage}
-        emptyMessage="No quizzes yet. Create your first one."
-        search={{ value: search, onChange: setSearch, placeholder: 'Search by title…' }}
+        emptyMessage={t('dashboardStudent.quizzesList.emptyMessage')}
+        search={{ value: search, onChange: setSearch, placeholder: t('dashboardStudent.quizzesList.searchPlaceholder') }}
         filters={[
           {
-            label: 'Status',
+            label: t('dashboardStudent.quizzesList.status'),
             value: status,
             onChange: setStatus,
             options: [
-              { value: '', label: 'All statuses' },
-              { value: 'draft', label: 'Draft' },
-              { value: 'published', label: 'Published' },
-              { value: 'closed', label: 'Closed' },
+              { value: '', label: t('dashboardStudent.quizzesList.allStatuses') },
+              { value: 'draft', label: t('dashboardStudent.quizzesList.draft') },
+              { value: 'published', label: t('dashboardStudent.quizzesList.published') },
+              { value: 'closed', label: t('dashboardStudent.quizzesList.closed') },
             ],
           },
         ]}
         exportRows={filteredQuizzes}
         exportFilename="quizzes"
-        exportTitle="Quizzes"
+        exportTitle={t('dashboardStudent.quizzesList.heading')}
         columns={[
-          { key: 'title', label: 'Title', render: (q) => <span className="font-semibold text-navy-900">{q.title}</span> },
-          { key: 'question_count', label: 'Questions' },
-          { key: 'attempt_limit', label: 'Max Attempts' },
-          { key: 'passing_marks', label: 'Passing', render: (q) => `${q.passing_marks}/${q.total_marks}` },
-          { key: 'status', label: 'Status', render: (q) => <Badge tone={statusTone[q.status]}>{q.status}</Badge>, exportValue: (q) => q.status },
+          { key: 'title', label: t('dashboardStudent.quizzesList.columnTitle'), render: (q) => <span className="font-semibold text-navy-900 dark:text-white">{q.title}</span> },
+          { key: 'question_count', label: t('dashboardStudent.quizzesList.columnQuestions') },
+          { key: 'attempt_limit', label: t('dashboardStudent.quizzesList.columnMaxAttempts') },
+          { key: 'passing_marks', label: t('dashboardStudent.quizzesList.columnPassing'), render: (q) => `${q.passing_marks}/${q.total_marks}` },
+          { key: 'status', label: t('dashboardStudent.quizzesList.status'), render: (q) => <Badge tone={statusTone[q.status]}>{q.status}</Badge>, exportValue: (q) => q.status },
           {
             key: 'actions',
             label: '',
@@ -117,13 +119,13 @@ export default function QuizzesList() {
               <div className="flex items-center justify-end gap-2">
                 {q.status === 'draft' && (
                   <Button size="sm" variant="secondary" disabled={busyId === q.id} onClick={() => handlePublish(q.id)}>
-                    Publish
+                    {t('dashboardStudent.quizzesList.publish')}
                   </Button>
                 )}
-                <Link to={`/dashboard/quizzes/${q.id}/edit`} className="rounded-lg p-1.5 text-navy-700/50 hover:bg-navy-50" aria-label="Edit quiz">
+                <Link to={`/dashboard/quizzes/${q.id}/edit`} className="rounded-lg p-1.5 text-navy-700/50 hover:bg-navy-50 dark:text-navy-100/50 dark:hover:bg-white/5" aria-label={t('dashboardStudent.quizzesList.editQuiz')}>
                   <IconEdit className="h-4 w-4" />
                 </Link>
-                <button type="button" disabled={busyId === q.id} onClick={() => handleDelete(q)} className="rounded-lg p-1.5 text-red-500 hover:bg-red-50" aria-label="Delete quiz">
+                <button type="button" disabled={busyId === q.id} onClick={() => handleDelete(q)} className="rounded-lg p-1.5 text-red-500 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10" aria-label={t('dashboardStudent.quizzesList.deleteQuiz')}>
                   <IconTrash className="h-4 w-4" />
                 </button>
               </div>

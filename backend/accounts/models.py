@@ -148,6 +148,7 @@ class InstructorProfile(models.Model):
     department = models.CharField(max_length=150, blank=True)
     biography = models.TextField(blank=True)
     years_of_experience = models.PositiveIntegerField(default=0)
+    linkedin_url = models.URLField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

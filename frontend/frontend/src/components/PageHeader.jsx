@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom'
+import { useLanguage } from '../context/LanguageContext'
 
-export default function PageHeader({ eyebrow, title, subtitle, crumb }) {
+export default function PageHeader({ eyebrow, title, subtitle, crumb, children }) {
+  const { t } = useLanguage()
   return (
     <section className="relative overflow-hidden bg-navy-900">
       <div
@@ -13,7 +15,7 @@ export default function PageHeader({ eyebrow, title, subtitle, crumb }) {
       <div className="relative mx-auto max-w-4xl px-6 py-16 text-center lg:px-8 lg:py-20">
         <nav className="flex items-center justify-center gap-2 text-xs font-medium text-navy-100/50">
           <Link to="/" className="transition-colors hover:text-white">
-            Home
+            {t('public.pageHeader.home')}
           </Link>
           <span>/</span>
           <span className="text-navy-100/80">{crumb}</span>
@@ -32,6 +34,7 @@ export default function PageHeader({ eyebrow, title, subtitle, crumb }) {
             {subtitle}
           </p>
         )}
+        {children}
       </div>
     </section>
   )

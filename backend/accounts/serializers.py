@@ -27,7 +27,7 @@ class InstructorProfileSerializer(serializers.ModelSerializer):
         model = InstructorProfile
         fields = [
             'id', 'staff_number', 'qualification', 'specialization', 'department',
-            'biography', 'years_of_experience',
+            'biography', 'years_of_experience', 'linkedin_url',
         ]
         read_only_fields = ['id', 'staff_number']
 
@@ -105,17 +105,25 @@ class InstructorPublicSerializer(ProfilePictureUrlMixin, serializers.ModelSerial
 
     full_name = serializers.ReadOnlyField()
     title = serializers.SerializerMethodField()
+    linkedin_url = serializers.SerializerMethodField()
     course_count = serializers.IntegerField(read_only=True)
     student_count = serializers.IntegerField(read_only=True)
     average_rating = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'full_name', 'profile_picture', 'title', 'course_count', 'student_count', 'average_rating']
+        fields = [
+            'id', 'username', 'full_name', 'profile_picture', 'title', 'linkedin_url',
+            'course_count', 'student_count', 'average_rating',
+        ]
 
     def get_title(self, obj):
         profile = getattr(obj, 'instructor_profile', None)
         return profile.specialization if profile and profile.specialization else 'Instructor'
+
+    def get_linkedin_url(self, obj):
+        profile = getattr(obj, 'instructor_profile', None)
+        return profile.linkedin_url if profile and profile.linkedin_url else None
 
     def get_average_rating(self, obj):
         return round(obj.average_rating, 2) if obj.average_rating else None

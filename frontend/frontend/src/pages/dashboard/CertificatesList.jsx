@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
+import { useLanguage } from '../../context/LanguageContext'
 import { apiFetch } from '../../lib/api'
 import { listCertificates, renewCertificate } from '../../lib/dashboardApi'
 import CertificateCard from '../../components/dashboard/CertificateCard'
@@ -9,6 +10,7 @@ const MANAGER_ROLES = ['admin', 'instructor']
 
 export default function CertificatesList() {
   const { accessToken, user } = useAuth()
+  const { t } = useLanguage()
   const canManage = MANAGER_ROLES.includes(user?.user_type)
   const [certificates, setCertificates] = useState([])
   const [loading, setLoading] = useState(true)
@@ -47,19 +49,19 @@ export default function CertificatesList() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">Certificates</h1>
-        <p className="mt-1 text-sm text-navy-700/55">{certificates.length} certificate{certificates.length === 1 ? '' : 's'}</p>
+        <h1 className="text-2xl font-extrabold tracking-tight text-navy-900 dark:text-white">{t('dashboardStudent.certificatesList.heading')}</h1>
+        <p className="mt-1 text-sm text-navy-700/55 dark:text-navy-100/55">{t('dashboardStudent.certificatesList.certificateCount', { count: certificates.length })}</p>
       </div>
 
       {loading ? (
         <div className="grid gap-4 sm:grid-cols-2">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-20 animate-pulse rounded-2xl bg-white ring-1 ring-navy-900/8" />
+            <div key={i} className="h-20 animate-pulse rounded-2xl bg-white ring-1 ring-navy-900/8 dark:bg-navy-800 dark:ring-white/10" />
           ))}
         </div>
       ) : certificates.length === 0 ? (
-        <p className="rounded-2xl bg-white p-10 text-center text-sm text-navy-700/45 ring-1 ring-navy-900/8">
-          No certificates issued yet.
+        <p className="rounded-2xl bg-white p-10 text-center text-sm text-navy-700/45 ring-1 ring-navy-900/8 dark:bg-navy-800 dark:text-navy-100/45 dark:ring-white/10">
+          {t('dashboardStudent.certificatesList.noCertificates')}
         </p>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
@@ -70,16 +72,16 @@ export default function CertificatesList() {
                 <div className="flex justify-end gap-2 px-1">
                   {cert.is_expired && (
                     <Button size="sm" variant="secondary" disabled={busyId === cert.id} onClick={() => renew(cert)}>
-                      Renew
+                      {t('dashboardStudent.certificatesList.renew')}
                     </Button>
                   )}
                   {cert.status === 'revoked' ? (
                     <Button size="sm" variant="secondary" disabled={busyId === cert.id} onClick={() => setStatus(cert, 'active')}>
-                      Reactivate
+                      {t('dashboardStudent.certificatesList.reactivate')}
                     </Button>
                   ) : (
                     <Button size="sm" variant="danger" disabled={busyId === cert.id} onClick={() => setStatus(cert, 'revoked')}>
-                      Revoke
+                      {t('dashboardStudent.certificatesList.revoke')}
                     </Button>
                   )}
                 </div>

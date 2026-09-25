@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { useLanguage } from '../../../context/LanguageContext'
 import { createCourse, getCourse, getCourses, getCategories, publishCourse, updateCourse } from '../../../services/courseService'
 import useCurrency from '../../../hooks/useCurrency'
 import useUnsavedChanges from '../../../hooks/useUnsavedChanges'
@@ -17,7 +18,7 @@ import Select from '../../../components/ui/Select'
 import Textarea from '../../../components/ui/Textarea'
 import { IconClose, IconPlus } from '../../../components/icons'
 
-const STEPS = ['Basic Info', 'Description', 'Media', 'Pricing', 'Objectives', 'Requirements', 'Review']
+const STEP_KEYS = ['basicInfo', 'description', 'media', 'pricing', 'objectives', 'requirements', 'review']
 
 const INITIAL_FORM = {
   title: '',
@@ -41,6 +42,7 @@ const INITIAL_FORM = {
 }
 
 function TagListEditor({ items, onChange, placeholder }) {
+  const { t } = useLanguage()
   const [draft, setDraft] = useState('')
 
   function add() {
@@ -65,18 +67,18 @@ function TagListEditor({ items, onChange, placeholder }) {
           placeholder={placeholder}
         />
         <Button type="button" variant="secondary" onClick={add}>
-          <IconPlus className="h-4 w-4" /> Add
+          <IconPlus className="h-4 w-4" /> {t('dashboardInstructor.createCourse.add')}
         </Button>
       </div>
       {items.length > 0 && (
         <ul className="mt-3 space-y-2">
           {items.map((item, i) => (
-            <li key={i} className="flex items-center justify-between gap-3 rounded-lg bg-navy-50 px-3.5 py-2 text-sm text-navy-800">
+            <li key={i} className="flex items-center justify-between gap-3 rounded-lg bg-navy-50 px-3.5 py-2 text-sm text-navy-800 dark:bg-white/5 dark:text-navy-100">
               <span className="min-w-0 flex-1 truncate">{item}</span>
               <button
                 type="button"
                 onClick={() => onChange(items.filter((_, idx) => idx !== i))}
-                className="shrink-0 text-navy-700/40 hover:text-red-600"
+                className="shrink-0 text-navy-700/40 hover:text-red-600 dark:text-navy-100/40 dark:hover:text-red-400"
               >
                 <IconClose className="h-4 w-4" />
               </button>
@@ -112,6 +114,7 @@ function toFormShape(course) {
 }
 
 export default function CreateCourse() {
+  const { t } = useLanguage()
   const formatCurrency = useCurrency()
   const navigate = useNavigate()
   const { slug } = useParams()
@@ -155,20 +158,20 @@ export default function CreateCourse() {
   function validateStep(index) {
     const next = {}
     if (index === 0) {
-      if (form.title.trim().length < 3) next.title = 'Must be at least 3 characters long.'
-      if (!form.course_code.trim()) next.course_code = 'This field is required.'
-      if (!form.category_id) next.category_id = 'This field is required.'
+      if (form.title.trim().length < 3) next.title = t('dashboardInstructor.createCourse.errors.titleMinLength')
+      if (!form.course_code.trim()) next.course_code = t('dashboardInstructor.createCourse.errors.required')
+      if (!form.category_id) next.category_id = t('dashboardInstructor.createCourse.errors.required')
     }
     if (index === 1) {
-      if (!form.short_description.trim()) next.short_description = 'This field is required.'
-      if (!form.description.trim()) next.description = 'This field is required.'
+      if (!form.short_description.trim()) next.short_description = t('dashboardInstructor.createCourse.errors.required')
+      if (!form.description.trim()) next.description = t('dashboardInstructor.createCourse.errors.required')
     }
     if (index === 3) {
-      if (form.price === '' || Number(form.price) < 0) next.price = 'Must be greater than or equal to 0.'
+      if (form.price === '' || Number(form.price) < 0) next.price = t('dashboardInstructor.createCourse.errors.priceMin')
       if (form.discount_price && Number(form.discount_price) > Number(form.price)) {
-        next.discount_price = 'Cannot exceed the regular price.'
+        next.discount_price = t('dashboardInstructor.createCourse.errors.discountExceedsPrice')
       }
-      if (!form.duration_hours || Number(form.duration_hours) <= 0) next.duration_hours = 'Must be greater than 0.'
+      if (!form.duration_hours || Number(form.duration_hours) <= 0) next.duration_hours = t('dashboardInstructor.createCourse.errors.greaterThanZero')
     }
     setErrors(next)
     return Object.keys(next).length === 0
@@ -227,13 +230,13 @@ export default function CreateCourse() {
     }
   }
 
-  if (initialLoading) return <LoadingSpinner label="Loading course…" />
+  if (initialLoading) return <LoadingSpinner label={t('dashboardInstructor.createCourse.loadingCourse')} />
 
   if (success) {
     return (
       <div className="mx-auto max-w-xl py-16">
-        <Alert tone="success" title={`Course ${isEdit ? 'updated' : 'created'} successfully.`}>
-          Redirecting to your course…
+        <Alert tone="success" title={isEdit ? t('dashboardInstructor.createCourse.updatedSuccess') : t('dashboardInstructor.createCourse.createdSuccess')}>
+          {t('dashboardInstructor.createCourse.redirecting')}
         </Alert>
       </div>
     )
@@ -242,53 +245,53 @@ export default function CreateCourse() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <PageHeader
-        breadcrumb={<Breadcrumb items={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Courses', to: '/dashboard/courses' }, { label: isEdit ? 'Edit Course' : 'Create Course' }]} />}
-        title={isEdit ? 'Edit Course' : 'Create a New Course'}
-        description={isEdit ? 'Update your course details below.' : 'Build your course step by step — you can save a draft at any time.'}
+        breadcrumb={<Breadcrumb items={[{ label: t('dashboardInstructor.createCourse.breadcrumbDashboard'), to: '/dashboard' }, { label: t('dashboardInstructor.createCourse.breadcrumbCourses'), to: '/dashboard/courses' }, { label: isEdit ? t('dashboardInstructor.createCourse.editTitle') : t('dashboardInstructor.createCourse.createBreadcrumb') }]} />}
+        title={isEdit ? t('dashboardInstructor.createCourse.editTitle') : t('dashboardInstructor.createCourse.createHeading')}
+        description={isEdit ? t('dashboardInstructor.createCourse.editDescription') : t('dashboardInstructor.createCourse.createDescription')}
       />
 
       <div className="flex flex-wrap gap-2">
-        {STEPS.map((label, i) => (
+        {STEP_KEYS.map((key, i) => (
           <button
-            key={label}
+            key={key}
             type="button"
             onClick={() => setStep(i)}
             className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
-              i === step ? 'bg-navy-900 text-white' : i < step ? 'bg-emerald-50 text-emerald-700' : 'bg-navy-50 text-navy-700/60'
+              i === step ? 'bg-navy-900 text-white dark:bg-brand-500' : i < step ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-navy-50 text-navy-700/60 dark:bg-white/5 dark:text-navy-100/60'
             }`}
           >
-            {i + 1}. {label}
+            {i + 1}. {t(`dashboardInstructor.createCourse.steps.${key}`)}
           </button>
         ))}
       </div>
 
       {submitError && <Alert tone="error">{submitError}</Alert>}
 
-      <div className="rounded-2xl bg-white p-6 ring-1 ring-navy-900/8">
+      <div className="rounded-2xl bg-white p-6 ring-1 ring-navy-900/8 dark:bg-navy-800 dark:ring-white/10">
         {step === 0 && (
           <div className="grid gap-5 sm:grid-cols-2">
-            <FormField label="Course Title" required error={errors.title} className="sm:col-span-2">
-              <Input value={form.title} onChange={(e) => update('title', e.target.value)} placeholder="e.g. Full Stack Web Development" error={errors.title} />
+            <FormField label={t('dashboardInstructor.createCourse.courseTitle')} required error={errors.title} className="sm:col-span-2">
+              <Input value={form.title} onChange={(e) => update('title', e.target.value)} placeholder={t('dashboardInstructor.createCourse.courseTitlePlaceholder')} error={errors.title} />
             </FormField>
-            <FormField label="Course Code" required error={errors.course_code}>
-              <Input value={form.course_code} onChange={(e) => update('course_code', e.target.value)} placeholder="e.g. WEB-101" error={errors.course_code} />
+            <FormField label={t('dashboardInstructor.createCourse.courseCode')} required error={errors.course_code}>
+              <Input value={form.course_code} onChange={(e) => update('course_code', e.target.value)} placeholder={t('dashboardInstructor.createCourse.courseCodePlaceholder')} error={errors.course_code} />
             </FormField>
-            <FormField label="Category" required error={errors.category_id}>
+            <FormField label={t('dashboardInstructor.createCourse.category')} required error={errors.category_id}>
               <Select value={form.category_id} onChange={(e) => update('category_id', e.target.value)} error={errors.category_id}>
-                <option value="">Select a category</option>
+                <option value="">{t('dashboardInstructor.createCourse.selectCategory')}</option>
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
               </Select>
             </FormField>
-            <FormField label="Level" required>
+            <FormField label={t('dashboardInstructor.createCourse.level')} required>
               <Select value={form.level} onChange={(e) => update('level', e.target.value)}>
-                <option value="beginner">Beginner</option>
-                <option value="intermediate">Intermediate</option>
-                <option value="advanced">Advanced</option>
+                <option value="beginner">{t('dashboardInstructor.createCourse.beginner')}</option>
+                <option value="intermediate">{t('dashboardInstructor.createCourse.intermediate')}</option>
+                <option value="advanced">{t('dashboardInstructor.createCourse.advanced')}</option>
               </Select>
             </FormField>
-            <FormField label="Language" required>
+            <FormField label={t('dashboardInstructor.createCourse.language')} required>
               <Input value={form.language} onChange={(e) => update('language', e.target.value)} />
             </FormField>
           </div>
@@ -296,10 +299,10 @@ export default function CreateCourse() {
 
         {step === 1 && (
           <div className="grid gap-5">
-            <FormField label="Short Description" required error={errors.short_description}>
+            <FormField label={t('dashboardInstructor.createCourse.shortDescription')} required error={errors.short_description}>
               <Textarea rows={2} value={form.short_description} onChange={(e) => update('short_description', e.target.value)} error={errors.short_description} />
             </FormField>
-            <FormField label="Full Description" required error={errors.description}>
+            <FormField label={t('dashboardInstructor.createCourse.fullDescription')} required error={errors.description}>
               <Textarea rows={8} value={form.description} onChange={(e) => update('description', e.target.value)} error={errors.description} />
             </FormField>
           </div>
@@ -307,7 +310,7 @@ export default function CreateCourse() {
 
         {step === 2 && (
           <div className="grid gap-5">
-            <FormField label="Thumbnail Image URL" error={errors.thumbnail_url} hint="Paste a link to an image instead of uploading a file — this takes priority if both are set.">
+            <FormField label={t('dashboardInstructor.createCourse.thumbnailUrl')} error={errors.thumbnail_url} hint={t('dashboardInstructor.createCourse.thumbnailUrlHint')}>
               <Input
                 type="url"
                 value={form.thumbnail_url}
@@ -319,15 +322,15 @@ export default function CreateCourse() {
             {form.thumbnail_url.trim() && (
               <img
                 src={form.thumbnail_url}
-                alt="Thumbnail preview"
-                className="h-40 w-full rounded-xl object-cover ring-1 ring-navy-900/8"
+                alt={t('dashboardInstructor.createCourse.thumbnailPreviewAlt')}
+                className="h-40 w-full rounded-xl object-cover ring-1 ring-navy-900/8 dark:ring-white/10"
                 onError={(e) => { e.currentTarget.style.display = 'none' }}
                 onLoad={(e) => { e.currentTarget.style.display = 'block' }}
               />
             )}
-            <FormField label="Or Upload a File" hint="PNG or JPG, up to 5MB.">
+            <FormField label={t('dashboardInstructor.createCourse.orUploadFile')} hint={t('dashboardInstructor.createCourse.uploadFileHint')}>
               <FileUpload
-                label="Upload thumbnail"
+                label={t('dashboardInstructor.createCourse.uploadThumbnail')}
                 accept="image/png,image/jpeg,image/webp"
                 maxSizeMb={5}
                 value={form.thumbnail}
@@ -339,45 +342,45 @@ export default function CreateCourse() {
 
         {step === 3 && (
           <div className="grid gap-5 sm:grid-cols-3">
-            <FormField label="Price" required error={errors.price}>
+            <FormField label={t('dashboardInstructor.createCourse.price')} required error={errors.price}>
               <Input type="number" min="0" step="0.01" value={form.price} onChange={(e) => update('price', e.target.value)} error={errors.price} />
             </FormField>
-            <FormField label="Discount Price" error={errors.discount_price} hint="Optional">
+            <FormField label={t('dashboardInstructor.createCourse.discountPrice')} error={errors.discount_price} hint={t('dashboardInstructor.createCourse.optional')}>
               <Input type="number" min="0" step="0.01" value={form.discount_price} onChange={(e) => update('discount_price', e.target.value)} error={errors.discount_price} />
             </FormField>
-            <FormField label="Duration (hours)" required error={errors.duration_hours}>
+            <FormField label={t('dashboardInstructor.createCourse.durationHours')} required error={errors.duration_hours}>
               <Input type="number" min="1" value={form.duration_hours} onChange={(e) => update('duration_hours', e.target.value)} error={errors.duration_hours} />
             </FormField>
           </div>
         )}
 
         {step === 4 && (
-          <FormField label="Learning Objectives" hint="What will students be able to do after this course?">
-            <TagListEditor items={form.learning_objectives} onChange={(v) => update('learning_objectives', v)} placeholder="e.g. Build a REST API" />
+          <FormField label={t('dashboardInstructor.createCourse.learningObjectives')} hint={t('dashboardInstructor.createCourse.learningObjectivesHint')}>
+            <TagListEditor items={form.learning_objectives} onChange={(v) => update('learning_objectives', v)} placeholder={t('dashboardInstructor.createCourse.objectivePlaceholder')} />
           </FormField>
         )}
 
         {step === 5 && (
           <div className="grid gap-5">
-            <FormField label="Requirements" hint="Prerequisites students should have before enrolling.">
-              <TagListEditor items={form.requirements} onChange={(v) => update('requirements', v)} placeholder="e.g. Basic computer knowledge" />
+            <FormField label={t('dashboardInstructor.createCourse.requirements')} hint={t('dashboardInstructor.createCourse.requirementsHint')}>
+              <TagListEditor items={form.requirements} onChange={(v) => update('requirements', v)} placeholder={t('dashboardInstructor.createCourse.requirementPlaceholder')} />
             </FormField>
-            <FormField label="Visibility" required>
+            <FormField label={t('dashboardInstructor.createCourse.visibility')} required>
               <Select value={form.visibility} onChange={(e) => update('visibility', e.target.value)}>
-                <option value="public">Public</option>
-                <option value="private">Private</option>
+                <option value="public">{t('dashboardInstructor.createCourse.public')}</option>
+                <option value="private">{t('dashboardInstructor.createCourse.private')}</option>
               </Select>
             </FormField>
             <div className="grid gap-5 sm:grid-cols-2">
-              <FormField label="Prerequisite Course" error={errors.prerequisite} hint="Students must complete this course first">
+              <FormField label={t('dashboardInstructor.createCourse.prerequisiteCourse')} error={errors.prerequisite} hint={t('dashboardInstructor.createCourse.prerequisiteHint')}>
                 <Select value={form.prerequisite} onChange={(e) => update('prerequisite', e.target.value)} error={errors.prerequisite}>
-                  <option value="">None</option>
+                  <option value="">{t('dashboardInstructor.createCourse.none')}</option>
                   {allCourses.filter((c) => c.slug !== slug).map((c) => (
                     <option key={c.id} value={c.id}>{c.title}</option>
                   ))}
                 </Select>
               </FormField>
-              <FormField label="Certificate Validity (months)" hint="Leave blank for certificates that never expire">
+              <FormField label={t('dashboardInstructor.createCourse.certificateValidity')} hint={t('dashboardInstructor.createCourse.certificateValidityHint')}>
                 <Input
                   type="number" min="1" value={form.certificate_validity_months}
                   onChange={(e) => update('certificate_validity_months', e.target.value)}
@@ -385,7 +388,7 @@ export default function CreateCourse() {
               </FormField>
             </div>
             <Checkbox
-              label="Sequential progression — lock each lesson until the previous one is completed"
+              label={t('dashboardInstructor.createCourse.sequentialProgression')}
               checked={form.sequential_progression}
               onChange={(e) => update('sequential_progression', e.target.checked)}
             />
@@ -399,25 +402,25 @@ export default function CreateCourse() {
               <Badge tone="neutral">{form.level}</Badge>
             </div>
             <div>
-              <p className="font-bold text-navy-900">{form.title || 'Untitled course'}</p>
-              <p className="text-navy-700/60">{form.course_code}</p>
+              <p className="font-bold text-navy-900 dark:text-white">{form.title || t('dashboardInstructor.createCourse.untitledCourse')}</p>
+              <p className="text-navy-700/60 dark:text-navy-100/60">{form.course_code}</p>
             </div>
-            <p className="text-navy-700/70">{form.short_description}</p>
-            <div className="grid grid-cols-2 gap-4 rounded-xl bg-navy-50 p-4 sm:grid-cols-3">
-              <div><p className="text-xs text-navy-700/50">Price</p><p className="font-semibold text-navy-900">{formatCurrency(form.price)}</p></div>
-              <div><p className="text-xs text-navy-700/50">Discount</p><p className="font-semibold text-navy-900">{form.discount_price ? formatCurrency(form.discount_price) : '—'}</p></div>
-              <div><p className="text-xs text-navy-700/50">Duration</p><p className="font-semibold text-navy-900">{form.duration_hours || '—'} hrs</p></div>
+            <p className="text-navy-700/70 dark:text-navy-100/70">{form.short_description}</p>
+            <div className="grid grid-cols-2 gap-4 rounded-xl bg-navy-50 p-4 sm:grid-cols-3 dark:bg-white/5">
+              <div><p className="text-xs text-navy-700/50 dark:text-navy-100/50">{t('dashboardInstructor.createCourse.price')}</p><p className="font-semibold text-navy-900 dark:text-white">{formatCurrency(form.price)}</p></div>
+              <div><p className="text-xs text-navy-700/50 dark:text-navy-100/50">{t('dashboardInstructor.createCourse.discountPrice')}</p><p className="font-semibold text-navy-900 dark:text-white">{form.discount_price ? formatCurrency(form.discount_price) : '—'}</p></div>
+              <div><p className="text-xs text-navy-700/50 dark:text-navy-100/50">{t('dashboardInstructor.createCourse.durationHours')}</p><p className="font-semibold text-navy-900 dark:text-white">{t('dashboardInstructor.createCourse.hoursValue', { count: Number(form.duration_hours) || 0 })}</p></div>
             </div>
             <div>
-              <p className="font-semibold text-navy-900">Learning Objectives</p>
-              <ul className="mt-1 list-inside list-disc text-navy-700/70">
-                {form.learning_objectives.length === 0 ? <li>None added</li> : form.learning_objectives.map((o, i) => <li key={i}>{o}</li>)}
+              <p className="font-semibold text-navy-900 dark:text-white">{t('dashboardInstructor.createCourse.learningObjectives')}</p>
+              <ul className="mt-1 list-inside list-disc text-navy-700/70 dark:text-navy-100/70">
+                {form.learning_objectives.length === 0 ? <li>{t('dashboardInstructor.createCourse.noneAdded')}</li> : form.learning_objectives.map((o, i) => <li key={i}>{o}</li>)}
               </ul>
             </div>
             <div>
-              <p className="font-semibold text-navy-900">Requirements</p>
-              <ul className="mt-1 list-inside list-disc text-navy-700/70">
-                {form.requirements.length === 0 ? <li>None added</li> : form.requirements.map((o, i) => <li key={i}>{o}</li>)}
+              <p className="font-semibold text-navy-900 dark:text-white">{t('dashboardInstructor.createCourse.requirements')}</p>
+              <ul className="mt-1 list-inside list-disc text-navy-700/70 dark:text-navy-100/70">
+                {form.requirements.length === 0 ? <li>{t('dashboardInstructor.createCourse.noneAdded')}</li> : form.requirements.map((o, i) => <li key={i}>{o}</li>)}
               </ul>
             </div>
           </div>
@@ -425,17 +428,17 @@ export default function CreateCourse() {
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Button type="button" variant="ghost" onClick={() => navigate('/dashboard')}>Cancel</Button>
+        <Button type="button" variant="ghost" onClick={() => navigate('/dashboard')}>{t('dashboardInstructor.createCourse.cancel')}</Button>
         <div className="flex gap-3">
-          {step > 0 && <Button type="button" variant="outline" onClick={goBack}>Back</Button>}
-          {step < STEPS.length - 1 && <Button type="button" onClick={goNext}>Next</Button>}
-          {step === STEPS.length - 1 && (
+          {step > 0 && <Button type="button" variant="outline" onClick={goBack}>{t('dashboardInstructor.createCourse.back')}</Button>}
+          {step < STEP_KEYS.length - 1 && <Button type="button" onClick={goNext}>{t('dashboardInstructor.createCourse.next')}</Button>}
+          {step === STEP_KEYS.length - 1 && (
             <>
               <Button type="button" variant="secondary" loading={loading} disabled={loading} onClick={() => handleSubmit(false)}>
-                {loading ? (isEdit ? 'Saving…' : 'Creating Course…') : isEdit ? 'Save Changes' : 'Save as Draft'}
+                {loading ? (isEdit ? t('dashboardInstructor.createCourse.saving') : t('dashboardInstructor.createCourse.creating')) : isEdit ? t('dashboardInstructor.createCourse.saveChanges') : t('dashboardInstructor.createCourse.saveAsDraft')}
               </Button>
               <Button type="button" loading={loading} disabled={loading} onClick={() => handleSubmit(true)}>
-                {loading ? (isEdit ? 'Saving…' : 'Creating Course…') : isEdit ? 'Save & Publish' : 'Create Course'}
+                {loading ? (isEdit ? t('dashboardInstructor.createCourse.saving') : t('dashboardInstructor.createCourse.creating')) : isEdit ? t('dashboardInstructor.createCourse.saveAndPublish') : t('dashboardInstructor.createCourse.createButton')}
               </Button>
             </>
           )}

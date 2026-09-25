@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { useLanguage } from '../../../context/LanguageContext'
 import { createLiveClass, getLiveClass, updateLiveClass } from '../../../services/liveClassService'
 import useCourseOptions from '../../../hooks/useCourseOptions'
 import useUnsavedChanges from '../../../hooks/useUnsavedChanges'
@@ -52,6 +53,7 @@ function toFormShape(session) {
 }
 
 export default function ScheduleLiveClass() {
+  const { t } = useLanguage()
   const navigate = useNavigate()
   const { id } = useParams()
   const isEdit = Boolean(id)
@@ -83,19 +85,19 @@ export default function ScheduleLiveClass() {
 
   function validate() {
     const next = {}
-    if (!form.course) next.course = 'This field is required.'
-    if (!form.title.trim()) next.title = 'This field is required.'
-    if (!form.scheduled_date) next.scheduled_date = 'This field is required.'
-    if (!form.start_time) next.start_time = 'This field is required.'
-    if (!form.end_time) next.end_time = 'This field is required.'
-    if (form.start_time && form.end_time && form.end_time <= form.start_time) next.end_time = 'Must be after the start time.'
+    if (!form.course) next.course = t('dashboardInstructor.scheduleLiveClass.errors.required')
+    if (!form.title.trim()) next.title = t('dashboardInstructor.scheduleLiveClass.errors.required')
+    if (!form.scheduled_date) next.scheduled_date = t('dashboardInstructor.scheduleLiveClass.errors.required')
+    if (!form.start_time) next.start_time = t('dashboardInstructor.scheduleLiveClass.errors.required')
+    if (!form.end_time) next.end_time = t('dashboardInstructor.scheduleLiveClass.errors.required')
+    if (form.start_time && form.end_time && form.end_time <= form.start_time) next.end_time = t('dashboardInstructor.scheduleLiveClass.errors.endAfterStart')
     if (form.meeting_platform !== 'in_app') {
-      if (!form.meeting_url.trim()) next.meeting_url = 'This field is required.'
+      if (!form.meeting_url.trim()) next.meeting_url = t('dashboardInstructor.scheduleLiveClass.errors.required')
       else {
         try {
           new URL(form.meeting_url)
         } catch {
-          next.meeting_url = 'Enter a valid URL.'
+          next.meeting_url = t('dashboardInstructor.scheduleLiveClass.errors.invalidUrl')
         }
       }
     }
@@ -125,13 +127,13 @@ export default function ScheduleLiveClass() {
     }
   }
 
-  if (initialLoading) return <LoadingSpinner label="Loading live class…" />
+  if (initialLoading) return <LoadingSpinner label={t('dashboardInstructor.scheduleLiveClass.loadingLiveClass')} />
 
   if (success) {
     return (
       <div className="mx-auto max-w-xl py-16">
-        <Alert tone="success" title={`Live class ${isEdit ? 'updated' : 'scheduled'} successfully.`}>
-          {isEdit ? 'Redirecting…' : 'Enrolled students have been notified. Redirecting…'}
+        <Alert tone="success" title={isEdit ? t('dashboardInstructor.scheduleLiveClass.updatedSuccess') : t('dashboardInstructor.scheduleLiveClass.scheduledSuccess')}>
+          {isEdit ? t('dashboardInstructor.scheduleLiveClass.redirecting') : t('dashboardInstructor.scheduleLiveClass.studentsNotifiedRedirecting')}
         </Alert>
       </div>
     )
@@ -140,80 +142,79 @@ export default function ScheduleLiveClass() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <PageHeader
-        breadcrumb={<Breadcrumb items={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Live Classes', to: '/dashboard/live-classes' }, { label: isEdit ? 'Edit Live Class' : 'Schedule Live Class' }]} />}
-        title={isEdit ? 'Edit Live Class' : 'Schedule a Live Class'}
-        description="Set up a live session for your students — conduct it right here in Asa Academy, or link out to Zoom, Google Meet, or Teams."
+        breadcrumb={<Breadcrumb items={[{ label: t('dashboardInstructor.scheduleLiveClass.breadcrumbDashboard'), to: '/dashboard' }, { label: t('dashboardInstructor.scheduleLiveClass.breadcrumbLiveClasses'), to: '/dashboard/live-classes' }, { label: isEdit ? t('dashboardInstructor.scheduleLiveClass.editTitle') : t('dashboardInstructor.scheduleLiveClass.scheduleBreadcrumb') }]} />}
+        title={isEdit ? t('dashboardInstructor.scheduleLiveClass.editTitle') : t('dashboardInstructor.scheduleLiveClass.scheduleHeading')}
+        description={t('dashboardInstructor.scheduleLiveClass.pageDescription')}
       />
 
       {submitError && <Alert tone="error">{submitError}</Alert>}
 
-      <Card title="Session Information">
+      <Card title={t('dashboardInstructor.scheduleLiveClass.sessionInformation')}>
         <div className="grid gap-5 sm:grid-cols-2">
-          <FormField label="Course" required error={errors.course}>
+          <FormField label={t('dashboardInstructor.scheduleLiveClass.course')} required error={errors.course}>
             <Select value={form.course} onChange={(e) => update('course', e.target.value)} error={errors.course}>
-              <option value="">Select a course</option>
+              <option value="">{t('dashboardInstructor.scheduleLiveClass.selectCourse')}</option>
               {courses.map((c) => (
                 <option key={c.id} value={c.id}>{c.title}</option>
               ))}
             </Select>
           </FormField>
-          <FormField label="Instructor">
+          <FormField label={t('dashboardInstructor.scheduleLiveClass.instructor')}>
             <Input value={user?.first_name ? `${user.first_name} ${user.last_name ?? ''}` : user?.username ?? ''} disabled />
           </FormField>
-          <FormField label="Session Title" required error={errors.title} className="sm:col-span-2">
+          <FormField label={t('dashboardInstructor.scheduleLiveClass.sessionTitle')} required error={errors.title} className="sm:col-span-2">
             <Input value={form.title} onChange={(e) => update('title', e.target.value)} error={errors.title} />
           </FormField>
-          <FormField label="Description" className="sm:col-span-2">
+          <FormField label={t('dashboardInstructor.scheduleLiveClass.description')} className="sm:col-span-2">
             <Textarea rows={3} value={form.description} onChange={(e) => update('description', e.target.value)} />
           </FormField>
         </div>
       </Card>
 
-      <Card title="Schedule">
+      <Card title={t('dashboardInstructor.scheduleLiveClass.schedule')}>
         <div className="grid gap-5 sm:grid-cols-2">
-          <FormField label="Date" required error={errors.scheduled_date}>
+          <FormField label={t('dashboardInstructor.scheduleLiveClass.date')} required error={errors.scheduled_date}>
             <Input type="date" value={form.scheduled_date} onChange={(e) => update('scheduled_date', e.target.value)} error={errors.scheduled_date} />
           </FormField>
-          <FormField label="Timezone" required>
+          <FormField label={t('dashboardInstructor.scheduleLiveClass.timezone')} required>
             <Select value={form.timezone} onChange={(e) => update('timezone', e.target.value)}>
               {TIMEZONES.map((tz) => <option key={tz} value={tz}>{tz}</option>)}
             </Select>
           </FormField>
-          <FormField label="Start Time" required error={errors.start_time}>
+          <FormField label={t('dashboardInstructor.scheduleLiveClass.startTime')} required error={errors.start_time}>
             <Input type="time" value={form.start_time} onChange={(e) => update('start_time', e.target.value)} error={errors.start_time} />
           </FormField>
-          <FormField label="End Time" required error={errors.end_time}>
+          <FormField label={t('dashboardInstructor.scheduleLiveClass.endTime')} required error={errors.end_time}>
             <Input type="time" value={form.end_time} onChange={(e) => update('end_time', e.target.value)} error={errors.end_time} />
           </FormField>
         </div>
       </Card>
 
-      <Card title="Meeting Information">
+      <Card title={t('dashboardInstructor.scheduleLiveClass.meetingInformation')}>
         <div className="grid gap-5 sm:grid-cols-2">
-          <FormField label="Platform" required className="sm:col-span-2">
+          <FormField label={t('dashboardInstructor.scheduleLiveClass.platform')} required className="sm:col-span-2">
             <Select value={form.meeting_platform} onChange={(e) => update('meeting_platform', e.target.value)}>
-              <option value="in_app">In-App (Asa Academy) — conduct the class right here</option>
-              <option value="zoom">Zoom</option>
-              <option value="google_meet">Google Meet</option>
-              <option value="teams">Microsoft Teams</option>
-              <option value="other">Other</option>
+              <option value="in_app">{t('dashboardInstructor.scheduleLiveClass.platformInApp')}</option>
+              <option value="zoom">{t('dashboardInstructor.scheduleLiveClass.platformZoom')}</option>
+              <option value="google_meet">{t('dashboardInstructor.scheduleLiveClass.platformGoogleMeet')}</option>
+              <option value="teams">{t('dashboardInstructor.scheduleLiveClass.platformTeams')}</option>
+              <option value="other">{t('dashboardInstructor.scheduleLiveClass.platformOther')}</option>
             </Select>
           </FormField>
 
           {form.meeting_platform === 'in_app' ? (
-            <p className="sm:col-span-2 rounded-xl bg-brand-50 px-4 py-3 text-sm text-navy-700/75">
-              A private video room is created automatically for this session — no link to paste. Students
-              join from the live class list once it&rsquo;s time, right inside Asa Academy.
+            <p className="sm:col-span-2 rounded-xl bg-brand-50 px-4 py-3 text-sm text-navy-700/75 dark:bg-brand-500/10 dark:text-navy-100/75">
+              {t('dashboardInstructor.scheduleLiveClass.inAppNotice')}
             </p>
           ) : (
             <>
-              <FormField label="Meeting URL" required error={errors.meeting_url}>
+              <FormField label={t('dashboardInstructor.scheduleLiveClass.meetingUrl')} required error={errors.meeting_url}>
                 <Input value={form.meeting_url} onChange={(e) => update('meeting_url', e.target.value)} placeholder="https://" error={errors.meeting_url} />
               </FormField>
-              <FormField label="Meeting ID" hint="Optional">
+              <FormField label={t('dashboardInstructor.scheduleLiveClass.meetingId')} hint={t('dashboardInstructor.scheduleLiveClass.optional')}>
                 <Input value={form.meeting_id} onChange={(e) => update('meeting_id', e.target.value)} />
               </FormField>
-              <FormField label="Meeting Password" hint="Optional">
+              <FormField label={t('dashboardInstructor.scheduleLiveClass.meetingPassword')} hint={t('dashboardInstructor.scheduleLiveClass.optional')}>
                 <Input value={form.meeting_password} onChange={(e) => update('meeting_password', e.target.value)} />
               </FormField>
             </>
@@ -221,21 +222,21 @@ export default function ScheduleLiveClass() {
         </div>
       </Card>
 
-      <Card title="Additional Information">
+      <Card title={t('dashboardInstructor.scheduleLiveClass.additionalInformation')}>
         <div className="grid gap-5 sm:grid-cols-2">
-          <FormField label="Maximum Participants" hint="Optional">
+          <FormField label={t('dashboardInstructor.scheduleLiveClass.maxParticipants')} hint={t('dashboardInstructor.scheduleLiveClass.optional')}>
             <Input type="number" min="1" value={form.capacity} onChange={(e) => update('capacity', e.target.value)} />
           </FormField>
-          <FormField label="Recording URL" hint="Optional, add after the session.">
+          <FormField label={t('dashboardInstructor.scheduleLiveClass.recordingUrl')} hint={t('dashboardInstructor.scheduleLiveClass.recordingUrlHint')}>
             <Input value={form.recording_url} onChange={(e) => update('recording_url', e.target.value)} />
           </FormField>
         </div>
       </Card>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Button type="button" variant="ghost" onClick={() => navigate('/dashboard')}>Cancel</Button>
+        <Button type="button" variant="ghost" onClick={() => navigate('/dashboard')}>{t('dashboardInstructor.scheduleLiveClass.cancel')}</Button>
         <Button type="button" loading={loading} disabled={loading} onClick={handleSubmit}>
-          {loading ? (isEdit ? 'Saving…' : 'Scheduling Class…') : isEdit ? 'Save Changes' : 'Schedule Class'}
+          {loading ? (isEdit ? t('dashboardInstructor.scheduleLiveClass.saving') : t('dashboardInstructor.scheduleLiveClass.scheduling')) : isEdit ? t('dashboardInstructor.scheduleLiveClass.saveChanges') : t('dashboardInstructor.scheduleLiveClass.scheduleClass')}
         </Button>
       </div>
     </div>

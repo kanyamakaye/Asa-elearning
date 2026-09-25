@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { useLanguage } from '../../context/LanguageContext'
 import { checkInLiveClass, getLiveClass } from '../../services/liveClassService'
 import LoadingSpinner from '../../components/ui/LoadingSpinner'
 import Alert from '../../components/ui/Alert'
@@ -36,6 +37,7 @@ function loadJitsiScript() {
 export default function LiveClassRoom() {
   const { id } = useParams()
   const { user } = useAuth()
+  const { t } = useLanguage()
   const navigate = useNavigate()
   const containerRef = useRef(null)
   const apiRef = useRef(null)
@@ -50,18 +52,18 @@ export default function LiveClassRoom() {
       .then((data) => {
         if (cancelled) return
         if (data.meeting_platform !== 'in_app' || !data.jitsi_room) {
-          setError('This live class does not have an in-app room.')
+          setError(t('dashboardStudent.liveClassRoom.noInAppRoom'))
           return
         }
         setSession(data)
         checkInLiveClass(id).catch(() => {})
       })
-      .catch((err) => !cancelled && setError(err.message || 'Unable to load this live class.'))
+      .catch((err) => !cancelled && setError(err.message || t('dashboardStudent.liveClassRoom.unableToLoad')))
       .finally(() => !cancelled && setLoading(false))
     return () => {
       cancelled = true
     }
-  }, [id])
+  }, [id, t])
 
   useEffect(() => {
     if (!session || !containerRef.current) return undefined
@@ -75,30 +77,30 @@ export default function LiveClassRoom() {
           parentNode: containerRef.current,
           width: '100%',
           height: '100%',
-          userInfo: { displayName: user?.full_name || user?.username || 'Asa Academy user' },
+          userInfo: { displayName: user?.full_name || user?.username || t('dashboardStudent.liveClassRoom.defaultDisplayName') },
           configOverwrite: { prejoinPageEnabled: true },
           interfaceConfigOverwrite: { MOBILE_APP_PROMO: false },
         })
         apiRef.current = api
         api.on('readyToClose', () => navigate('/dashboard/live-classes', { replace: true }))
       })
-      .catch(() => setError('Unable to load the video room. Please check your connection and try again.'))
+      .catch(() => setError(t('dashboardStudent.liveClassRoom.unableToLoadVideoRoom')))
 
     return () => {
       disposed = true
       apiRef.current?.dispose()
       apiRef.current = null
     }
-  }, [session, user, navigate])
+  }, [session, user, navigate, t])
 
-  if (loading) return <LoadingSpinner label="Loading live class…" className="min-h-screen" />
+  if (loading) return <LoadingSpinner label={t('dashboardStudent.liveClassRoom.loading')} className="min-h-screen" />
 
   if (error) {
     return (
       <div className="mx-auto flex min-h-screen max-w-lg flex-col items-center justify-center gap-4 px-6 text-center">
         <Alert tone="error">{error}</Alert>
-        <Link to="/dashboard/live-classes" className="text-sm font-semibold text-brand-500 hover:text-navy-900">
-          Back to Live Classes
+        <Link to="/dashboard/live-classes" className="text-sm font-semibold text-brand-500 hover:text-navy-900 dark:hover:text-white">
+          {t('dashboardStudent.liveClassRoom.backToLiveClasses')}
         </Link>
       </div>
     )
@@ -112,7 +114,7 @@ export default function LiveClassRoom() {
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-navy-100/70 hover:text-white"
         >
           <IconChevronLeft className="h-3.5 w-3.5" />
-          Leave
+          {t('dashboardStudent.liveClassRoom.leave')}
         </Link>
         <span className="truncate text-sm font-semibold text-white">{session?.title}</span>
       </div>

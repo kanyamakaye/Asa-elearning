@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useLanguage } from '../context/LanguageContext'
 import { getCategories } from '../lib/queries'
 import { CATEGORY_ICONS } from './CategoryExplorer'
 import { IconTarget } from './icons'
@@ -9,6 +10,7 @@ import { IconTarget } from './icons'
 // thing homedoc.md's trust section warns against). This earns credibility
 // honestly instead, using the platform's own live category catalog.
 export default function TrustStrip() {
+  const { t } = useLanguage()
   const [categories, setCategories] = useState([])
 
   useEffect(() => {
@@ -20,10 +22,10 @@ export default function TrustStrip() {
   if (categories.length === 0) return null
 
   return (
-    <section className="border-b border-navy-900/8 bg-white py-10">
+    <section className="border-b border-navy-900/8 bg-white py-10 dark:border-white/10 dark:bg-navy-950">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
-        <p className="text-center text-xs font-semibold uppercase tracking-wide text-navy-700/45">
-          Skills that hiring teams are actively looking for
+        <p className="text-center text-xs font-semibold uppercase tracking-wide text-navy-700/45 dark:text-navy-100/45">
+          {t('public.trustStrip.heading')}
         </p>
         <div className="mt-6 flex flex-wrap items-center justify-center gap-x-10 gap-y-4">
           {categories.map((cat) => {
@@ -31,9 +33,9 @@ export default function TrustStrip() {
             return (
               <span
                 key={cat.id}
-                className="inline-flex items-center gap-2 text-sm font-semibold text-navy-700/60"
+                className="inline-flex items-center gap-2 text-sm font-semibold text-navy-700/60 dark:text-navy-100/60"
               >
-                <Icon className="h-4 w-4 text-navy-700/35" />
+                <Icon className="h-4 w-4 text-navy-700/35 dark:text-navy-100/35" />
                 {cat.name}
               </span>
             )

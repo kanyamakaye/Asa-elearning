@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { useLanguage } from '../../../context/LanguageContext'
 import {
   addQuestion, createQuiz, deleteQuestion, getQuestions, getQuiz, publishQuiz, updateQuestion, updateQuiz,
 } from '../../../services/quizService'
@@ -18,7 +19,7 @@ import PageHeader from '../../../components/ui/PageHeader'
 import Select from '../../../components/ui/Select'
 import Textarea from '../../../components/ui/Textarea'
 
-const STEPS = ['Quiz Information', 'Configuration', 'Questions', 'Availability']
+const STEP_KEYS = ['quizInformation', 'configuration', 'questions', 'availability']
 
 const INITIAL_FORM = {
   course: '',
@@ -55,6 +56,7 @@ function toFormShape(quiz) {
 }
 
 export default function CreateQuiz() {
+  const { t } = useLanguage()
   const navigate = useNavigate()
   const { id } = useParams()
   const isEdit = Boolean(id)
@@ -117,11 +119,11 @@ export default function CreateQuiz() {
   function validateStep(index) {
     const next = {}
     if (index === 0) {
-      if (form.title.trim().length < 3) next.title = 'Must be at least 3 characters long.'
-      if (!form.course) next.course = 'This field is required.'
+      if (form.title.trim().length < 3) next.title = t('dashboardInstructor.createQuiz.errors.titleMinLength')
+      if (!form.course) next.course = t('dashboardInstructor.createQuiz.errors.required')
     }
     if (index === 1) {
-      if (Number(form.passing_marks) > Number(form.total_marks)) next.passing_marks = 'Cannot exceed the total marks.'
+      if (Number(form.passing_marks) > Number(form.total_marks)) next.passing_marks = t('dashboardInstructor.createQuiz.errors.passingExceedsTotal')
     }
     setErrors(next)
     return Object.keys(next).length === 0
@@ -141,7 +143,7 @@ export default function CreateQuiz() {
       return
     }
     if (publish && questions.length === 0) {
-      setSubmitError('Add at least one question before publishing this quiz.')
+      setSubmitError(t('dashboardInstructor.createQuiz.needsQuestionToPublish'))
       setStep(2)
       return
     }
@@ -174,12 +176,12 @@ export default function CreateQuiz() {
     }
   }
 
-  if (initialLoading) return <LoadingSpinner label="Loading quiz…" />
+  if (initialLoading) return <LoadingSpinner label={t('dashboardInstructor.createQuiz.loadingQuiz')} />
 
   if (success) {
     return (
       <div className="mx-auto max-w-xl py-16">
-        <Alert tone="success" title={`Quiz ${isEdit ? 'updated' : 'created'} successfully.`}>Redirecting…</Alert>
+        <Alert tone="success" title={isEdit ? t('dashboardInstructor.createQuiz.updatedSuccess') : t('dashboardInstructor.createQuiz.createdSuccess')}>{t('dashboardInstructor.createQuiz.redirecting')}</Alert>
       </div>
     )
   }
@@ -187,54 +189,54 @@ export default function CreateQuiz() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <PageHeader
-        breadcrumb={<Breadcrumb items={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Quizzes', to: '/dashboard/quizzes' }, { label: isEdit ? 'Edit Quiz' : 'Create Quiz' }]} />}
-        title={isEdit ? 'Edit Quiz' : 'Create a Quiz'}
-        description="Build your quiz, then add questions before publishing."
+        breadcrumb={<Breadcrumb items={[{ label: t('dashboardInstructor.createQuiz.breadcrumbDashboard'), to: '/dashboard' }, { label: t('dashboardInstructor.createQuiz.breadcrumbQuizzes'), to: '/dashboard/quizzes' }, { label: isEdit ? t('dashboardInstructor.createQuiz.editTitle') : t('dashboardInstructor.createQuiz.createBreadcrumb') }]} />}
+        title={isEdit ? t('dashboardInstructor.createQuiz.editTitle') : t('dashboardInstructor.createQuiz.createHeading')}
+        description={t('dashboardInstructor.createQuiz.pageDescription')}
       />
 
       <div className="flex flex-wrap gap-2">
-        {STEPS.map((label, i) => (
+        {STEP_KEYS.map((key, i) => (
           <button
-            key={label}
+            key={key}
             type="button"
             onClick={() => setStep(i)}
             className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
-              i === step ? 'bg-navy-900 text-white' : i < step ? 'bg-emerald-50 text-emerald-700' : 'bg-navy-50 text-navy-700/60'
+              i === step ? 'bg-navy-900 text-white dark:bg-brand-500' : i < step ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-navy-50 text-navy-700/60 dark:bg-white/5 dark:text-navy-100/60'
             }`}
           >
-            {i + 1}. {label}
+            {i + 1}. {t(`dashboardInstructor.createQuiz.steps.${key}`)}
           </button>
         ))}
       </div>
 
       {submitError && <Alert tone="error">{submitError}</Alert>}
 
-      <div className="rounded-2xl bg-white p-6 ring-1 ring-navy-900/8">
+      <div className="rounded-2xl bg-white p-6 ring-1 ring-navy-900/8 dark:bg-navy-800 dark:ring-white/10">
         {step === 0 && (
           <div className="grid gap-5 sm:grid-cols-2">
-            <FormField label="Quiz Title" required error={errors.title} className="sm:col-span-2">
+            <FormField label={t('dashboardInstructor.createQuiz.quizTitle')} required error={errors.title} className="sm:col-span-2">
               <Input value={form.title} onChange={(e) => update('title', e.target.value)} error={errors.title} />
             </FormField>
-            <FormField label="Course" required error={errors.course}>
+            <FormField label={t('dashboardInstructor.createQuiz.course')} required error={errors.course}>
               <Select value={form.course} onChange={(e) => updateCourse(e.target.value)} error={errors.course}>
-                <option value="">Select a course</option>
+                <option value="">{t('dashboardInstructor.createQuiz.selectCourse')}</option>
                 {courses.map((c) => (
                   <option key={c.id} value={c.id}>{c.title}</option>
                 ))}
               </Select>
             </FormField>
-            <FormField label="Module" hint="Optional — attach this quiz to a specific module">
+            <FormField label={t('dashboardInstructor.createQuiz.module')} hint={t('dashboardInstructor.createQuiz.moduleHint')}>
               <Select value={form.module} onChange={(e) => update('module', e.target.value)} disabled={!form.course}>
-                <option value="">Whole course</option>
+                <option value="">{t('dashboardInstructor.createQuiz.wholeCourse')}</option>
                 {modules.map((m) => (
                   <option key={m.id} value={m.id}>{m.title}</option>
                 ))}
               </Select>
             </FormField>
-            <FormField label="Description" className="sm:col-span-2">
+            <FormField label={t('dashboardInstructor.createQuiz.description')} className="sm:col-span-2">
               <Textarea rows={2} value={form.description} onChange={(e) => update('description', e.target.value)} />
             </FormField>
-            <FormField label="Instructions" className="sm:col-span-2">
+            <FormField label={t('dashboardInstructor.createQuiz.instructions')} className="sm:col-span-2">
               <Textarea rows={3} value={form.instructions} onChange={(e) => update('instructions', e.target.value)} />
             </FormField>
           </div>
@@ -242,21 +244,21 @@ export default function CreateQuiz() {
 
         {step === 1 && (
           <div className="grid gap-5 sm:grid-cols-2">
-            <FormField label="Time Limit (minutes)">
+            <FormField label={t('dashboardInstructor.createQuiz.timeLimit')}>
               <Input type="number" min="0" value={form.duration_minutes} onChange={(e) => update('duration_minutes', e.target.value)} />
             </FormField>
-            <FormField label="Maximum Attempts">
+            <FormField label={t('dashboardInstructor.createQuiz.maxAttempts')}>
               <Input type="number" min="1" value={form.attempt_limit} onChange={(e) => update('attempt_limit', e.target.value)} />
             </FormField>
-            <FormField label="Total Marks">
+            <FormField label={t('dashboardInstructor.createQuiz.totalMarks')}>
               <Input type="number" min="1" value={form.total_marks} onChange={(e) => update('total_marks', e.target.value)} />
             </FormField>
-            <FormField label="Passing Marks" error={errors.passing_marks}>
+            <FormField label={t('dashboardInstructor.createQuiz.passingMarks')} error={errors.passing_marks}>
               <Input type="number" min="0" value={form.passing_marks} onChange={(e) => update('passing_marks', e.target.value)} error={errors.passing_marks} />
             </FormField>
             <div className="flex flex-col gap-3 sm:col-span-2">
-              <Checkbox label="Randomize question order" checked={form.shuffle_questions} onChange={(e) => update('shuffle_questions', e.target.checked)} />
-              <Checkbox label="Show results to students after submission" checked={form.show_answers} onChange={(e) => update('show_answers', e.target.checked)} />
+              <Checkbox label={t('dashboardInstructor.createQuiz.randomizeOrder')} checked={form.shuffle_questions} onChange={(e) => update('shuffle_questions', e.target.checked)} />
+              <Checkbox label={t('dashboardInstructor.createQuiz.showResults')} checked={form.show_answers} onChange={(e) => update('show_answers', e.target.checked)} />
             </div>
           </div>
         )}
@@ -265,10 +267,10 @@ export default function CreateQuiz() {
 
         {step === 3 && (
           <div className="grid gap-5 sm:grid-cols-2">
-            <FormField label="Available From" hint="Optional">
+            <FormField label={t('dashboardInstructor.createQuiz.availableFrom')} hint={t('dashboardInstructor.createQuiz.optional')}>
               <Input type="datetime-local" value={form.available_from} onChange={(e) => update('available_from', e.target.value)} />
             </FormField>
-            <FormField label="Available Until" hint="Optional">
+            <FormField label={t('dashboardInstructor.createQuiz.availableUntil')} hint={t('dashboardInstructor.createQuiz.optional')}>
               <Input type="datetime-local" value={form.available_until} onChange={(e) => update('available_until', e.target.value)} />
             </FormField>
           </div>
@@ -276,17 +278,17 @@ export default function CreateQuiz() {
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Button type="button" variant="ghost" onClick={() => navigate('/dashboard/quizzes')}>Cancel</Button>
+        <Button type="button" variant="ghost" onClick={() => navigate('/dashboard/quizzes')}>{t('dashboardInstructor.createQuiz.cancel')}</Button>
         <div className="flex gap-3">
-          {step > 0 && <Button type="button" variant="outline" onClick={goBack}>Back</Button>}
-          {step < STEPS.length - 1 && <Button type="button" onClick={goNext}>Next</Button>}
-          {step === STEPS.length - 1 && (
+          {step > 0 && <Button type="button" variant="outline" onClick={goBack}>{t('dashboardInstructor.createQuiz.back')}</Button>}
+          {step < STEP_KEYS.length - 1 && <Button type="button" onClick={goNext}>{t('dashboardInstructor.createQuiz.next')}</Button>}
+          {step === STEP_KEYS.length - 1 && (
             <>
               <Button type="button" variant="secondary" loading={loading} disabled={loading} onClick={() => handleSubmit(false)}>
-                {loading ? (isEdit ? 'Saving…' : 'Creating Quiz…') : 'Save Draft'}
+                {loading ? (isEdit ? t('dashboardInstructor.createQuiz.saving') : t('dashboardInstructor.createQuiz.creating')) : t('dashboardInstructor.createQuiz.saveDraft')}
               </Button>
               <Button type="button" loading={loading} disabled={loading} onClick={() => handleSubmit(true)}>
-                {loading ? (isEdit ? 'Saving…' : 'Creating Quiz…') : 'Publish Quiz'}
+                {loading ? (isEdit ? t('dashboardInstructor.createQuiz.saving') : t('dashboardInstructor.createQuiz.creating')) : t('dashboardInstructor.createQuiz.publishQuiz')}
               </Button>
             </>
           )}

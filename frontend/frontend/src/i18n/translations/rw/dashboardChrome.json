@@ -1,0 +1,119 @@
+{
+  "nav": {
+    "dashboard": "Imbonerahamwe",
+    "profile": "Umwirondoro",
+    "settings": "Igenamiterere",
+    "users": "Abakoresha",
+    "allUsers": "Abakoresha bose",
+    "students": "Abanyeshuri",
+    "instructors": "Abarimu",
+    "staff": "Abakozi",
+    "courses": "Amasomo",
+    "allCourses": "Amasomo yose",
+    "createCourse": "Kora isomo",
+    "categories": "Ibyiciro",
+    "modulesLessons": "Uduce n'amasomo",
+    "enrollments": "Kwiyandikisha",
+    "groups": "Amatsinda",
+    "assessments": "Amasuzuma",
+    "quizzes": "Ibibazo bigufi",
+    "createQuiz": "Kora ikibazo kigufi",
+    "questionBanks": "Ububiko bw'ibibazo",
+    "assignments": "Imirimo",
+    "createAssignment": "Kora umurimo",
+    "exams": "Ibizamini",
+    "rubrics": "Ibipimo by'isuzuma",
+    "gradingQueue": "Urutonde rw'amanota",
+    "certificates": "Impamyabumenyi",
+    "payments": "Kwishyura",
+    "transactions": "Ibikorwa by'imari",
+    "refunds": "Kwishyurwa",
+    "communication": "Itumanaho",
+    "announcements": "Amatangazo",
+    "notifications": "Imenyesha",
+    "messages": "Ubutumwa",
+    "discussions": "Ibiganiro",
+    "liveClasses": "Amasomo mu gihe nyacyo",
+    "allLiveClasses": "Amasomo yose mu gihe nyacyo",
+    "scheduleLiveClass": "Tegura isomo mu gihe nyacyo",
+    "support": "Ubufasha",
+    "tickets": "Amatike y'ubufasha",
+    "faqs": "Ibibazo bikunze kubazwa",
+    "auditLogs": "Raporo z'igenzura",
+    "systemSettings": "Igenamiterere rya sisitemu",
+    "academics": "Uburezi",
+    "myCourses": "Amasomo yanjye",
+    "contentModulesLessons": "Ibikubiyemo, uduce n'amasomo",
+    "examsGrades": "Ibizamini n'amanota",
+    "enrolledStudents": "Abanyeshuri biyandikishije",
+    "content": "Ibikubiyemo",
+    "learning": "Kwiga",
+    "browseCourses": "Reba amasomo",
+    "grades": "Amanota",
+    "transcript": "Urutonde rw'amanota"
+  },
+  "roles": {
+    "roleAdmin": "Umuyobozi mukuru",
+    "roleAcademicManager": "Umuyobozi w'uburezi",
+    "roleInstructor": "Umwarimu",
+    "roleStudent": "Umunyeshuri",
+    "roleContentManager": "Umuyobozi w'ibikubiyemo",
+    "roleSupportStaff": "Umukozi w'ubufasha"
+  },
+  "sidebar": {
+    "expand": "Gufungura umwanya w'ibumoso",
+    "collapse": "Gufunga umwanya w'ibumoso"
+  },
+  "topbar": {
+    "openMenu": "Fungura menu",
+    "portal": "Urubuga"
+  },
+  "searchBar": {
+    "placeholder": "Shakisha amasomo…"
+  },
+  "notifications": {
+    "title": "Imenyesha",
+    "markAllRead": "Emeza byose ko byasomwe",
+    "loading": "Kuraguza…",
+    "caughtUp": "Nta kindi gisigaye.",
+    "markAsRead": "Emeza ko ryasomwe"
+  },
+  "userMenu": {
+    "myProfile": "Umwirondoro Wanjye"
+  },
+  "refresh": "Kuraguza",
+  "recentActivity": {
+    "title": "Ibyakozwe Vuba",
+    "empty": "Nta kintu kigaragara kugeza ubu."
+  },
+  "timeAgo": {
+    "justNow": "vuba aha",
+    "minutes": "iminota {{count}} ishize",
+    "hours": "amasaha {{count}} ashize",
+    "days": "iminsi {{count}} ishize"
+  },
+  "quickActions": {
+    "defaultTitle": "Ibikorwa Byihuse"
+  },
+  "reminders": {
+    "title": "Ibyibutswa",
+    "liveClassDetail": "{{course}} · {{date}}{{time}}",
+    "atTime": " saa {{time}}",
+    "inactiveCourseDetail": "{{percent}}% byarangiye · byakoreshejwe bwa nyuma {{date}}",
+    "sections": {
+      "upcoming_live_classes": "Amasomo Aziyeguru Ari Imbere",
+      "inactive_courses": "Komeza Aho Wasize",
+      "unresolved_payments": "Bikeneye Kwishyurwa"
+    },
+    "ctas": {
+      "upcoming_live_classes": "Reba amasomo aziyeguru",
+      "inactive_courses": "Komeza kwiga",
+      "unresolved_payments": "Reba kwishyura"
+    }
+  },
+  "upcomingLiveClasses": {
+    "title": "Amasomo Aziyeguru Ari Imbere",
+    "viewAll": "Reba Byose",
+    "empty": "Nta somo ryiyeguru riteganyijwe."
+  }
+}

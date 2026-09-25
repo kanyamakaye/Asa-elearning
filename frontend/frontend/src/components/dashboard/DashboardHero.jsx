@@ -1,8 +1,10 @@
+import { useLanguage } from '../../context/LanguageContext'
 import { IconRefresh } from '../icons'
 
 /** Prominent banner header for dashboard landing pages — icon + title/subtitle
  * on a dark gradient, with an optional refresh action on the right. */
 export default function DashboardHero({ icon: Icon, title, subtitle, onRefresh, refreshing }) {
+  const { t } = useLanguage()
   return (
     <div className="animate-fade-up relative overflow-hidden rounded-2xl bg-gradient-to-br from-navy-900 via-navy-800 to-violet-600 bg-[length:200%_200%] px-5 py-5 text-white shadow-lg shadow-navy-900/15 sm:px-6">
       <div
@@ -32,7 +34,7 @@ export default function DashboardHero({ icon: Icon, title, subtitle, onRefresh, 
             className="inline-flex shrink-0 items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-xs font-semibold text-white ring-1 ring-white/15 transition-all hover:-translate-y-0.5 hover:bg-white/20 disabled:opacity-50 disabled:hover:translate-y-0"
           >
             <IconRefresh className={`h-3.5 w-3.5 ${refreshing ? 'animate-spin' : ''}`} />
-            Refresh
+            {t('dashboardChrome.refresh')}
           </button>
         )}
       </div>

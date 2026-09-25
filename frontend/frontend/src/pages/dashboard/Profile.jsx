@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
+import { useLanguage } from '../../context/LanguageContext'
 import { apiFetch } from '../../lib/api'
 import { getMyBadges } from '../../services/badgeService'
 import { ROLE_LABELS } from '../../components/dashboard/navConfig'
@@ -18,19 +19,23 @@ const ROLE_PROFILE_ENDPOINT = {
   instructor: '/users/me/instructor-profile/',
 }
 
-const STUDENT_FIELDS = [
-  { key: 'institution_name', label: 'Institution' },
-  { key: 'department', label: 'Department' },
-  { key: 'program', label: 'Program' },
-  { key: 'academic_level', label: 'Academic Level' },
-]
+function getStudentFields(t) {
+  return [
+    { key: 'institution_name', label: t('dashboardStudent.profile.institution') },
+    { key: 'department', label: t('dashboardStudent.profile.department') },
+    { key: 'program', label: t('dashboardStudent.profile.program') },
+    { key: 'academic_level', label: t('dashboardStudent.profile.academicLevel') },
+  ]
+}
 
-const INSTRUCTOR_FIELDS = [
-  { key: 'qualification', label: 'Qualification' },
-  { key: 'specialization', label: 'Specialization' },
-  { key: 'department', label: 'Department' },
-  { key: 'years_of_experience', label: 'Years of Experience', type: 'number' },
-]
+function getInstructorFields(t) {
+  return [
+    { key: 'qualification', label: t('dashboardStudent.profile.qualification') },
+    { key: 'specialization', label: t('dashboardStudent.profile.specialization') },
+    { key: 'department', label: t('dashboardStudent.profile.department') },
+    { key: 'years_of_experience', label: t('dashboardStudent.profile.yearsOfExperience'), type: 'number' },
+  ]
+}
 
 function Field({ label, value, onChange, type = 'text' }) {
   return (
@@ -42,6 +47,9 @@ function Field({ label, value, onChange, type = 'text' }) {
 
 export default function Profile() {
   const { accessToken, user, setUser } = useAuth()
+  const { t } = useLanguage()
+  const STUDENT_FIELDS = getStudentFields(t)
+  const INSTRUCTOR_FIELDS = getInstructorFields(t)
   const [account, setAccount] = useState(null)
   const [roleProfile, setRoleProfile] = useState(null)
   const [savingAccount, setSavingAccount] = useState(false)
@@ -91,7 +99,7 @@ export default function Profile() {
     try {
       const updated = await apiFetch('/users/me/', { method: 'PATCH', body: account, token: accessToken })
       setUser?.(updated)
-      setAccountMessage('Profile updated successfully.')
+      setAccountMessage(t('dashboardStudent.profile.accountUpdated'))
     } catch (err) {
       setError(err.message)
     } finally {
@@ -109,7 +117,7 @@ export default function Profile() {
       const body = Object.fromEntries(fieldKeys.map((k) => [k, roleProfile[k] ?? '']))
       const updated = await apiFetch(roleEndpoint, { method: 'PATCH', body, token: accessToken })
       setRoleProfile(updated)
-      setRoleMessage(`${user.user_type === 'student' ? 'Student' : 'Instructor'} profile updated successfully.`)
+      setRoleMessage(user.user_type === 'student' ? t('dashboardStudent.profile.studentProfileUpdated') : t('dashboardStudent.profile.instructorProfileUpdated'))
     } catch (err) {
       setError(err.message)
     } finally {
@@ -117,54 +125,54 @@ export default function Profile() {
     }
   }
 
-  if (!account) return <LoadingSpinner label="Loading profile…" />
+  if (!account) return <LoadingSpinner label={t('dashboardStudent.profile.loading')} />
 
   return (
     <div className="max-w-2xl space-y-6">
       <div>
         <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">My Profile</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-navy-900 dark:text-white">{t('dashboardStudent.profile.heading')}</h1>
           <Badge tone="brand">{ROLE_LABELS[user?.user_type] ?? user?.user_type}</Badge>
         </div>
-        <p className="mt-1 text-sm text-navy-700/55">{user?.email}</p>
+        <p className="mt-1 text-sm text-navy-700/55 dark:text-navy-100/55">{user?.email}</p>
       </div>
 
       {error && <Alert tone="error">{error}</Alert>}
 
       {user?.user_type === 'student' && badges.length > 0 && (
-        <div className="rounded-2xl bg-white p-6 ring-1 ring-navy-900/8">
-          <h2 className="text-sm font-bold text-navy-900">My Badges</h2>
+        <div className="rounded-2xl bg-white p-6 ring-1 ring-navy-900/8 dark:bg-navy-800 dark:ring-white/10">
+          <h2 className="text-sm font-bold text-navy-900 dark:text-white">{t('dashboardStudent.profile.myBadges')}</h2>
           <div className="mt-4 flex flex-wrap gap-3">
             {badges.map((b) => (
-              <div key={b.id} className="flex w-32 flex-col items-center gap-1.5 rounded-xl bg-navy-50/60 p-3 text-center" title={b.badge.description}>
+              <div key={b.id} className="flex w-32 flex-col items-center gap-1.5 rounded-xl bg-navy-50/60 p-3 text-center dark:bg-white/5" title={b.badge.description}>
                 <span className="text-3xl">{b.badge.icon}</span>
-                <span className="text-xs font-semibold text-navy-900">{b.badge.name}</span>
-                <span className="text-[10px] text-navy-700/45">{new Date(b.awarded_at).toLocaleDateString()}</span>
+                <span className="text-xs font-semibold text-navy-900 dark:text-white">{b.badge.name}</span>
+                <span className="text-[10px] text-navy-700/45 dark:text-navy-100/45">{new Date(b.awarded_at).toLocaleDateString()}</span>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      <form onSubmit={handleAccountSubmit} className="space-y-5 rounded-2xl bg-white p-6 ring-1 ring-navy-900/8">
-        <h2 className="text-sm font-bold text-navy-900">Account Information</h2>
+      <form onSubmit={handleAccountSubmit} className="space-y-5 rounded-2xl bg-white p-6 ring-1 ring-navy-900/8 dark:bg-navy-800 dark:ring-white/10">
+        <h2 className="text-sm font-bold text-navy-900 dark:text-white">{t('dashboardStudent.profile.accountInformation')}</h2>
         {accountMessage && <Alert tone="success">{accountMessage}</Alert>}
 
         <div className="flex items-center gap-4">
           {account.profile_picture_url ? (
             <img
               src={account.profile_picture_url}
-              alt="Profile preview"
-              className="h-16 w-16 shrink-0 rounded-full object-cover ring-1 ring-navy-900/8"
+              alt={t('dashboardStudent.profile.profilePreviewAlt')}
+              className="h-16 w-16 shrink-0 rounded-full object-cover ring-1 ring-navy-900/8 dark:ring-white/10"
               onError={(e) => { e.currentTarget.style.visibility = 'hidden' }}
               onLoad={(e) => { e.currentTarget.style.visibility = 'visible' }}
             />
           ) : (
-            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-navy-900 text-xl font-bold text-white">
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-navy-900 text-xl font-bold text-white dark:bg-brand-500">
               {account.first_name?.[0] ?? user?.email?.[0]?.toUpperCase() ?? '?'}
             </div>
           )}
-          <FormField label="Profile Picture URL" hint="Paste a link to an image — no file upload needed." className="flex-1">
+          <FormField label={t('dashboardStudent.profile.profilePictureUrl')} hint={t('dashboardStudent.profile.profilePictureHint')} className="flex-1">
             <Input
               type="url"
               value={account.profile_picture_url}
@@ -175,35 +183,35 @@ export default function Profile() {
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <Field label="First name" value={account.first_name} onChange={updateAccount('first_name')} />
-          <Field label="Last name" value={account.last_name} onChange={updateAccount('last_name')} />
+          <Field label={t('dashboardStudent.profile.firstName')} value={account.first_name} onChange={updateAccount('first_name')} />
+          <Field label={t('dashboardStudent.profile.lastName')} value={account.last_name} onChange={updateAccount('last_name')} />
         </div>
-        <Field label="Phone number" value={account.phone_number} onChange={updateAccount('phone_number')} />
+        <Field label={t('dashboardStudent.profile.phoneNumber')} value={account.phone_number} onChange={updateAccount('phone_number')} />
         <div className="grid grid-cols-2 gap-4">
-          <Field label="City" value={account.city} onChange={updateAccount('city')} />
-          <Field label="Country" value={account.country} onChange={updateAccount('country')} />
+          <Field label={t('dashboardStudent.profile.city')} value={account.city} onChange={updateAccount('city')} />
+          <Field label={t('dashboardStudent.profile.country')} value={account.country} onChange={updateAccount('country')} />
         </div>
-        <Field label="Address" value={account.address} onChange={updateAccount('address')} />
+        <Field label={t('dashboardStudent.profile.address')} value={account.address} onChange={updateAccount('address')} />
 
         <Button type="submit" loading={savingAccount} disabled={savingAccount}>
-          {savingAccount ? 'Saving…' : 'Save Changes'}
+          {savingAccount ? t('dashboardStudent.profile.saving') : t('dashboardStudent.profile.saveChanges')}
         </Button>
       </form>
 
       {roleEndpoint && (
-        <form onSubmit={handleRoleSubmit} className="space-y-5 rounded-2xl bg-white p-6 ring-1 ring-navy-900/8">
+        <form onSubmit={handleRoleSubmit} className="space-y-5 rounded-2xl bg-white p-6 ring-1 ring-navy-900/8 dark:bg-navy-800 dark:ring-white/10">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold text-navy-900">
-              {user.user_type === 'student' ? 'Student Profile' : 'Instructor Profile'}
+            <h2 className="text-sm font-bold text-navy-900 dark:text-white">
+              {user.user_type === 'student' ? t('dashboardStudent.profile.studentProfile') : t('dashboardStudent.profile.instructorProfile')}
             </h2>
-            <span className="text-xs font-mono text-navy-700/45">
+            <span className="text-xs text-navy-700/45 dark:text-navy-100/45">
               {roleProfile?.student_number ?? roleProfile?.staff_number}
             </span>
           </div>
           {roleMessage && <Alert tone="success">{roleMessage}</Alert>}
 
           {!roleProfile ? (
-            <div className="h-24 animate-pulse rounded-xl bg-navy-50" />
+            <div className="h-24 animate-pulse rounded-xl bg-navy-50 dark:bg-white/5" />
           ) : (
             <>
               <div className="grid grid-cols-2 gap-4">
@@ -211,12 +219,12 @@ export default function Profile() {
                   <Field key={f.key} label={f.label} type={f.type} value={roleProfile[f.key]} onChange={updateRole(f.key)} />
                 ))}
               </div>
-              <FormField label="Biography">
+              <FormField label={t('dashboardStudent.profile.biography')}>
                 <Textarea rows={4} value={roleProfile.biography ?? ''} onChange={updateRole('biography')} />
               </FormField>
 
               <Button type="submit" loading={savingRole} disabled={savingRole}>
-                {savingRole ? 'Saving…' : 'Save Changes'}
+                {savingRole ? t('dashboardStudent.profile.saving') : t('dashboardStudent.profile.saveChanges')}
               </Button>
             </>
           )}

@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
+import { useLanguage } from '../context/LanguageContext'
+import { useToast } from '../context/ToastContext'
 import { IconArrowRight, IconMail, IconRefresh } from './icons'
 
 // Shared 6-digit verification UI for every OTP-by-email flow (registration,
@@ -6,14 +8,16 @@ import { IconArrowRight, IconMail, IconRefresh } from './icons'
 // the resend-cooldown countdown and error handling in one place instead of
 // re-implementing it per page.
 export default function OtpVerifyPanel({
-  heading = 'Verify Your Email',
+  heading,
   description,
   email,
   onVerify,
   onResend,
   resendCooldownSeconds = 60,
-  verifyLabel = 'Verify',
+  verifyLabel,
 }) {
+  const { t } = useLanguage()
+  const { showToast } = useToast()
   const [code, setCode] = useState('')
   const [error, setError] = useState('')
   const [info, setInfo] = useState('')
@@ -40,7 +44,9 @@ export default function OtpVerifyPanel({
     try {
       await onVerify(code)
     } catch (err) {
-      setError(err.message || 'The verification code is invalid or has expired. Please try again or request a new code.')
+      const message = err.message || t('auth.otp.verifyError')
+      setError(message)
+      showToast(message, { tone: 'error' })
     } finally {
       setVerifying(false)
     }
@@ -53,12 +59,14 @@ export default function OtpVerifyPanel({
     setResending(true)
     try {
       await onResend()
-      setInfo('A new verification code has been sent to your email.')
+      const message = t('auth.otp.resendSuccess')
+      setInfo(message)
+      showToast(message, { tone: 'info' })
       setCooldown(resendCooldownSeconds)
       setCode('')
       inputRef.current?.focus()
     } catch (err) {
-      setError(err.message || 'Please wait before requesting another verification code.')
+      setError(err.message || t('auth.otp.resendError'))
     } finally {
       setResending(false)
     }
@@ -66,22 +74,29 @@ export default function OtpVerifyPanel({
 
   return (
     <div className="w-full max-w-md">
-      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-brand-50 text-brand-500">
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-brand-50 text-brand-500 dark:bg-brand-500/15 dark:text-brand-300">
         <IconMail className="h-6 w-6" />
       </div>
-      <h1 className="mt-5 text-center text-2xl font-extrabold tracking-tight text-navy-900">{heading}</h1>
-      <p className="mt-2 text-center text-sm leading-relaxed text-navy-700/60">
+      <h1 className="mt-5 text-center text-2xl font-extrabold tracking-tight text-navy-900 dark:text-white">
+        {heading || t('auth.otp.defaultHeading')}
+      </h1>
+      <p className="mt-2 text-center text-sm leading-relaxed text-navy-700/60 dark:text-navy-100/60">
         {description || (
           <>
-            We sent a verification code to{' '}
-            {email ? <span className="font-semibold text-navy-900">{email}</span> : 'your email address'}.
+            {t('auth.otp.sentTo')}{' '}
+            {email ? (
+              <span className="font-semibold text-navy-900 dark:text-white">{email}</span>
+            ) : (
+              t('auth.otp.yourEmail')
+            )}
+            .
           </>
         )}
       </p>
 
       <form onSubmit={handleVerify} className="mt-8">
         <label className="block">
-          <span className="text-sm font-semibold text-navy-900">Enter your 6-digit verification code</span>
+          <span className="text-sm font-semibold text-navy-900 dark:text-white">{t('auth.otp.inputLabel')}</span>
           <input
             ref={inputRef}
             type="text"
@@ -92,37 +107,41 @@ export default function OtpVerifyPanel({
             value={code}
             onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
             placeholder="000000"
-            className="mt-2 w-full rounded-xl border border-navy-900/10 px-4 py-4 text-center text-2xl font-bold tracking-[0.5em] text-navy-900 placeholder:text-navy-700/20 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
+            className="mt-2 w-full rounded-xl border border-navy-900/10 bg-white px-4 py-4 text-center text-2xl font-bold tracking-[0.5em] text-navy-900 placeholder:text-navy-700/20 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100 dark:border-white/15 dark:bg-white/5 dark:text-white dark:placeholder:text-navy-100/20 dark:focus:ring-brand-500/20"
           />
         </label>
 
         {error && (
-          <div className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-600">{error}</div>
+          <div className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-600 dark:bg-red-500/10 dark:text-red-400">{error}</div>
         )}
         {info && !error && (
-          <div className="mt-4 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">{info}</div>
+          <div className="mt-4 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400">{info}</div>
         )}
 
         <button
           type="submit"
           disabled={verifying || code.length !== 6}
-          className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-navy-900 px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-brand-500 disabled:opacity-60"
+          className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-navy-900 px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-brand-500 disabled:opacity-60 dark:bg-brand-500 dark:hover:bg-brand-400"
         >
-          {verifying ? 'Verifying…' : verifyLabel}
+          {verifying ? t('auth.otp.verifying') : verifyLabel || t('auth.otp.defaultVerifyLabel')}
           {!verifying && <IconArrowRight className="h-4 w-4" />}
         </button>
       </form>
 
-      <div className="mt-6 text-center text-sm text-navy-700/60">
-        Didn&apos;t receive the code?{' '}
+      <div className="mt-6 text-center text-sm text-navy-700/60 dark:text-navy-100/60">
+        {t('auth.otp.didNotReceive')}{' '}
         <button
           type="button"
           onClick={handleResend}
           disabled={cooldown > 0 || resending}
-          className="inline-flex items-center gap-1.5 font-semibold text-brand-500 hover:text-navy-900 disabled:cursor-not-allowed disabled:text-navy-700/40"
+          className="inline-flex items-center gap-1.5 font-semibold text-brand-500 hover:text-navy-900 disabled:cursor-not-allowed disabled:text-navy-700/40 dark:hover:text-white dark:disabled:text-navy-100/40"
         >
           <IconRefresh className="h-3.5 w-3.5" />
-          {resending ? 'Sending…' : cooldown > 0 ? `Resend code (${cooldown}s)` : 'Resend Code'}
+          {resending
+            ? t('auth.otp.sending')
+            : cooldown > 0
+              ? t('auth.otp.resendWithCooldown', { seconds: cooldown })
+              : t('auth.otp.resend')}
         </button>
       </div>
     </div>

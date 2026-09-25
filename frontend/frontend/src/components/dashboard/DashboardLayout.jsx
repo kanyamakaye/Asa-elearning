@@ -31,7 +31,7 @@ export default function DashboardLayout() {
   const sidebarWidth = collapsed ? 'w-20' : 'w-64'
 
   return (
-    <div className="flex min-h-screen bg-navy-50/40">
+    <div className="flex min-h-screen bg-navy-50/40 dark:bg-navy-950">
       {/* Desktop sidebar */}
       <aside className={`hidden shrink-0 lg:block ${sidebarWidth}`}>
         <div className={`fixed h-screen ${sidebarWidth} transition-[width]`}>
@@ -58,7 +58,7 @@ export default function DashboardLayout() {
               <button
                 type="button"
                 onClick={() => setMobileOpen(false)}
-                className="absolute right-3 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-navy-900/5 text-navy-700 hover:bg-navy-900/10"
+                className="absolute right-3 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-navy-900/5 text-navy-700 hover:bg-navy-900/10 dark:bg-white/10 dark:text-navy-100 dark:hover:bg-white/15"
                 aria-label="Close menu"
               >
                 <IconClose className="h-4 w-4" />

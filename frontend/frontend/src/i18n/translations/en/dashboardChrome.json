@@ -1,0 +1,119 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "profile": "Profile",
+    "settings": "Settings",
+    "users": "Users",
+    "allUsers": "All Users",
+    "students": "Students",
+    "instructors": "Instructors",
+    "staff": "Staff",
+    "courses": "Courses",
+    "allCourses": "All Courses",
+    "createCourse": "Create Course",
+    "categories": "Categories",
+    "modulesLessons": "Modules & Lessons",
+    "enrollments": "Enrollments",
+    "groups": "Groups",
+    "assessments": "Assessments",
+    "quizzes": "Quizzes",
+    "createQuiz": "Create Quiz",
+    "questionBanks": "Question Banks",
+    "assignments": "Assignments",
+    "createAssignment": "Create Assignment",
+    "exams": "Exams",
+    "rubrics": "Rubrics",
+    "gradingQueue": "Grading Queue",
+    "certificates": "Certificates",
+    "payments": "Payments",
+    "transactions": "Transactions",
+    "refunds": "Refunds",
+    "communication": "Communication",
+    "announcements": "Announcements",
+    "notifications": "Notifications",
+    "messages": "Messages",
+    "discussions": "Discussions",
+    "liveClasses": "Live Classes",
+    "allLiveClasses": "All Live Classes",
+    "scheduleLiveClass": "Schedule Live Class",
+    "support": "Support",
+    "tickets": "Tickets",
+    "faqs": "FAQs",
+    "auditLogs": "Audit Logs",
+    "systemSettings": "System Settings",
+    "academics": "Academics",
+    "myCourses": "My Courses",
+    "contentModulesLessons": "Content, Modules & Lessons",
+    "examsGrades": "Exams & Grades",
+    "enrolledStudents": "Enrolled Students",
+    "content": "Content",
+    "learning": "Learning",
+    "browseCourses": "Browse Courses",
+    "grades": "Grades",
+    "transcript": "Transcript"
+  },
+  "roles": {
+    "roleAdmin": "Administrator",
+    "roleAcademicManager": "Academic Manager",
+    "roleInstructor": "Instructor",
+    "roleStudent": "Student",
+    "roleContentManager": "Content Manager",
+    "roleSupportStaff": "Support Staff"
+  },
+  "sidebar": {
+    "expand": "Expand sidebar",
+    "collapse": "Collapse sidebar"
+  },
+  "topbar": {
+    "openMenu": "Open menu",
+    "portal": "Portal"
+  },
+  "searchBar": {
+    "placeholder": "Search courses…"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "markAllRead": "Mark all read",
+    "loading": "Loading…",
+    "caughtUp": "You're all caught up.",
+    "markAsRead": "Mark as read"
+  },
+  "userMenu": {
+    "myProfile": "My Profile"
+  },
+  "refresh": "Refresh",
+  "recentActivity": {
+    "title": "Recent Activity",
+    "empty": "Nothing to show yet."
+  },
+  "timeAgo": {
+    "justNow": "just now",
+    "minutes": "{{count}}m ago",
+    "hours": "{{count}}h ago",
+    "days": "{{count}}d ago"
+  },
+  "quickActions": {
+    "defaultTitle": "Quick Actions"
+  },
+  "reminders": {
+    "title": "Reminders",
+    "liveClassDetail": "{{course}} · {{date}}{{time}}",
+    "atTime": " at {{time}}",
+    "inactiveCourseDetail": "{{percent}}% complete · last active {{date}}",
+    "sections": {
+      "upcoming_live_classes": "Upcoming Live Classes",
+      "inactive_courses": "Pick Back Up",
+      "unresolved_payments": "Needs Payment"
+    },
+    "ctas": {
+      "upcoming_live_classes": "View live classes",
+      "inactive_courses": "Continue learning",
+      "unresolved_payments": "View payments"
+    }
+  },
+  "upcomingLiveClasses": {
+    "title": "Upcoming Live Classes",
+    "viewAll": "View All",
+    "empty": "No live classes scheduled."
+  }
+}

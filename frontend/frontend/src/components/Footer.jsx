@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useLanguage } from '../context/LanguageContext'
 import { getCategories } from '../lib/queries'
 import logo from '../assets/logo.png'
 import { IconArrowRight, IconCheck, IconHelpCircle, IconLifeBuoy } from './icons'
@@ -11,34 +12,34 @@ import { IconArrowRight, IconCheck, IconHelpCircle, IconLifeBuoy } from './icons
 // actually has — no fabricated pages (no blog, no mobile app, no investor
 // pages) — rather than a 1:1 content copy of Alison's own footer.
 const platformLinks = [
-  { label: 'Home', to: '/' },
-  { label: 'Courses', to: '/courses' },
-  { label: 'Instructors', to: '/#instructors' },
-  { label: 'About Us', to: '/#about' },
-  { label: 'Pricing', to: '/#pricing' },
+  { id: 'home', to: '/' },
+  { id: 'courses', to: '/courses' },
+  { id: 'instructors', to: '/#instructors' },
+  { id: 'aboutUs', to: '/#about' },
+  { id: 'pricing', to: '/#pricing' },
 ]
 
 const studentLinks = [
-  { label: 'Browse Courses', to: '/courses' },
-  { label: 'Learning Paths', to: '/#paths' },
-  { label: 'Career Outcomes', to: '/#outcomes' },
-  { label: 'Verify a Certificate', to: '/verify-certificate' },
-  { label: 'Create an Account', to: '/signup' },
-  { label: 'Log In', to: '/login' },
+  { id: 'browseCourses', to: '/courses' },
+  { id: 'learningPaths', to: '/#paths' },
+  { id: 'careerOutcomes', to: '/#outcomes' },
+  { id: 'verifyCertificate', to: '/verify-certificate' },
+  { id: 'createAccount', to: '/signup' },
+  { id: 'logIn', to: '/login' },
 ]
 
 const instructorLinks = [
-  { label: 'Become an Instructor', to: '/signup?role=instructor' },
-  { label: 'Meet Our Instructors', to: '/#instructors' },
-  { label: 'Instructor Pricing & Plans', to: '/#pricing' },
+  { id: 'becomeInstructor', to: '/signup?role=instructor' },
+  { id: 'meetInstructors', to: '/#instructors' },
+  { id: 'instructorPricing', to: '/#pricing' },
 ]
 
 const supportLinks = [
-  { label: 'Contact Us', to: '/contact' },
-  { label: 'FAQ', to: '/#faq' },
-  { label: 'Help Center', to: '/contact' },
-  { label: 'Privacy Policy', to: '/contact' },
-  { label: 'Terms of Service', to: '/contact' },
+  { id: 'contactUs', to: '/contact' },
+  { id: 'faq', to: '/#faq' },
+  { id: 'helpCenter', to: '/contact' },
+  { id: 'privacyPolicy', to: '/contact' },
+  { id: 'termsOfService', to: '/contact' },
 ]
 
 const MAP_EMBED_SRC = 'https://www.google.com/maps?q=-1.886829,30.276593&z=15&output=embed'
@@ -70,6 +71,7 @@ function FooterLink({ to, children }) {
 }
 
 export default function Footer() {
+  const { t } = useLanguage()
   const [categories, setCategories] = useState([])
   const [email, setEmail] = useState('')
   const [subscribed, setSubscribed] = useState(false)
@@ -94,29 +96,29 @@ export default function Footer() {
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         {/* Top: wide link grid, matching sampleUI.md's 5-column layout */}
         <div className="grid grid-cols-2 gap-x-6 gap-y-10 pb-14 sm:grid-cols-3 lg:grid-cols-5">
-          <FooterColumn title="Platform">
-            {platformLinks.map((l) => <FooterLink key={l.label} to={l.to}>{l.label}</FooterLink>)}
+          <FooterColumn title={t('public.footer.columns.platform')}>
+            {platformLinks.map((l) => <FooterLink key={l.id} to={l.to}>{t(`public.footer.links.${l.id}`)}</FooterLink>)}
           </FooterColumn>
 
-          <FooterColumn title="Categories">
+          <FooterColumn title={t('public.footer.columns.categories')}>
             {categories.map((c) => (
               <FooterLink key={c.id} to={`/courses?category=${c.slug}`}>{c.name}</FooterLink>
             ))}
             <FooterLink to="/courses">
-              <span className="font-semibold text-brand-400">View all courses</span>
+              <span className="font-semibold text-brand-400">{t('public.footer.viewAllCourses')}</span>
             </FooterLink>
           </FooterColumn>
 
-          <FooterColumn title="For Students">
-            {studentLinks.map((l) => <FooterLink key={l.label} to={l.to}>{l.label}</FooterLink>)}
+          <FooterColumn title={t('public.footer.columns.forStudents')}>
+            {studentLinks.map((l) => <FooterLink key={l.id} to={l.to}>{t(`public.footer.links.${l.id}`)}</FooterLink>)}
           </FooterColumn>
 
-          <FooterColumn title="For Instructors">
-            {instructorLinks.map((l) => <FooterLink key={l.label} to={l.to}>{l.label}</FooterLink>)}
+          <FooterColumn title={t('public.footer.columns.forInstructors')}>
+            {instructorLinks.map((l) => <FooterLink key={l.id} to={l.to}>{t(`public.footer.links.${l.id}`)}</FooterLink>)}
           </FooterColumn>
 
-          <FooterColumn title="Support">
-            {supportLinks.map((l) => <FooterLink key={l.label} to={l.to}>{l.label}</FooterLink>)}
+          <FooterColumn title={t('public.footer.columns.support')}>
+            {supportLinks.map((l) => <FooterLink key={l.id} to={l.to}>{t(`public.footer.links.${l.id}`)}</FooterLink>)}
           </FooterColumn>
         </div>
 
@@ -130,7 +132,7 @@ export default function Footer() {
               <div>
                 <span className="block font-display text-lg font-bold leading-tight text-white">Asa Academy</span>
                 <span className="block text-[11px] font-semibold uppercase tracking-widest text-navy-100/45">
-                  Learn Without Limits
+                  {t('public.footer.tagline')}
                 </span>
               </div>
             </Link>
@@ -138,11 +140,11 @@ export default function Footer() {
             <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-3">
               <Link to="/#faq" className="inline-flex items-center gap-1.5 text-sm font-semibold text-white hover:text-brand-300">
                 <IconHelpCircle className="h-4 w-4" />
-                FAQs
+                {t('public.footer.faqs')}
               </Link>
               <Link to="/contact" className="inline-flex items-center gap-1.5 text-sm font-semibold text-white hover:text-brand-300">
                 <IconLifeBuoy className="h-4 w-4" />
-                Customer Support
+                {t('public.footer.customerSupport')}
               </Link>
             </div>
 
@@ -163,7 +165,7 @@ export default function Footer() {
           </div>
 
           <div className="lg:max-w-sm lg:justify-self-end">
-            <h3 className="text-xs font-bold uppercase tracking-wide text-white">Find Us</h3>
+            <h3 className="text-xs font-bold uppercase tracking-wide text-white">{t('public.footer.findUs')}</h3>
             <div className="mt-3 overflow-hidden rounded-2xl ring-1 ring-white/10">
               <iframe
                 title="Asa Academy location"
@@ -181,7 +183,7 @@ export default function Footer() {
               rel="noreferrer"
               className="mt-2.5 inline-flex items-center gap-1.5 text-xs font-semibold text-brand-400 transition-colors hover:text-white"
             >
-              Get directions
+              {t('public.footer.getDirections')}
               <IconArrowRight className="h-3.5 w-3.5" />
             </a>
           </div>
@@ -191,21 +193,21 @@ export default function Footer() {
         <div className="border-t border-white/10 py-6">
           <div className="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
             <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs">
-              <span>&copy; {new Date().getFullYear()} Asa Academy. All rights reserved.</span>
-              <Link to="/contact" className="transition-colors hover:text-white">Privacy</Link>
-              <Link to="/contact" className="transition-colors hover:text-white">Terms</Link>
-              <Link to="/contact" className="transition-colors hover:text-white">Cookie Policy</Link>
+              <span>{t('public.footer.copyright', { year: new Date().getFullYear() })}</span>
+              <Link to="/contact" className="transition-colors hover:text-white">{t('public.footer.privacy')}</Link>
+              <Link to="/contact" className="transition-colors hover:text-white">{t('public.footer.terms')}</Link>
+              <Link to="/contact" className="transition-colors hover:text-white">{t('public.footer.cookiePolicy')}</Link>
             </div>
 
             <form onSubmit={handleSubscribe} className="w-full max-w-sm sm:w-auto">
               {subscribed ? (
                 <p className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-400">
-                  <IconCheck className="h-4 w-4" /> Thanks — you&apos;re on the list.
+                  <IconCheck className="h-4 w-4" /> {t('public.footer.subscribed')}
                 </p>
               ) : (
                 <div className="flex w-full items-center gap-2 sm:w-72">
                   <label htmlFor="footer-newsletter-email" className="sr-only">
-                    Email address
+                    {t('public.footer.emailAddress')}
                   </label>
                   <input
                     id="footer-newsletter-email"
@@ -213,12 +215,12 @@ export default function Footer() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Get updates by email"
+                    placeholder={t('public.footer.emailPlaceholder')}
                     className="w-full rounded-full bg-white/5 px-4 py-2 text-sm text-white placeholder:text-navy-100/40 ring-1 ring-white/10 focus:outline-none focus:ring-brand-400"
                   />
                   <button
                     type="submit"
-                    aria-label="Subscribe"
+                    aria-label={t('public.footer.subscribe')}
                     className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-500 text-white transition-colors hover:bg-brand-400"
                   >
                     <IconArrowRight className="h-4 w-4" />

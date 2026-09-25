@@ -1,0 +1,426 @@
+{
+  "nav": {
+    "home": "Ahabanza",
+    "courses": "Amasomo",
+    "instructors": "Abarimu",
+    "pricing": "Ibiciro",
+    "about": "Abo turibo",
+    "faq": "Ibibazo bikunze kubazwa",
+    "contact": "Twandikire",
+    "logIn": "Injira",
+    "getStarted": "Tangira",
+    "dashboard": "Imbonerahamwe",
+    "logOut": "Sohoka",
+    "greeting": "Muraho, {{name}}",
+    "toggleMenu": "Fungura urutonde"
+  },
+  "courses": {
+    "eyebrow": "Amasomo Akunzwe",
+    "heading": "Wige amasomo abanyeshuri bakunda",
+    "subheadWithCount": "Amasomo {{count}} mu byiciro byose",
+    "subhead": "Yateguriwe ubumenyi bukoreshwa mu buzima nyabwo",
+    "viewAll": "Reba amasomo yose",
+    "free": "Ubuntu",
+    "generalCategory": "Rusange",
+    "hours": "amasaha {{count}}",
+    "studentsEnrolled": "Abanyeshuri {{count}} biyandikishije"
+  },
+  "instructors": {
+    "eyebrow": "Menyana n'abarimu",
+    "heading": "Wige ku banyabuhanga mu murima",
+    "viewAll": "Reba abarimu bose",
+    "linkedinLabel": "{{name}} kuri LinkedIn",
+    "courseCount": "Amasomo {{count}}"
+  },
+  "hero": {
+    "eyebrow": "Wige ubumenyi. Wiyubakire ejo hazaza.",
+    "headlineStart": "Menya ubumenyi",
+    "headlineEnd": "buzagufasha mu mwuga wawe",
+    "subhead": "Wige ubumenyi bufatika kandi bukenewe ku isoko ry'akazi uturutse ku barimu bafite uburambe, ukore imishinga y'ukuri, uhindure icyo wize kikaba amahirwe mu mwuga wawe.",
+    "primaryCta": "Tangira kwiga",
+    "secondaryCta": "Reba amasomo",
+    "searchLabel": "Shakisha amasomo",
+    "searchPlaceholder": "Ni iki ushaka kwiga uyu munsi?",
+    "searchButton": "Shakisha",
+    "popularLabel": "Bikunzwe:",
+    "popularSearches": {
+      "webDevelopment": "Gukora Imbuga",
+      "dataScience": "Siyansi y'Ibipimo",
+      "digitalMarketing": "Ubucuruzi kuri Interineti",
+      "accounting": "Ibarura",
+      "french": "Igifaransa"
+    },
+    "certCardTitle": "Impamyabumenyi yabonetse",
+    "certCardSubtitle": "Inzira ya Siyansi y'Ibipimo",
+    "streakCardTitle": "Iminsi 12 ukurikirana",
+    "streakCardSubtitle": "Abiga {{count}} uyu munsi",
+    "stats": {
+      "courses": "Amasomo",
+      "students": "Abanyeshuri",
+      "instructors": "Abarimu",
+      "completionRate": "Igipimo cyo kurangiza"
+    }
+  },
+  "trustStrip": {
+    "heading": "Ubumenyi abakoresha bashaka cyane"
+  },
+  "categoryExplorer": {
+    "eyebrow": "Reba ku byiciro",
+    "heading": "Reba amasomo mu bice byose",
+    "headingWithCount": "Reba amasomo {{count}} mu bice byose",
+    "subhead": "Hitamo icyiciro ukajya butumwa mu masomo yateguwe kuri iyo nzira — kuva ku bitangira kugeza ku byimbitse, byose ahantu hamwe.",
+    "courseCount": "Amasomo {{count}}",
+    "viewAll": "Reba amasomo yose"
+  },
+  "features": {
+    "eyebrow": "Impamvu Asa Academy",
+    "heading": "Ibyo ukeneye byose kwiga no kwigisha kuri interineti",
+    "subhead": "Urubuga rumwe rukubiyemo byose uhereye ku kwiyandikisha kugeza ku kubona impamyabumenyi.",
+    "items": {
+      "liveClasses": {
+        "title": "Amasomo aziyeguru n'ayafashwe",
+        "description": "Injira mu masomo aziyeguru ateganyijwe n'abarimu cyangwa wige ku gihe cyawe ukoresheje videwo."
+      },
+      "quizzes": {
+        "title": "Ibibazo bigufi n'imirimo",
+        "description": "Gerageza ubumenyi bwawe ukoresheje ibibazo bigufi n'imirimo, hanyuma uhabwe amanota n'ibisobanuro by'umwarimu."
+      },
+      "progress": {
+        "title": "Gukurikirana iterambere",
+        "description": "Kurikirana urugendo rwawe rwo kwiga isomo ku isomo ukoresheje imbonerahamwe yihariye igaragaza aho ugeze."
+      },
+      "certificates": {
+        "title": "Impamyabumenyi zemejwe",
+        "description": "Bona impamyabumenyi ya buri somo urangije, ifite kode yihariye umuntu wese yakwemeza."
+      },
+      "discussions": {
+        "title": "Ibiganiro n'ubutumwa",
+        "description": "Baza ibibazo mu biganiro by'isomo cyangwa uvugane n'umwarimu igihe cyose ubikeneye."
+      },
+      "everyRole": {
+        "title": "Byateguriwe buri wese",
+        "description": "Imbonerahamwe zihariye ku banyeshuri, abarimu n'abayobozi zituma buri wese yibanda ku ngenzi."
+      }
+    }
+  },
+  "howItWorks": {
+    "eyebrow": "Uko bikora",
+    "heading": "Tangira kwiga mu ntambwe enye zoroshye",
+    "steps": {
+      "createAccount": {
+        "title": "Fungura konti yawe",
+        "description": "Iyandikishe mu minota mike nk'umunyeshuri utubwire icyo ushaka kwiga."
+      },
+      "browseEnroll": {
+        "title": "Reba amasomo winjiremo",
+        "description": "Shakisha ukurikije icyiciro, urwego, cyangwa umwarimu winjire mu masomo ahuye n'intego zawe."
+      },
+      "learnAtPace": {
+        "title": "Iga ku gihe cyawe",
+        "description": "Reba amasomo, injira mu masomo aziyeguru, urangize ibibazo bigufi n'imirimo, kandi ukurikirane iterambere ryawe."
+      },
+      "earnCertificate": {
+        "title": "Bona impamyabumenyi yawe",
+        "description": "Rangiza isomo maze uhabwe impamyabumenyi yemejwe ushobora gusangiza no kwemeza."
+      }
+    }
+  },
+  "learningPaths": {
+    "eyebrow": "Inzira zo kwiga",
+    "heading": "Ntukagire ngo wige isomo rimwe gusa. Kurikira inzira.",
+    "subhead": "Buri cyiciro giteguwe kuva ku bitangira kugeza ku byimbitse, kugira ngo umenye igihe cyose icyo wiga ku bukurikira.",
+    "courseCount": "Amasomo {{count}}",
+    "levels": {
+      "beginner": "Utangira",
+      "intermediate": "Hagati",
+      "advanced": "Byimbitse"
+    },
+    "startPath": "Tangira iyi nzira"
+  },
+  "careerOutcomes": {
+    "eyebrow": "Ibisohoka mu mwuga",
+    "heading": "Kwiga bigomba kugera ahantu.",
+    "steps": {
+      "learn": { "label": "Kwiga", "description": "Amasomo ateguwe n'abarimu bakora akazi ka buri munsi" },
+      "practice": { "label": "Kwimenyereza", "description": "Ibibazo bigufi n'imirimo bishimangira buri gitekerezo" },
+      "trackProgress": { "label": "Gukurikirana Iterambere", "description": "Imbonerahamwe igaragaza neza aho ugeze" },
+      "getCertified": { "label": "Kubona Impamyabumenyi", "description": "Impamyabumenyi yemejwe nyuma yo kurangiza isomo" },
+      "advance": { "label": "Kwiyongera", "description": "Ikimenyetso cy'ubumenyi ushobora kwereka abakoresha" }
+    }
+  },
+  "testimonials": {
+    "eyebrow": "Ibitekerezo",
+    "heading": "Bikundwa n'abanyeshuri n'abarimu",
+    "defaultStudentName": "Umunyeshuri wa Asa Academy",
+    "studentOfCategory": "Umunyeshuri, {{category}}"
+  },
+  "instructorCta": {
+    "eyebrow": "Ku barimu",
+    "heading": "Sangiza ubumenyi bwawe n'abiga ibihumbi",
+    "description": "Asa Academy iha abarimu ibyo bakeneye byose kugira ngo bakore, bigishe, kandi bagure isomo — kuva mu gukora ibikubiyemo kugeza mu gutanga amanota no gusesengura.",
+    "cta": "Tangira Kwigisha Uyu Munsi",
+    "points": {
+      "unlimitedCourses": "Kora kandi utangaze amasomo atagira ingano",
+      "liveClasses": "Tegura amasomo aziyeguru ukurikirane abaje",
+      "grading": "Tanga amanota ku bibazo bigufi n'imirimo byoroshye",
+      "getPaid": "Bona amafaranga kuri buri kwiyandikisha"
+    }
+  },
+  "studentPortal": {
+    "eyebrow": "Urubuga rw'umunyeshuri",
+    "heading": "Ha buri munyeshuri uburyo bwo kureba aho ageze",
+    "description": "Abanyeshuri binjira ku rubuga rwabo bwite bagakurikirana amasomo yabo igihe cyose, badategereje umwarimu.",
+    "points": {
+      "courses": "Amasomo wiyandikishijemo n'aho ugeze mu masomo",
+      "grades": "Amanota y'ibibazo bigufi n'imirimo",
+      "certificates": "Impamyabumenyi, kwitabira na raporo z'imyigire"
+    },
+    "getStarted": "Tangira",
+    "logIn": "Injira",
+    "illustrationAlt": "Igishushanyo cy'umunyeshuri ufungura urubuga rwe kuri telefoni"
+  },
+  "pricing": {
+    "eyebrow": "Ibiciro",
+    "heading": "Ibiciro byoroshye kandi by'ukuri",
+    "subhead": "Nta kwishyura buri kwezi cyangwa amafaranga ahishwe. Tangira n'amasomo y'ubuntu, cyangwa wishyure rimwe kuri buri somo ubone uburenganzira bw'igihe kirekire.",
+    "freeTitle": "Amasomo y'Ubuntu",
+    "freeFeatures": {
+      "fullAccess": "Uburenganzira bwuzuye ku masomo yose y'ubuntu",
+      "progressTracking": "Ibibazo bigufi, imirimo, no gukurikirana iterambere",
+      "discussions": "Ibiganiro by'isomo n'ubutumwa n'umwarimu",
+      "certificate": "Impamyabumenyi yemejwe nyuma yo kurangiza"
+    },
+    "freeCta": "Fungura Konti y'Ubuntu",
+    "mostPopular": "Ikunzwe cyane",
+    "paidTitle": "Amasomo Yishyurwa",
+    "perCourse": "Ku isomo",
+    "paidFeatures": {
+      "everythingFree": "Byose biri mu masomo y'ubuntu",
+      "inDepthCourses": "Amasomo yimbitse ayoborwa n'umwarimu",
+      "lifetimeAccess": "Uburenganzira bw'igihe kirekire — wige ku gihe cyawe",
+      "onePrice": "Igiciro kimwe gisobanutse kuri buri somo, nta kwishyura buri kwezi"
+    },
+    "paidCta": "Reba Amasomo Yishyurwa"
+  },
+  "faq": {
+    "eyebrow": "Ibibazo bikunze kubazwa",
+    "heading": "Ibibazo bikunze kubazwa"
+  },
+  "cta": {
+    "heading": "Witeguye gutangira kwiga uyu munsi?",
+    "description": "Ifatanye n'abanyeshuri n'abarimu ibihumbi basanzwe bateza imbere ubumenyi bwabo kuri Asa Academy.",
+    "primaryCta": "Fungura Konti y'Ubuntu",
+    "secondaryCta": "Reba Amasomo"
+  },
+  "footer": {
+    "columns": {
+      "platform": "Urubuga",
+      "categories": "Ibyiciro",
+      "forStudents": "Ku Banyeshuri",
+      "forInstructors": "Ku Barimu",
+      "support": "Ubufasha"
+    },
+    "links": {
+      "home": "Ahabanza",
+      "courses": "Amasomo",
+      "instructors": "Abarimu",
+      "aboutUs": "Abo turibo",
+      "pricing": "Ibiciro",
+      "browseCourses": "Reba Amasomo",
+      "learningPaths": "Inzira zo Kwiga",
+      "careerOutcomes": "Ibisohoka mu Mwuga",
+      "verifyCertificate": "Emeza Impamyabumenyi",
+      "createAccount": "Fungura Konti",
+      "logIn": "Injira",
+      "becomeInstructor": "Ba Umwarimu",
+      "meetInstructors": "Menya Abarimu Bacu",
+      "instructorPricing": "Ibiciro n'Ingamba by'Abarimu",
+      "contactUs": "Twandikire",
+      "faq": "Ibibazo bikunze kubazwa",
+      "helpCenter": "Ikigo cy'Ubufasha",
+      "privacyPolicy": "Politiki y'Ibanga",
+      "termsOfService": "Amabwiriza y'Ikoreshwa"
+    },
+    "viewAllCourses": "Reba amasomo yose",
+    "tagline": "Wiga Nta Mbibi",
+    "faqs": "Ibibazo",
+    "customerSupport": "Ubufasha ku Bakiriya",
+    "findUs": "Tubone",
+    "getDirections": "Bona Inzira",
+    "copyright": "© {{year}} Asa Academy. Uburenganzira bwose burinzwe.",
+    "privacy": "Ibanga",
+    "terms": "Amabwiriza",
+    "cookiePolicy": "Politiki ya Cookie",
+    "subscribed": "Murakoze — muri ku rutonde.",
+    "emailAddress": "Aderesi imeyili",
+    "emailPlaceholder": "Bona amakuru kuri imeyili",
+    "subscribe": "Iyandikishe"
+  },
+  "coursesMegaMenu": {
+    "getStarted": "Tangira",
+    "quickLinks": {
+      "exploreCourses": "Reba Amasomo",
+      "exploreInstructors": "Reba Abarimu",
+      "learningPaths": "Inzira zo Kwiga",
+      "getCertified": "Bona Impamyabumenyi",
+      "pricingPlans": "Ibiciro n'Ingamba",
+      "becomeInstructor": "Ba Umwarimu"
+    },
+    "courseCategories": "Ibyiciro by'Amasomo",
+    "viewAll": "Reba byose",
+    "courseCount": "Amasomo {{count}}",
+    "topCourses": "Amasomo Akomeye muri {{category}}",
+    "noCourses": "Nta masomo ari muri iki cyiciro kugeza ubu.",
+    "viewAllCategoryCourses": "Reba amasomo yose muri {{category}}"
+  },
+  "pageHeader": {
+    "home": "Ahabanza"
+  },
+  "coursesCatalog": {
+    "crumb": "Amasomo",
+    "eyebrow": "Urutonde rw'amasomo",
+    "title": "Reba amasomo yose",
+    "subtitle": "Shakisha ukurikije icyiciro cyangwa ushakishe kugira ngo ubone isomo rihuye n'icyo ushaka kwiga.",
+    "countSummary": "Amasomo {{count}} mu byiciro {{categoryCount}}",
+    "resultsFor": "Ibisubizo {{count}} kuri",
+    "clear": "Siba",
+    "all": "Byose",
+    "noneFoundTitle": "Nta somo ryabonetse",
+    "noneFoundWithQuery": "Ntabwo twabonye isomo rihuye na \"{{query}}\".",
+    "noneFoundNoQuery": "Nta somo ryatangajwe muri iki cyiciro kugeza ubu.",
+    "clearSearch": "Siba ishakisha",
+    "free": "Ubuntu",
+    "generalCategory": "Rusange",
+    "hours": "amasaha {{count}}",
+    "studentsEnrolled": "Abanyeshuri {{count}} biyandikishije",
+    "loading": "Kuraguza…",
+    "loadMore": "Reba Andi Masomo",
+    "searchPlaceholder": "Shakisha amasomo, urugero: Python, Excel…",
+    "search": "Shakisha",
+    "filters": "Muyunguruzi",
+    "categories": "Ibyiciro",
+    "level": "Urwego",
+    "price": "Igiciro",
+    "levels": {
+      "all": "Inzego zose",
+      "beginner": "Abatangira",
+      "intermediate": "Hagati",
+      "advanced": "Abateye imbere"
+    },
+    "prices": {
+      "all": "Igiciro icyo ari cyo cyose",
+      "free": "Ubuntu",
+      "paid": "Byishyurwa"
+    },
+    "sortBy": "Tondeka ukurikije",
+    "sort": {
+      "newest": "Amashya",
+      "priceLow": "Igiciro: gito ujya kinini",
+      "priceHigh": "Igiciro: kinini ujya gito",
+      "title": "Umutwe: A kugeza Z"
+    },
+    "showingOne": "Isomo 1",
+    "showing": "Amasomo {{count}}",
+    "clearAll": "Siba muyunguruzi zose",
+    "students": "Abanyeshuri {{count}}",
+    "noneFoundFiltered": "Gerageza irindi jambo cyangwa ukureho muyunguruzi zimwe."
+  },
+  "contact": {
+    "crumb": "Twandikire",
+    "eyebrow": "Turi hano kugira ngo tugufashe",
+    "title": "Vugana na Asa Academy",
+    "subtitle": "Ufite ibibazo ku isomo, ikibazo cya tekiniki, cyangwa ushaka kwigisha? Twoherereze ubutumwa itsinda ryacu rikwitabe.",
+    "infoCards": {
+      "email": { "title": "Twandikire", "line1": "support@asaacademy.com", "line2": "Dusubiza mu masaha 24" },
+      "call": { "title": "Duhamagare", "line1": "+254 700 123 456", "line2": "Kuwa mbere-Kuwa gatanu, 8am-6pm EAT" },
+      "visit": { "title": "Tugendere", "line1": "Westlands Business Park", "line2": "Nairobi, Kenya" }
+    },
+    "form": {
+      "sentTitle": "Ubutumwa bwoherejwe",
+      "sentDescription": "Murakoze kutwandikira. Itsinda ryacu rizabasubiza mu masaha 24.",
+      "sendAnother": "Ohereza undi butumwa",
+      "heading": "Twoherereze ubutumwa",
+      "subheading": "Uzuza ifishi maze tuzasubiza vuba bishoboka.",
+      "fullName": "Amazina yombi",
+      "subject": "Ingingo",
+      "selectTopic": "Hitamo ingingo",
+      "message": "Ubutumwa",
+      "messagePlaceholder": "Tubwire uko twagufasha...",
+      "sending": "Kohereza…",
+      "send": "Ohereza Ubutumwa"
+    },
+    "subjects": {
+      "general": "Ikibazo Rusange",
+      "courseSupport": "Ubufasha ku Isomo",
+      "technical": "Ikibazo cya Tekiniki",
+      "partnership": "Ubufatanye",
+      "instructorApplication": "Gusaba Kuba Umwarimu",
+      "billing": "Kwishyura n'Amafaranga"
+    },
+    "office": {
+      "title": "Ibiro Byacu",
+      "line1": "Westlands Business Park",
+      "line2": "Nairobi, Kenya",
+      "getDirections": "Bona Inzira"
+    },
+    "officeHours": {
+      "title": "Amasaha y'Akazi",
+      "weekdays": { "day": "Kuwa mbere – Kuwa gatanu", "hours": "8:00 AM – 6:00 PM" },
+      "saturday": { "day": "Kuwa gatandatu", "hours": "9:00 AM – 2:00 PM" },
+      "sunday": { "day": "Ku cyumweru", "hours": "Rufunze" }
+    },
+    "faqPrompt": "Ushaka igisubizo cyihuse? Reba",
+    "faqLink": "ibibazo bikunze kubazwa"
+  },
+  "verifyCertificate": {
+    "title": "Emeza Impamyabumenyi",
+    "subtitle": "Andika kode yo kwemeza yanditse ku mpamyabumenyi ya Asa Academy kugira ngo wemeze ko ari iy'ukuri.",
+    "checking": "Kugenzura…",
+    "verify": "Emeza",
+    "genericError": "Kwemeza ntibyakunze.",
+    "verified": "Impamyabumenyi yemejwe",
+    "issuedTo": "Yahawe",
+    "forCourse": "ku",
+    "certificateNumber": "Impamyabumenyi #{{number}}",
+    "issued": "Yatanzwe {{date}}",
+    "viewPdf": "Reba impamyabumenyi ya PDF"
+  },
+  "courseDetail": {
+    "lessonCount": "amasomo {{count}}",
+    "quizCount": "ibibazo bigufi {{count}}",
+    "preview": "Reba mbere",
+    "minutes": "iminota {{count}}",
+    "noLessonsYet": "Nta somo ryatangajwe kugeza ubu.",
+    "notFound": "Isomo ntiryabonetse.",
+    "enrollError": "Kwiyandikisha ntibyakunze ubu.",
+    "loading": "Kuraguza isomo…",
+    "backToCourses": "Subira ku masomo",
+    "noRatings": "Nta manota ahari",
+    "studentsCount": "Abanyeshuri {{count}}",
+    "createdBy": "Byakozwe na",
+    "watchPreview": "Reba icyitegererezo",
+    "whatYouLearn": "Ibyo uzajya wiga",
+    "aboutCourse": "Ibijyanye n'iri somo",
+    "noDescription": "Nta bisobanuro bitanzwe kugeza ubu.",
+    "requirements": "Ibisabwa",
+    "requiresCompleting": "Bisaba kuba warangije",
+    "first": "mbere",
+    "courseContent": "Ibikubiye mu isomo",
+    "unitCount": "amasomo {{count}}",
+    "submoduleCount": "uduce {{count}}",
+    "certificate": "Impamyabumenyi",
+    "certificateDescription": "Rangiza iri somo ubone impamyabumenyi ya Asa Academy yemejwe. Dore urugero rw'uko isa.",
+    "certificateSampleAlt": "Urugero rw'impamyabumenyi ya {{title}}",
+    "teachingTeam": "Itsinda ryigisha",
+    "studentReviews": "Ibitekerezo by'abanyeshuri",
+    "defaultStudent": "Umunyeshuri",
+    "taughtBy": "Byigishwa na",
+    "free": "Ubuntu",
+    "enrolled": "Wiyandikishije!",
+    "enrolling": "Kwiyandikisha…",
+    "enrollNow": "Iyandikishe",
+    "totalHours": "amasaha {{count}} muri rusange",
+    "certificateOnCompletion": "Impamyabumenyi nyuma yo kurangiza",
+    "levelLabel": "Urwego {{level}}"
+  }
+}

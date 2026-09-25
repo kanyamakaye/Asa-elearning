@@ -4,10 +4,13 @@ export function getCategories() {
   return apiFetch('/courses/categories/')
 }
 
-export function getCourses({ search, category, page, pageSize } = {}) {
+export function getCourses({ search, category, level, isFree, ordering, page, pageSize } = {}) {
   const params = new URLSearchParams()
   if (search) params.set('search', search)
   if (category) params.set('category', category)
+  if (level) params.set('level', level)
+  if (isFree !== undefined) params.set('is_free', isFree ? 'true' : 'false')
+  if (ordering) params.set('ordering', ordering)
   if (page) params.set('page', page)
   if (pageSize) params.set('page_size', pageSize)
   const qs = params.toString()

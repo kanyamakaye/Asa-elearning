@@ -166,6 +166,40 @@ export function IconMegaphone(props) {
   )
 }
 
+export function IconInfo(props) {
+  return (
+    <svg {...base} {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 11v5.5M12 8v.01" />
+    </svg>
+  )
+}
+
+export function IconSun(props) {
+  return (
+    <svg {...base} {...props}>
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+    </svg>
+  )
+}
+
+export function IconMoon(props) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z" />
+    </svg>
+  )
+}
+
+export function IconLinkedIn(props) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M6.5 9.5v9M6.5 6.5v.01M11 18.5v-5.2c0-1.5 1-2.6 2.5-2.6s2.5 1 2.5 2.6v5.2M11 9.5v9" />
+    </svg>
+  )
+}
+
 export function IconGlobe(props) {
   return (
     <svg {...base} {...props}>
@@ -450,6 +484,25 @@ export function IconChevronLeft(props) {
   return (
     <svg {...base} {...props}>
       <path d="m15 18-6-6 6-6" />
+    </svg>
+  )
+}
+
+export function IconSend(props) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M21 3 10 14" />
+      <path d="m21 3-6.5 18-4.5-7-7-4.5Z" />
+    </svg>
+  )
+}
+
+export function IconLogin(props) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M15 4.5h3a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2h-3" />
+      <path d="M10 15.5l3.5-3.5L10 8.5" />
+      <path d="M13.5 12H4" />
     </svg>
   )
 }

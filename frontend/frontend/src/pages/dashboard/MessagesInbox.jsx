@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
+import { useLanguage } from '../../context/LanguageContext'
 import {
   getConversationMessages,
   listConversations,
@@ -20,17 +21,18 @@ function formatMessageTime(iso) {
   return new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
 }
 
-function formatConversationTime(iso) {
+function formatConversationTime(iso, t) {
   const date = new Date(iso)
   const now = new Date()
   if (isSameDay(date, now)) return formatMessageTime(iso)
   const yesterday = new Date(now)
   yesterday.setDate(now.getDate() - 1)
-  if (isSameDay(date, yesterday)) return 'Yesterday'
+  if (isSameDay(date, yesterday)) return t('dashboardStudent.messagesInbox.yesterday')
   return date.toLocaleDateString([], { month: 'short', day: 'numeric' })
 }
 
 function ConversationListItem({ conversation, active, onClick }) {
+  const { t } = useLanguage()
   const other = conversation.other_participants?.[0]
   const unread = conversation.unread_count > 0
   return (
@@ -39,25 +41,25 @@ function ConversationListItem({ conversation, active, onClick }) {
       onClick={onClick}
       aria-current={active ? 'true' : undefined}
       className={`flex w-full items-start gap-3 rounded-xl px-3 py-3 text-left transition-colors ${
-        active ? 'bg-brand-50' : 'hover:bg-navy-50/70'
+        active ? 'bg-brand-50 dark:bg-brand-500/10' : 'hover:bg-navy-50/70 dark:hover:bg-white/5'
       }`}
     >
       <Avatar user={other ?? {}} size="h-11 w-11" />
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">
-          <p className={`truncate text-sm ${unread ? 'font-bold text-navy-900' : 'font-semibold text-navy-800'}`}>
-            {other?.full_name ?? 'Unknown user'}
+          <p className={`truncate text-sm ${unread ? 'font-bold text-navy-900 dark:text-white' : 'font-semibold text-navy-800 dark:text-navy-100'}`}>
+            {other?.full_name ?? t('dashboardStudent.messagesInbox.unknownUser')}
           </p>
-          <span className="shrink-0 text-[11px] text-navy-700/45">
-            {conversation.last_message ? formatConversationTime(conversation.last_message.created_at) : ''}
+          <span className="shrink-0 text-[11px] text-navy-700/45 dark:text-navy-100/45">
+            {conversation.last_message ? formatConversationTime(conversation.last_message.created_at, t) : ''}
           </span>
         </div>
-        <p className="text-[11px] font-medium uppercase tracking-wide text-navy-700/40">
+        <p className="text-[11px] font-medium uppercase tracking-wide text-navy-700/40 dark:text-navy-100/40">
           {ROLE_LABELS[other?.user_type] ?? other?.user_type}
         </p>
         <div className="mt-0.5 flex items-center justify-between gap-2">
-          <p className={`truncate text-xs ${unread ? 'font-semibold text-navy-800' : 'text-navy-700/55'}`}>
-            {conversation.last_message?.content ?? 'No messages yet'}
+          <p className={`truncate text-xs ${unread ? 'font-semibold text-navy-800 dark:text-navy-100' : 'text-navy-700/55 dark:text-navy-100/55'}`}>
+            {conversation.last_message?.content ?? t('dashboardStudent.messagesInbox.noMessagesYetShort')}
           </p>
           {unread && (
             <span className="flex h-5 min-w-[1.25rem] shrink-0 items-center justify-center rounded-full bg-brand-500 px-1.5 text-[10px] font-bold text-white">
@@ -75,11 +77,11 @@ function MessageBubble({ message, isOwn }) {
     <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
       <div
         className={`max-w-[75%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
-          isOwn ? 'bg-navy-900 text-white' : 'bg-navy-50 text-navy-800'
+          isOwn ? 'bg-navy-900 text-white dark:bg-brand-500' : 'bg-navy-50 text-navy-800 dark:bg-white/5 dark:text-navy-100'
         }`}
       >
         <p className="whitespace-pre-wrap break-words">{message.content}</p>
-        <p className={`mt-1 text-[10px] ${isOwn ? 'text-white/50' : 'text-navy-700/40'}`}>
+        <p className={`mt-1 text-[10px] ${isOwn ? 'text-white/50' : 'text-navy-700/40 dark:text-navy-100/40'}`}>
           {formatMessageTime(message.created_at)}
         </p>
       </div>
@@ -89,6 +91,7 @@ function MessageBubble({ message, isOwn }) {
 
 export default function MessagesInbox() {
   const { accessToken, user } = useAuth()
+  const { t } = useLanguage()
 
   const [conversations, setConversations] = useState([])
   const [conversationsLoading, setConversationsLoading] = useState(true)
@@ -124,7 +127,7 @@ export default function MessagesInbox() {
     setConversationsError('')
     return listConversations(accessToken, search ? { search } : {})
       .then((data) => setConversations(data.results ?? data))
-      .catch((err) => setConversationsError(err.message || 'Unable to load your conversations.'))
+      .catch((err) => setConversationsError(err.message || t('dashboardStudent.messagesInbox.unableToLoadConversations')))
       .finally(() => setConversationsLoading(false))
   }
 
@@ -152,7 +155,7 @@ export default function MessagesInbox() {
         setHasMoreOlder(data.has_more)
         shouldScrollToBottomRef.current = true
       })
-      .catch((err) => !cancelled && setMessagesError(err.message || 'Unable to load this conversation.'))
+      .catch((err) => !cancelled && setMessagesError(err.message || t('dashboardStudent.messagesInbox.unableToLoadConversation')))
       .finally(() => !cancelled && setMessagesLoading(false))
 
     // Opening a conversation marks it read — updates this user's unread
@@ -257,7 +260,7 @@ export default function MessagesInbox() {
       window.dispatchEvent(new Event(MESSAGES_CHANGED_EVENT))
     } catch (err) {
       // Keep the draft so the student/instructor doesn't have to retype it.
-      setSendError(err.message || 'Message could not be sent.')
+      setSendError(err.message || t('dashboardStudent.messagesInbox.messageCouldNotBeSent'))
     } finally {
       setSending(false)
     }
@@ -283,16 +286,16 @@ export default function MessagesInbox() {
   const otherParticipant = activeConversation?.other_participants?.[0]
 
   return (
-    <div className="flex h-[calc(100vh-8.5rem)] flex-col overflow-hidden rounded-2xl bg-white ring-1 ring-navy-900/8 lg:flex-row">
+    <div className="flex h-[calc(100vh-8.5rem)] flex-col overflow-hidden rounded-2xl bg-white ring-1 ring-navy-900/8 dark:bg-navy-800 dark:ring-white/10 lg:flex-row">
       {/* Conversation list — hidden on mobile once a conversation is open */}
-      <div className={`flex w-full flex-col border-r border-navy-900/8 lg:w-80 lg:shrink-0 ${activeConversation ? 'hidden lg:flex' : 'flex'}`}>
-        <div className="flex items-center justify-between gap-2 border-b border-navy-900/8 px-4 py-3.5">
-          <h1 className="text-base font-bold text-navy-900">Messages</h1>
+      <div className={`flex w-full flex-col border-r border-navy-900/8 dark:border-white/10 lg:w-80 lg:shrink-0 ${activeConversation ? 'hidden lg:flex' : 'flex'}`}>
+        <div className="flex items-center justify-between gap-2 border-b border-navy-900/8 px-4 py-3.5 dark:border-white/10">
+          <h1 className="text-base font-bold text-navy-900 dark:text-white">{t('dashboardStudent.messagesInbox.heading')}</h1>
           <button
             type="button"
             onClick={() => setNewMessageOpen(true)}
-            aria-label="New message"
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-navy-900 text-white hover:bg-brand-500"
+            aria-label={t('dashboardStudent.messagesInbox.newMessage')}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-navy-900 text-white hover:bg-brand-500 dark:bg-brand-500 dark:hover:bg-brand-400"
           >
             <IconPlus className="h-4 w-4" />
           </button>
@@ -300,14 +303,14 @@ export default function MessagesInbox() {
 
         <div className="px-4 py-3">
           <div className="relative">
-            <IconSearch className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-navy-700/35" />
+            <IconSearch className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-navy-700/35 dark:text-navy-100/35" />
             <input
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search messages…"
-              aria-label="Search conversations"
-              className="w-full rounded-full border border-navy-900/10 bg-navy-50/40 py-2 pl-9 pr-3 text-sm text-navy-900 placeholder:text-navy-700/35 focus:border-brand-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-100"
+              placeholder={t('dashboardStudent.messagesInbox.searchPlaceholder')}
+              aria-label={t('dashboardStudent.messagesInbox.searchConversations')}
+              className="w-full rounded-full border border-navy-900/10 bg-navy-50/40 py-2 pl-9 pr-3 text-sm text-navy-900 placeholder:text-navy-700/35 focus:border-brand-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-100 dark:border-white/15 dark:bg-white/5 dark:text-white dark:placeholder:text-navy-100/35 dark:focus:bg-white/5"
             />
           </div>
         </div>
@@ -316,28 +319,28 @@ export default function MessagesInbox() {
           {conversationsLoading ? (
             <div className="space-y-2 px-1">
               {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="h-16 animate-pulse rounded-xl bg-navy-50" />
+                <div key={i} className="h-16 animate-pulse rounded-xl bg-navy-50 dark:bg-white/5" />
               ))}
             </div>
           ) : conversationsError ? (
             <div className="px-3 py-8 text-center">
-              <p className="text-sm text-red-600">{conversationsError}</p>
-              <button type="button" onClick={loadConversations} className="mt-2 text-xs font-semibold text-brand-500 hover:text-navy-900">
-                Retry
+              <p className="text-sm text-red-600 dark:text-red-400">{conversationsError}</p>
+              <button type="button" onClick={loadConversations} className="mt-2 text-xs font-semibold text-brand-500 hover:text-navy-900 dark:hover:text-white">
+                {t('dashboardStudent.messagesInbox.retry')}
               </button>
             </div>
           ) : conversations.length === 0 ? (
             <div className="px-4 py-10 text-center">
-              <IconChat className="mx-auto h-7 w-7 text-navy-700/25" />
+              <IconChat className="mx-auto h-7 w-7 text-navy-700/25 dark:text-navy-100/25" />
               {search ? (
                 <>
-                  <p className="mt-3 text-sm font-semibold text-navy-800">No conversations found.</p>
-                  <p className="mt-1 text-xs text-navy-700/50">Try another search term.</p>
+                  <p className="mt-3 text-sm font-semibold text-navy-800 dark:text-navy-100">{t('dashboardStudent.messagesInbox.noConversationsFound')}</p>
+                  <p className="mt-1 text-xs text-navy-700/50 dark:text-navy-100/50">{t('dashboardStudent.messagesInbox.tryAnotherSearch')}</p>
                 </>
               ) : (
                 <>
-                  <p className="mt-3 text-sm font-semibold text-navy-800">No messages yet</p>
-                  <p className="mt-1 text-xs text-navy-700/50">Start a conversation with your instructor or support team.</p>
+                  <p className="mt-3 text-sm font-semibold text-navy-800 dark:text-navy-100">{t('dashboardStudent.messagesInbox.noMessagesYet')}</p>
+                  <p className="mt-1 text-xs text-navy-700/50 dark:text-navy-100/50">{t('dashboardStudent.messagesInbox.startConversation')}</p>
                 </>
               )}
             </div>
@@ -360,24 +363,24 @@ export default function MessagesInbox() {
       <div className={`flex min-w-0 flex-1 flex-col ${activeConversation ? 'flex' : 'hidden lg:flex'}`}>
         {!activeConversation ? (
           <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
-            <IconChat className="h-9 w-9 text-navy-700/20" />
-            <p className="mt-3 text-sm font-semibold text-navy-700/60">Select a conversation to start reading.</p>
+            <IconChat className="h-9 w-9 text-navy-700/20 dark:text-navy-100/20" />
+            <p className="mt-3 text-sm font-semibold text-navy-700/60 dark:text-navy-100/60">{t('dashboardStudent.messagesInbox.selectConversation')}</p>
           </div>
         ) : (
           <>
-            <div className="flex items-center gap-3 border-b border-navy-900/8 px-4 py-3.5">
+            <div className="flex items-center gap-3 border-b border-navy-900/8 px-4 py-3.5 dark:border-white/10">
               <button
                 type="button"
                 onClick={() => setActiveConversation(null)}
-                aria-label="Back to conversations"
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-navy-700/60 hover:bg-navy-50 lg:hidden"
+                aria-label={t('dashboardStudent.messagesInbox.backToConversations')}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-navy-700/60 hover:bg-navy-50 dark:text-navy-100/60 dark:hover:bg-white/5 lg:hidden"
               >
                 <IconChevronLeft className="h-4 w-4" />
               </button>
               <Avatar user={otherParticipant ?? {}} size="h-9 w-9" />
               <div className="min-w-0">
-                <p className="truncate text-sm font-bold text-navy-900">{otherParticipant?.full_name ?? 'Unknown user'}</p>
-                <p className="text-xs text-navy-700/50">{ROLE_LABELS[otherParticipant?.user_type] ?? otherParticipant?.user_type}</p>
+                <p className="truncate text-sm font-bold text-navy-900 dark:text-white">{otherParticipant?.full_name ?? t('dashboardStudent.messagesInbox.unknownUser')}</p>
+                <p className="text-xs text-navy-700/50 dark:text-navy-100/50">{ROLE_LABELS[otherParticipant?.user_type] ?? otherParticipant?.user_type}</p>
               </div>
             </div>
 
@@ -385,23 +388,23 @@ export default function MessagesInbox() {
               {messagesLoading ? (
                 <div className="space-y-3">
                   {Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} className={`h-12 w-2/3 animate-pulse rounded-2xl bg-navy-50 ${i % 2 ? 'ml-auto' : ''}`} />
+                    <div key={i} className={`h-12 w-2/3 animate-pulse rounded-2xl bg-navy-50 dark:bg-white/5 ${i % 2 ? 'ml-auto' : ''}`} />
                   ))}
                 </div>
               ) : messagesError ? (
                 <div className="flex h-full flex-col items-center justify-center text-center">
-                  <p className="text-sm text-red-600">{messagesError}</p>
+                  <p className="text-sm text-red-600 dark:text-red-400">{messagesError}</p>
                   <button
                     type="button"
                     onClick={() => setActiveConversation({ ...activeConversation })}
-                    className="mt-2 text-xs font-semibold text-brand-500 hover:text-navy-900"
+                    className="mt-2 text-xs font-semibold text-brand-500 hover:text-navy-900 dark:hover:text-white"
                   >
-                    Retry
+                    {t('dashboardStudent.messagesInbox.retry')}
                   </button>
                 </div>
               ) : (
                 <>
-                  {loadingOlder && <p className="py-1 text-center text-xs text-navy-700/40">Loading older messages…</p>}
+                  {loadingOlder && <p className="py-1 text-center text-xs text-navy-700/40 dark:text-navy-100/40">{t('dashboardStudent.messagesInbox.loadingOlder')}</p>}
                   {messages.map((m) => (
                     <MessageBubble key={m.id} message={m} isOwn={m.sender.id === user.id} />
                   ))}
@@ -409,12 +412,12 @@ export default function MessagesInbox() {
               )}
             </div>
 
-            <form onSubmit={handleSend} className="border-t border-navy-900/8 p-3">
+            <form onSubmit={handleSend} className="border-t border-navy-900/8 p-3 dark:border-white/10">
               {sendError && (
-                <div className="mb-2 flex items-center justify-between gap-3 rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-600">
+                <div className="mb-2 flex items-center justify-between gap-3 rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-600 dark:bg-red-500/10 dark:text-red-400">
                   <span>{sendError}</span>
                   <button type="button" onClick={handleSend} className="shrink-0 font-semibold underline">
-                    Retry
+                    {t('dashboardStudent.messagesInbox.retry')}
                   </button>
                 </div>
               )}
@@ -424,19 +427,19 @@ export default function MessagesInbox() {
                   onChange={(e) => setDraft(e.target.value)}
                   onKeyDown={handleComposerKeyDown}
                   rows={1}
-                  placeholder="Type a message…"
-                  aria-label="Type a message"
-                  className="max-h-32 flex-1 resize-none rounded-2xl border border-navy-900/10 px-4 py-2.5 text-sm text-navy-900 placeholder:text-navy-700/35 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
+                  placeholder={t('dashboardStudent.messagesInbox.typeMessage')}
+                  aria-label={t('dashboardStudent.messagesInbox.typeMessage')}
+                  className="max-h-32 flex-1 resize-none rounded-2xl border border-navy-900/10 px-4 py-2.5 text-sm text-navy-900 placeholder:text-navy-700/35 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100 dark:border-white/15 dark:bg-white/5 dark:text-white dark:placeholder:text-navy-100/35"
                 />
                 <button
                   type="submit"
                   disabled={!draft.trim() || sending}
-                  aria-label="Send message"
-                  className="flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-navy-900 px-4 text-sm font-semibold text-white hover:bg-brand-500 disabled:opacity-50"
+                  aria-label={t('dashboardStudent.messagesInbox.sendMessage')}
+                  className="flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-navy-900 px-4 text-sm font-semibold text-white hover:bg-brand-500 disabled:opacity-50 dark:bg-brand-500 dark:hover:bg-brand-400"
                 >
-                  {sending ? 'Sending…' : (
+                  {sending ? t('dashboardStudent.messagesInbox.sending') : (
                     <>
-                      Send <IconArrowRight className="h-3.5 w-3.5" />
+                      {t('dashboardStudent.messagesInbox.send')} <IconArrowRight className="h-3.5 w-3.5" />
                     </>
                   )}
                 </button>

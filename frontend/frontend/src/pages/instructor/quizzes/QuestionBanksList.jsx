@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useConfirm } from '../../../context/ConfirmContext'
+import { useLanguage } from '../../../context/LanguageContext'
 import { deleteQuestionBank, getQuestionBanks } from '../../../services/questionBankService'
 import DataTable from '../../../components/dashboard/DataTable'
 import Button from '../../../components/ui/Button'
@@ -8,6 +9,7 @@ import PageHeader from '../../../components/ui/PageHeader'
 import { IconEdit, IconPlus, IconTrash } from '../../../components/icons'
 
 export default function QuestionBanksList() {
+  const { t } = useLanguage()
   const confirm = useConfirm()
   const [banks, setBanks] = useState([])
   const [search, setSearch] = useState('')
@@ -29,7 +31,7 @@ export default function QuestionBanksList() {
   }, [search])
 
   async function handleDelete(bank) {
-    const { confirmed, reason } = await confirm(`Delete question bank "${bank.title}"? This cannot be undone.`)
+    const { confirmed, reason } = await confirm(t('dashboardInstructor.questionBanksList.confirmDelete', { title: bank.title }))
     if (!confirmed) return
     setBusyId(bank.id)
     try {
@@ -43,32 +45,32 @@ export default function QuestionBanksList() {
   return (
     <div className="space-y-4">
       <PageHeader
-        title="Question Banks"
-        description="Reusable questions you can pull into any quiz."
-        actions={<Button as={Link} to="/dashboard/question-banks/create"><IconPlus className="h-4 w-4" /> New Bank</Button>}
+        title={t('dashboardInstructor.questionBanksList.heading')}
+        description={t('dashboardInstructor.questionBanksList.pageDescription')}
+        actions={<Button as={Link} to="/dashboard/question-banks/create"><IconPlus className="h-4 w-4" /> {t('dashboardInstructor.questionBanksList.newBank')}</Button>}
       />
 
       <DataTable
         loading={loading}
         rows={banks}
-        emptyMessage="No question banks yet. Create your first one."
-        search={{ value: search, onChange: setSearch, placeholder: 'Search by title…' }}
+        emptyMessage={t('dashboardInstructor.questionBanksList.noQuestionBanks')}
+        search={{ value: search, onChange: setSearch, placeholder: t('dashboardInstructor.questionBanksList.searchPlaceholder') }}
         exportFilename="question-banks"
-        exportTitle="Question Banks"
+        exportTitle={t('dashboardInstructor.questionBanksList.heading')}
         columns={[
-          { key: 'title', label: 'Title', render: (b) => <span className="font-semibold text-navy-900">{b.title}</span> },
-          { key: 'category_name', label: 'Category', render: (b) => b.category_name ?? '—' },
-          { key: 'course_title', label: 'Course', render: (b) => b.course_title ?? '—' },
-          { key: 'question_count', label: 'Questions' },
+          { key: 'title', label: t('dashboardInstructor.questionBanksList.columnTitle'), render: (b) => <span className="font-semibold text-navy-900 dark:text-white">{b.title}</span> },
+          { key: 'category_name', label: t('dashboardInstructor.questionBanksList.columnCategory'), render: (b) => b.category_name ?? '—' },
+          { key: 'course_title', label: t('dashboardInstructor.questionBanksList.columnCourse'), render: (b) => b.course_title ?? '—' },
+          { key: 'question_count', label: t('dashboardInstructor.questionBanksList.columnQuestions') },
           {
             key: 'actions',
             label: '',
             render: (b) => (
               <div className="flex items-center justify-end gap-2">
-                <Link to={`/dashboard/question-banks/${b.id}`} className="rounded-lg p-1.5 text-navy-700/50 hover:bg-navy-50" aria-label="Manage questions">
+                <Link to={`/dashboard/question-banks/${b.id}`} className="rounded-lg p-1.5 text-navy-700/50 hover:bg-navy-50 dark:text-navy-100/50 dark:hover:bg-white/5" aria-label={t('dashboardInstructor.questionBanksList.manageQuestions')}>
                   <IconEdit className="h-4 w-4" />
                 </Link>
-                <button type="button" disabled={busyId === b.id} onClick={() => handleDelete(b)} className="rounded-lg p-1.5 text-red-500 hover:bg-red-50" aria-label="Delete bank">
+                <button type="button" disabled={busyId === b.id} onClick={() => handleDelete(b)} className="rounded-lg p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10" aria-label={t('dashboardInstructor.questionBanksList.deleteBank')}>
                   <IconTrash className="h-4 w-4" />
                 </button>
               </div>

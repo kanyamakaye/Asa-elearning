@@ -12,6 +12,7 @@ import LearningPaths from '../components/LearningPaths'
 import Pricing from '../components/Pricing'
 import Testimonials from '../components/Testimonials'
 import TrustStrip from '../components/TrustStrip'
+import StudentPortal from '../components/StudentPortal'
 import Reveal from '../components/ui/Reveal'
 
 export default function Home() {
@@ -25,6 +26,7 @@ export default function Home() {
       <Reveal><Courses /></Reveal>
       <Reveal><LearningPaths /></Reveal>
       <Reveal><CareerOutcomes /></Reveal>
+      <Reveal><StudentPortal /></Reveal>
       <Reveal><Testimonials /></Reveal>
       <Reveal><Instructors /></Reveal>
       <Reveal><InstructorCTA /></Reveal>

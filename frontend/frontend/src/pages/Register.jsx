@@ -1,15 +1,20 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useLanguage } from '../context/LanguageContext'
+import { useToast } from '../context/ToastContext'
 import AuthBrandPanel from '../components/auth/AuthBrandPanel'
 import GoogleDivider from '../components/auth/GoogleDivider'
 import GoogleSignInButton from '../components/GoogleSignInButton'
+import PasswordStrengthChecklist from '../components/auth/PasswordStrengthChecklist'
 import { PASSWORD_RULES } from '../lib/passwordRules'
-import { IconArrowRight, IconCheck, IconChevronLeft, IconEye, IconEyeOff, IconLock, IconMail } from '../components/icons'
+import { IconArrowRight, IconChevronLeft, IconEye, IconEyeOff, IconLock, IconMail } from '../components/icons'
 import logo from '../assets/logo.png'
 
 export default function Register() {
   const { register, loginWithGoogle } = useAuth()
+  const { t } = useLanguage()
+  const { showToast } = useToast()
   const navigate = useNavigate()
   const [googleLoading, setGoogleLoading] = useState(false)
 
@@ -35,8 +40,7 @@ export default function Register() {
     }
   }
 
-  const passwordChecks = PASSWORD_RULES.map((rule) => ({ ...rule, met: rule.test(form.password) }))
-  const passwordValid = passwordChecks.every((c) => c.met)
+  const passwordValid = PASSWORD_RULES.every((rule) => rule.test(form.password))
   const passwordsMatch = form.password.length > 0 && form.password === form.passwordConfirm
 
   async function handleSubmit(e) {
@@ -44,20 +48,23 @@ export default function Register() {
     setError('')
 
     if (form.password !== form.passwordConfirm) {
-      setError('Passwords do not match.')
+      setError(t('auth.register.passwordsDontMatch'))
       return
     }
     if (!form.acceptTerms || !form.acceptPrivacyPolicy) {
-      setError('Please accept the Terms and Conditions and Privacy Policy to continue.')
+      setError(t('auth.register.mustAcceptTerms'))
       return
     }
 
     setLoading(true)
     try {
       const data = await register(form)
+      showToast(t('auth.toast.accountCreated'), { tone: 'success' })
       navigate('/verify-email', { state: { email: data?.email || form.email } })
     } catch (err) {
-      setError(err.message || 'Unable to create your account. Please try again.')
+      const message = err.message || t('auth.register.genericError')
+      setError(message)
+      showToast(message, { tone: 'error', title: t('auth.toast.registerFailedTitle') })
     } finally {
       setLoading(false)
     }
@@ -71,9 +78,12 @@ export default function Register() {
     setGoogleLoading(true)
     try {
       await loginWithGoogle(credential)
+      showToast(t('auth.toast.welcomeBack'), { tone: 'success' })
       navigate('/dashboard', { replace: true })
     } catch (err) {
-      setError(err.message || 'Unable to sign up with Google. Please try again.')
+      const message = err.message || t('auth.register.googleError')
+      setError(message)
+      showToast(message, { tone: 'error', title: t('auth.toast.registerFailedTitle') })
     } finally {
       setGoogleLoading(false)
     }
@@ -82,90 +92,90 @@ export default function Register() {
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
       <AuthBrandPanel
-        badge="Join 50,000+ learners already growing with us"
+        badge={t('auth.brandPanel.signupBadge')}
         heading={
           <>
-            Start learning{' '}
+            {t('auth.brandPanel.signupHeadingStart')}{' '}
             <span className="bg-gradient-to-r from-brand-600 via-violet-500 to-brand-500 bg-clip-text text-transparent">
-              today, for free
+              {t('auth.brandPanel.signupHeadingEnd')}
             </span>
           </>
         }
-        description="Create your Asa Academy learner account in minutes — verify your email, and you're ready to enroll in your first course."
+        description={t('auth.brandPanel.signupDescription')}
       />
 
-      <div className="flex min-h-screen items-center justify-center bg-brand-50/40 px-6 py-12 lg:bg-white">
+      <div className="flex min-h-screen items-center justify-center bg-brand-50/40 px-6 py-12 dark:bg-navy-950 lg:bg-white dark:lg:bg-navy-950">
         <div className="animate-fade-up w-full max-w-md">
           <Link
             to="/"
-            className="mb-6 inline-flex items-center gap-1.5 text-xs font-semibold text-navy-700/55 hover:text-brand-500 lg:hidden"
+            className="mb-6 inline-flex items-center gap-1.5 text-xs font-semibold text-navy-700/55 hover:text-brand-500 dark:text-navy-100/55 lg:hidden"
           >
             <IconChevronLeft className="h-3.5 w-3.5" />
-            Back to home
+            {t('auth.backToHome')}
           </Link>
 
           <Link to="/" className="mb-8 flex items-center justify-center gap-2.5 lg:hidden">
             <img src={logo} alt="Asa Academy" className="h-10 w-10 object-contain" />
-            <span className="font-display text-lg font-bold tracking-tight text-navy-900">Asa Academy</span>
+            <span className="font-display text-lg font-bold tracking-tight text-navy-900 dark:text-white">Asa Academy</span>
           </Link>
 
           <Link
             to="/"
-            className="mb-6 hidden items-center gap-1.5 text-xs font-semibold text-navy-700/55 hover:text-brand-500 lg:inline-flex"
+            className="mb-6 hidden items-center gap-1.5 text-xs font-semibold text-navy-700/55 hover:text-brand-500 dark:text-navy-100/55 lg:inline-flex"
           >
             <IconChevronLeft className="h-3.5 w-3.5" />
-            Back to home
+            {t('auth.backToHome')}
           </Link>
 
-          <div className="mt-2 rounded-3xl bg-white p-8 shadow-sm ring-1 ring-navy-900/8 lg:mt-4 lg:p-0 lg:shadow-none lg:ring-0">
-            <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">Create your learner account</h1>
-            <p className="mt-2 text-sm text-navy-700/60">
-              Join Asa Academy and start learning today &mdash; it&apos;s free.
+          <div className="mt-2 rounded-3xl bg-white p-8 shadow-sm ring-1 ring-navy-900/8 dark:bg-navy-900 dark:ring-white/10 lg:mt-4 lg:p-0 lg:shadow-none lg:ring-0 dark:lg:bg-transparent dark:lg:ring-0">
+            <h1 className="text-2xl font-extrabold tracking-tight text-navy-900 dark:text-white">{t('auth.register.heading')}</h1>
+            <p className="mt-2 text-sm text-navy-700/60 dark:text-navy-100/60">
+              {t('auth.register.subheading')}
             </p>
 
             {error && (
-              <div className="mt-6 rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-600">{error}</div>
+              <div className="mt-6 rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-600 dark:bg-red-500/10 dark:text-red-400">{error}</div>
             )}
 
             <form onSubmit={handleSubmit} className="mt-8 grid gap-5">
               <div className="grid grid-cols-2 gap-4">
                 <label className="block">
-                  <span className="text-sm font-semibold text-navy-900">First name</span>
+                  <span className="text-sm font-semibold text-navy-900 dark:text-white">{t('auth.register.firstName')}</span>
                   <input
                     type="text"
                     required
                     value={form.firstName}
                     onChange={update('firstName')}
-                    className="mt-2 w-full rounded-xl border border-navy-900/10 px-4 py-3 text-sm text-navy-900 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
+                    className="mt-2 w-full rounded-xl border border-navy-900/10 bg-white px-4 py-3 text-sm text-navy-900 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100 dark:border-white/15 dark:bg-white/5 dark:text-white"
                   />
                 </label>
                 <label className="block">
-                  <span className="text-sm font-semibold text-navy-900">Last name</span>
+                  <span className="text-sm font-semibold text-navy-900 dark:text-white">{t('auth.register.lastName')}</span>
                   <input
                     type="text"
                     required
                     value={form.lastName}
                     onChange={update('lastName')}
-                    className="mt-2 w-full rounded-xl border border-navy-900/10 px-4 py-3 text-sm text-navy-900 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
+                    className="mt-2 w-full rounded-xl border border-navy-900/10 bg-white px-4 py-3 text-sm text-navy-900 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100 dark:border-white/15 dark:bg-white/5 dark:text-white"
                   />
                 </label>
               </div>
 
               <label className="block">
-                <span className="text-sm font-semibold text-navy-900">Username</span>
+                <span className="text-sm font-semibold text-navy-900 dark:text-white">{t('auth.register.username')}</span>
                 <input
                   type="text"
                   required
                   value={form.username}
                   onChange={update('username')}
-                  className="mt-2 w-full rounded-xl border border-navy-900/10 px-4 py-3 text-sm text-navy-900 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
+                  className="mt-2 w-full rounded-xl border border-navy-900/10 bg-white px-4 py-3 text-sm text-navy-900 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100 dark:border-white/15 dark:bg-white/5 dark:text-white"
                 />
               </label>
 
               <label className="block">
-                <span className="text-sm font-semibold text-navy-900">Email address</span>
+                <span className="text-sm font-semibold text-navy-900 dark:text-white">{t('auth.fields.email')}</span>
                 <div className="relative mt-2">
-                  <IconMail className="pointer-events-none absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-navy-700/35" />
+                  <IconMail className="pointer-events-none absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-navy-700/35 dark:text-navy-100/35" />
                   <input
                     type="email"
                     required
@@ -173,15 +183,15 @@ export default function Register() {
                     value={form.email}
                     onChange={update('email')}
                     placeholder="jane@example.com"
-                    className="w-full rounded-xl border border-navy-900/10 py-3 pl-11 pr-4 text-sm text-navy-900 placeholder:text-navy-700/35 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
+                    className="w-full rounded-xl border border-navy-900/10 bg-white py-3 pl-11 pr-4 text-sm text-navy-900 placeholder:text-navy-700/35 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100 dark:border-white/15 dark:bg-white/5 dark:text-white dark:placeholder:text-navy-100/35"
                   />
                 </div>
               </label>
 
               <label className="block">
-                <span className="text-sm font-semibold text-navy-900">Password</span>
+                <span className="text-sm font-semibold text-navy-900 dark:text-white">{t('auth.fields.password')}</span>
                 <div className="relative mt-2">
-                  <IconLock className="pointer-events-none absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-navy-700/35" />
+                  <IconLock className="pointer-events-none absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-navy-700/35 dark:text-navy-100/35" />
                   <input
                     type={showPassword ? 'text' : 'password'}
                     required
@@ -189,85 +199,67 @@ export default function Register() {
                     value={form.password}
                     onChange={update('password')}
                     onFocus={() => setTouchedPassword(true)}
-                    placeholder="At least 8 characters"
-                    className="w-full rounded-xl border border-navy-900/10 py-3 pl-11 pr-11 text-sm text-navy-900 placeholder:text-navy-700/35 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
+                    placeholder={t('auth.atLeast8Chars')}
+                    className="w-full rounded-xl border border-navy-900/10 bg-white py-3 pl-11 pr-11 text-sm text-navy-900 placeholder:text-navy-700/35 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100 dark:border-white/15 dark:bg-white/5 dark:text-white dark:placeholder:text-navy-100/35"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword((v) => !v)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-navy-700/40 hover:text-navy-700"
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-navy-700/40 hover:text-navy-700 dark:text-navy-100/40 dark:hover:text-navy-100"
+                    aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
                   >
                     {showPassword ? <IconEyeOff className="h-4.5 w-4.5" /> : <IconEye className="h-4.5 w-4.5" />}
                   </button>
                 </div>
-                {touchedPassword && (
-                  <ul className="mt-2.5 grid grid-cols-1 gap-1 sm:grid-cols-2">
-                    {passwordChecks.map((c) => (
-                      <li
-                        key={c.label}
-                        className={`flex items-center gap-1.5 text-xs ${c.met ? 'text-emerald-600' : 'text-navy-700/40'}`}
-                      >
-                        <span
-                          className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full ${
-                            c.met ? 'bg-emerald-100' : 'bg-navy-900/8'
-                          }`}
-                        >
-                          {c.met && <IconCheck className="h-2.5 w-2.5" />}
-                        </span>
-                        {c.label}
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                {touchedPassword && <PasswordStrengthChecklist password={form.password} />}
               </label>
 
               <label className="block">
-                <span className="text-sm font-semibold text-navy-900">Confirm password</span>
+                <span className="text-sm font-semibold text-navy-900 dark:text-white">{t('auth.register.confirmPassword')}</span>
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required
                   autoComplete="new-password"
                   value={form.passwordConfirm}
                   onChange={update('passwordConfirm')}
-                  className={`mt-2 w-full rounded-xl border px-4 py-3 text-sm text-navy-900 focus:outline-none focus:ring-2 ${
+                  className={`mt-2 w-full rounded-xl border bg-white px-4 py-3 text-sm text-navy-900 focus:outline-none focus:ring-2 dark:bg-white/5 dark:text-white ${
                     form.passwordConfirm && !passwordsMatch
-                      ? 'border-red-300 focus:border-red-400 focus:ring-red-100'
-                      : 'border-navy-900/10 focus:border-brand-400 focus:ring-brand-100'
+                      ? 'border-red-300 focus:border-red-400 focus:ring-red-100 dark:border-red-400/50'
+                      : 'border-navy-900/10 focus:border-brand-400 focus:ring-brand-100 dark:border-white/15'
                   }`}
                 />
                 {form.passwordConfirm && !passwordsMatch && (
-                  <p className="mt-1.5 text-xs font-medium text-red-600">Passwords do not match.</p>
+                  <p className="mt-1.5 text-xs font-medium text-red-600 dark:text-red-400">{t('auth.register.passwordsDontMatch')}</p>
                 )}
               </label>
 
-              <div className="space-y-2.5 border-t border-navy-900/8 pt-5">
-                <label className="flex items-start gap-2.5 text-sm text-navy-700/75">
+              <div className="space-y-2.5 border-t border-navy-900/8 pt-5 dark:border-white/10">
+                <label className="flex items-start gap-2.5 text-sm text-navy-700/75 dark:text-navy-100/75">
                   <input
                     type="checkbox"
                     checked={form.acceptTerms}
                     onChange={update('acceptTerms')}
-                    className="mt-0.5 h-4 w-4 shrink-0 rounded border-navy-900/20 text-brand-500 focus:ring-brand-200"
+                    className="mt-0.5 h-4 w-4 shrink-0 rounded border-navy-900/20 text-brand-500 focus:ring-brand-200 dark:border-white/25 dark:bg-white/5"
                   />
-                  <span>I agree to the Asa Academy Terms and Conditions</span>
+                  <span>{t('auth.register.acceptTerms')}</span>
                 </label>
-                <label className="flex items-start gap-2.5 text-sm text-navy-700/75">
+                <label className="flex items-start gap-2.5 text-sm text-navy-700/75 dark:text-navy-100/75">
                   <input
                     type="checkbox"
                     checked={form.acceptPrivacyPolicy}
                     onChange={update('acceptPrivacyPolicy')}
-                    className="mt-0.5 h-4 w-4 shrink-0 rounded border-navy-900/20 text-brand-500 focus:ring-brand-200"
+                    className="mt-0.5 h-4 w-4 shrink-0 rounded border-navy-900/20 text-brand-500 focus:ring-brand-200 dark:border-white/25 dark:bg-white/5"
                   />
-                  <span>I agree to the Asa Academy Privacy Policy</span>
+                  <span>{t('auth.register.acceptPrivacy')}</span>
                 </label>
               </div>
 
               <button
                 type="submit"
                 disabled={loading || !form.acceptTerms || !form.acceptPrivacyPolicy || !passwordValid || !passwordsMatch}
-                className="mt-1 inline-flex items-center justify-center gap-2 rounded-full bg-navy-900 px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-brand-500 disabled:opacity-50"
+                className="mt-1 inline-flex items-center justify-center gap-2 rounded-full bg-navy-900 px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-brand-500 disabled:opacity-50 dark:bg-brand-500 dark:hover:bg-brand-400"
               >
-                {loading ? 'Creating account…' : 'Create Account'}
+                {loading ? t('auth.register.submitting') : t('auth.register.submit')}
                 {!loading && <IconArrowRight className="h-4 w-4" />}
               </button>
             </form>
@@ -278,10 +270,10 @@ export default function Register() {
             </div>
           </div>
 
-          <p className="mt-6 text-center text-sm text-navy-700/60">
-            Already have an account?{' '}
-            <Link to="/login" className="font-semibold text-brand-500 hover:text-navy-900">
-              Log in
+          <p className="mt-6 text-center text-sm text-navy-700/60 dark:text-navy-100/60">
+            {t('auth.register.haveAccount')}{' '}
+            <Link to="/login" className="font-semibold text-brand-500 hover:text-navy-900 dark:hover:text-white">
+              {t('auth.register.logIn')}
             </Link>
           </p>
         </div>

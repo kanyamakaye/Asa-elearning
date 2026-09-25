@@ -1,0 +1,430 @@
+{
+  "nav": {
+    "home": "Accueil",
+    "courses": "Cours",
+    "instructors": "Instructeurs",
+    "pricing": "Tarifs",
+    "about": "À propos",
+    "faq": "FAQ",
+    "contact": "Contact",
+    "logIn": "Connexion",
+    "getStarted": "Commencer",
+    "dashboard": "Tableau de bord",
+    "logOut": "Déconnexion",
+    "greeting": "Bonjour, {{name}}",
+    "toggleMenu": "Ouvrir le menu"
+  },
+  "courses": {
+    "eyebrow": "Cours populaires",
+    "heading": "Apprenez avec des cours plébiscités par les étudiants",
+    "subheadWithCount": "{{count}} cours dans toutes les catégories",
+    "subhead": "Conçus pour des compétences concrètes",
+    "viewAll": "Voir tous les cours",
+    "free": "Gratuit",
+    "generalCategory": "Général",
+    "hours": "{{count}} h",
+    "studentsEnrolled": "{{count}} étudiants inscrits"
+  },
+  "instructors": {
+    "eyebrow": "Découvrez les instructeurs",
+    "heading": "Apprenez auprès d'experts du secteur",
+    "viewAll": "Voir tous les instructeurs",
+    "linkedinLabel": "{{name}} sur LinkedIn",
+    "courseCount": "{{count}} cours"
+  },
+  "hero": {
+    "eyebrow": "Apprenez des compétences. Construisez votre avenir.",
+    "headlineStart": "Maîtrisez les compétences qui",
+    "headlineEnd": "font avancer votre carrière",
+    "subhead": "Apprenez des compétences pratiques et pertinentes auprès d'instructeurs expérimentés, réalisez des projets concrets et transformez ce que vous apprenez en opportunités de carrière.",
+    "primaryCta": "Commencer à apprendre",
+    "secondaryCta": "Explorer les cours",
+    "searchLabel": "Rechercher des cours",
+    "searchPlaceholder": "Que voulez-vous apprendre aujourd'hui ?",
+    "searchButton": "Rechercher",
+    "popularLabel": "Populaire :",
+    "popularSearches": {
+      "webDevelopment": "Développement web",
+      "dataScience": "Science des données",
+      "digitalMarketing": "Marketing numérique",
+      "accounting": "Comptabilité",
+      "french": "Français"
+    },
+    "certCardTitle": "Certificat obtenu",
+    "certCardSubtitle": "Parcours Science des données",
+    "streakCardTitle": "Série de 12 jours",
+    "streakCardSubtitle": "{{count}} apprenants aujourd'hui",
+    "stats": {
+      "courses": "Cours",
+      "students": "Étudiants",
+      "instructors": "Instructeurs",
+      "completionRate": "Taux de réussite"
+    }
+  },
+  "trustStrip": {
+    "heading": "Des compétences recherchées activement par les recruteurs"
+  },
+  "categoryExplorer": {
+    "eyebrow": "Parcourir par catégorie",
+    "heading": "Explorez des cours dans tous les domaines",
+    "headingWithCount": "Explorez {{count}} cours dans tous les domaines",
+    "subhead": "Choisissez une catégorie pour accéder directement aux cours de ce parcours — du débutant à l'avancé, tout au même endroit.",
+    "courseCount": "{{count}} cours",
+    "viewAll": "Voir tous les cours"
+  },
+  "features": {
+    "eyebrow": "Pourquoi Asa Academy",
+    "heading": "Tout ce dont vous avez besoin pour apprendre et enseigner en ligne",
+    "subhead": "Un environnement intégré pour tout le parcours d'apprentissage — de l'inscription à la certification.",
+    "items": {
+      "liveClasses": {
+        "title": "Cours en direct et enregistrés",
+        "description": "Rejoignez des sessions en direct planifiées avec des instructeurs ou apprenez à votre rythme avec des vidéos à la demande."
+      },
+      "quizzes": {
+        "title": "Quiz et devoirs",
+        "description": "Testez votre compréhension avec des quiz et des devoirs, puis recevez une évaluation détaillée de l'instructeur."
+      },
+      "progress": {
+        "title": "Suivi de la progression",
+        "description": "Suivez votre parcours d'apprentissage leçon par leçon grâce à un tableau de bord personnel qui montre exactement où vous en êtes."
+      },
+      "certificates": {
+        "title": "Certificats vérifiés",
+        "description": "Obtenez un certificat d'achèvement pour chaque cours terminé, avec un code unique que tout le monde peut vérifier."
+      },
+      "discussions": {
+        "title": "Discussions et messagerie",
+        "description": "Posez des questions dans les discussions de cours et contactez directement les instructeurs en cas de besoin."
+      },
+      "everyRole": {
+        "title": "Conçu pour chaque rôle",
+        "description": "Des tableaux de bord conçus pour les étudiants, les instructeurs et les administrateurs gardent tout le monde concentré sur l'essentiel."
+      }
+    }
+  },
+  "howItWorks": {
+    "eyebrow": "Comment ça marche",
+    "heading": "Commencez à apprendre en quatre étapes simples",
+    "steps": {
+      "createAccount": {
+        "title": "Créez votre compte",
+        "description": "Inscrivez-vous en quelques minutes en tant qu'étudiant et indiquez-nous ce que vous voulez apprendre."
+      },
+      "browseEnroll": {
+        "title": "Parcourez et inscrivez-vous",
+        "description": "Recherchez par catégorie, niveau ou instructeur et inscrivez-vous aux cours qui correspondent à vos objectifs."
+      },
+      "learnAtPace": {
+        "title": "Apprenez à votre rythme",
+        "description": "Regardez les leçons, participez aux cours en direct, complétez les quiz et devoirs, et suivez votre progression."
+      },
+      "earnCertificate": {
+        "title": "Obtenez votre certificat",
+        "description": "Terminez le cours et recevez un certificat vérifié que vous pouvez partager et prouver."
+      }
+    }
+  },
+  "learningPaths": {
+    "eyebrow": "Parcours d'apprentissage",
+    "heading": "Ne suivez pas juste un cours. Suivez un parcours.",
+    "subhead": "Chaque catégorie est structurée du débutant à l'avancé, pour toujours savoir quoi apprendre ensuite.",
+    "courseCount": "{{count}} cours",
+    "levels": {
+      "beginner": "Débutant",
+      "intermediate": "Intermédiaire",
+      "advanced": "Avancé"
+    },
+    "startPath": "Commencer ce parcours"
+  },
+  "careerOutcomes": {
+    "eyebrow": "Résultats de carrière",
+    "heading": "L'apprentissage doit mener quelque part.",
+    "steps": {
+      "learn": { "label": "Apprendre", "description": "Des leçons structurées données par des professionnels en activité" },
+      "practice": { "label": "Pratiquer", "description": "Des quiz et devoirs qui renforcent chaque concept" },
+      "trackProgress": { "label": "Suivre la progression", "description": "Un tableau de bord qui montre exactement où vous en êtes" },
+      "getCertified": { "label": "Être certifié", "description": "Un certificat vérifiable une fois le cours terminé" },
+      "advance": { "label": "Avancer", "description": "Une preuve de compétence à partager avec les employeurs" }
+    }
+  },
+  "testimonials": {
+    "eyebrow": "Témoignages",
+    "heading": "Apprécié par les étudiants et les instructeurs",
+    "defaultStudentName": "Étudiant Asa Academy",
+    "studentOfCategory": "Étudiant, {{category}}"
+  },
+  "instructorCta": {
+    "eyebrow": "Pour les instructeurs",
+    "heading": "Partagez votre expertise avec des milliers d'apprenants",
+    "description": "Asa Academy donne aux instructeurs tout ce qu'il faut pour créer, enseigner et développer un cours — de la création de contenu à la correction et aux analyses.",
+    "cta": "Commencez à enseigner dès aujourd'hui",
+    "points": {
+      "unlimitedCourses": "Créez et publiez un nombre illimité de cours",
+      "liveClasses": "Animez des cours en direct et suivez la présence",
+      "grading": "Corrigez facilement les quiz et devoirs",
+      "getPaid": "Soyez payé pour chaque inscription"
+    }
+  },
+  "studentPortal": {
+    "eyebrow": "Portail étudiant",
+    "heading": "Offrez à chaque apprenant une vue sur sa progression",
+    "description": "Les étudiants se connectent à leur propre tableau de bord et suivent leur apprentissage à tout moment, sans attendre un instructeur.",
+    "points": {
+      "courses": "Cours suivis et progression des leçons",
+      "grades": "Résultats des quiz et notes des devoirs",
+      "certificates": "Certificats, présence et rapports d'apprentissage"
+    },
+    "getStarted": "Commencer",
+    "logIn": "Se connecter",
+    "illustrationAlt": "Illustration d'un étudiant déverrouillant son portail sur un téléphone"
+  },
+  "pricing": {
+    "eyebrow": "Tarifs",
+    "heading": "Une tarification simple et honnête",
+    "subhead": "Pas d'abonnement ni de frais cachés. Commencez avec des cours gratuits, ou payez une fois par cours pour un accès à vie.",
+    "freeTitle": "Cours gratuits",
+    "freeFeatures": {
+      "fullAccess": "Accès complet à tous les cours gratuits",
+      "progressTracking": "Quiz, devoirs et suivi de progression",
+      "discussions": "Discussions de cours et messagerie avec l'instructeur",
+      "certificate": "Un certificat vérifié à la fin"
+    },
+    "freeCta": "Créer un compte gratuit",
+    "mostPopular": "Le plus populaire",
+    "paidTitle": "Cours payants",
+    "perCourse": "Par cours",
+    "paidFeatures": {
+      "everythingFree": "Tout ce qui est inclus dans les cours gratuits",
+      "inDepthCourses": "Des cours payants approfondis, animés par des instructeurs",
+      "lifetimeAccess": "Accès à vie — apprenez à votre rythme",
+      "onePrice": "Un prix clair par cours, sans abonnement"
+    },
+    "paidCta": "Parcourir les cours payants"
+  },
+  "faq": {
+    "eyebrow": "FAQ",
+    "heading": "Questions fréquentes"
+  },
+  "cta": {
+    "heading": "Prêt à commencer à apprendre dès aujourd'hui ?",
+    "description": "Rejoignez des milliers d'étudiants et d'instructeurs qui développent déjà leurs compétences sur Asa Academy.",
+    "primaryCta": "Créer un compte gratuit",
+    "secondaryCta": "Parcourir les cours"
+  },
+  "footer": {
+    "columns": {
+      "platform": "Plateforme",
+      "categories": "Catégories",
+      "forStudents": "Pour les étudiants",
+      "forInstructors": "Pour les instructeurs",
+      "support": "Assistance"
+    },
+    "links": {
+      "home": "Accueil",
+      "courses": "Cours",
+      "instructors": "Instructeurs",
+      "aboutUs": "À propos",
+      "pricing": "Tarifs",
+      "browseCourses": "Parcourir les cours",
+      "learningPaths": "Parcours d'apprentissage",
+      "careerOutcomes": "Résultats de carrière",
+      "verifyCertificate": "Vérifier un certificat",
+      "createAccount": "Créer un compte",
+      "logIn": "Connexion",
+      "becomeInstructor": "Devenir instructeur",
+      "meetInstructors": "Découvrir nos instructeurs",
+      "instructorPricing": "Tarifs et formules instructeur",
+      "contactUs": "Nous contacter",
+      "faq": "FAQ",
+      "helpCenter": "Centre d'aide",
+      "privacyPolicy": "Politique de confidentialité",
+      "termsOfService": "Conditions d'utilisation"
+    },
+    "viewAllCourses": "Voir tous les cours",
+    "tagline": "Apprenez sans limites",
+    "faqs": "FAQ",
+    "customerSupport": "Assistance client",
+    "findUs": "Nous trouver",
+    "getDirections": "Obtenir l'itinéraire",
+    "copyright": "© {{year}} Asa Academy. Tous droits réservés.",
+    "privacy": "Confidentialité",
+    "terms": "Conditions",
+    "cookiePolicy": "Politique de cookies",
+    "subscribed": "Merci — vous êtes inscrit.",
+    "emailAddress": "Adresse e-mail",
+    "emailPlaceholder": "Recevoir les actualités par e-mail",
+    "subscribe": "S'abonner"
+  },
+  "coursesMegaMenu": {
+    "getStarted": "Commencer",
+    "quickLinks": {
+      "exploreCourses": "Explorer les cours",
+      "exploreInstructors": "Explorer les instructeurs",
+      "learningPaths": "Parcours d'apprentissage",
+      "getCertified": "Obtenir une certification",
+      "pricingPlans": "Tarifs et formules",
+      "becomeInstructor": "Devenir instructeur"
+    },
+    "courseCategories": "Catégories de cours",
+    "viewAll": "Voir tout",
+    "courseCount": "{{count}} cours",
+    "topCourses": "Meilleurs cours en {{category}}",
+    "noCourses": "Aucun cours pour l'instant dans cette catégorie.",
+    "viewAllCategoryCourses": "Voir tous les cours en {{category}}"
+  },
+  "pageHeader": {
+    "home": "Accueil"
+  },
+  "coursesCatalog": {
+    "crumb": "Cours",
+    "eyebrow": "Catalogue de cours",
+    "title": "Explorez tous les cours",
+    "subtitle": "Filtrez par catégorie ou effectuez une recherche pour trouver le cours qui correspond à ce que vous voulez apprendre.",
+    "countSummary": "{{count}} cours dans {{categoryCount}} catégories",
+    "resultsFor": "{{count}} résultats pour",
+    "clear": "Effacer",
+    "all": "Tous",
+    "noneFoundTitle": "Aucun cours trouvé",
+    "noneFoundWithQuery": "Nous n'avons trouvé aucun cours correspondant à « {{query}} ».",
+    "noneFoundNoQuery": "Aucun cours n'a encore été publié dans cette catégorie.",
+    "clearSearch": "Effacer la recherche",
+    "free": "Gratuit",
+    "generalCategory": "Général",
+    "hours": "{{count}} h",
+    "studentsEnrolled": "{{count}} étudiants inscrits",
+    "loading": "Chargement…",
+    "loadMore": "Charger plus de cours",
+    "searchPlaceholder": "Rechercher des cours, ex. Python, Excel…",
+    "search": "Rechercher",
+    "filters": "Filtres",
+    "categories": "Catégories",
+    "level": "Niveau",
+    "price": "Prix",
+    "levels": {
+      "all": "Tous les niveaux",
+      "beginner": "Débutant",
+      "intermediate": "Intermédiaire",
+      "advanced": "Avancé"
+    },
+    "prices": {
+      "all": "Tous les prix",
+      "free": "Gratuit",
+      "paid": "Payant"
+    },
+    "sortBy": "Trier par",
+    "sort": {
+      "newest": "Plus récents",
+      "priceLow": "Prix croissant",
+      "priceHigh": "Prix décroissant",
+      "title": "Titre : A à Z"
+    },
+    "showingOne": "1 cours",
+    "showing": "{{count}} cours",
+    "clearAll": "Effacer tous les filtres",
+    "students": "{{count}} étudiants",
+    "noneFoundFiltered": "Essayez un autre terme ou retirez des filtres."
+  },
+  "contact": {
+    "crumb": "Contact",
+    "eyebrow": "Nous sommes là pour vous aider",
+    "title": "Contactez Asa Academy",
+    "subtitle": "Des questions sur un cours, un problème technique, ou l'envie d'enseigner ? Envoyez-nous un message et notre équipe vous répondra.",
+    "infoCards": {
+      "email": { "title": "Écrivez-nous", "line1": "support@asaacademy.com", "line2": "Nous répondons sous 24 heures" },
+      "call": { "title": "Appelez-nous", "line1": "+254 700 123 456", "line2": "Lun-Ven, 8h-18h EAT" },
+      "visit": { "title": "Rendez-nous visite", "line1": "Westlands Business Park", "line2": "Nairobi, Kenya" }
+    },
+    "form": {
+      "sentTitle": "Message envoyé",
+      "sentDescription": "Merci de nous avoir contactés. Notre équipe vous répondra sous 24 heures.",
+      "sendAnother": "Envoyer un autre message",
+      "heading": "Envoyez-nous un message",
+      "subheading": "Remplissez le formulaire et nous répondrons dès que possible.",
+      "fullName": "Nom complet",
+      "subject": "Sujet",
+      "selectTopic": "Choisissez un sujet",
+      "message": "Message",
+      "messagePlaceholder": "Dites-nous comment nous pouvons vous aider...",
+      "sending": "Envoi…",
+      "send": "Envoyer le message"
+    },
+    "subjects": {
+      "general": "Demande générale",
+      "courseSupport": "Assistance sur un cours",
+      "technical": "Problème technique",
+      "partnership": "Partenariat",
+      "instructorApplication": "Candidature d'instructeur",
+      "billing": "Facturation et paiements"
+    },
+    "office": {
+      "title": "Notre bureau",
+      "line1": "Westlands Business Park",
+      "line2": "Nairobi, Kenya",
+      "getDirections": "Obtenir l'itinéraire"
+    },
+    "officeHours": {
+      "title": "Horaires d'ouverture",
+      "weekdays": { "day": "Lundi – Vendredi", "hours": "8h00 – 18h00" },
+      "saturday": { "day": "Samedi", "hours": "9h00 – 14h00" },
+      "sunday": { "day": "Dimanche", "hours": "Fermé" }
+    },
+    "faqPrompt": "Vous cherchez une réponse rapide ? Consultez notre",
+    "faqLink": "foire aux questions"
+  },
+  "verifyCertificate": {
+    "title": "Vérifier un certificat",
+    "subtitle": "Entrez le code de vérification imprimé sur un certificat Asa Academy pour confirmer son authenticité.",
+    "checking": "Vérification…",
+    "verify": "Vérifier",
+    "genericError": "Échec de la vérification.",
+    "verified": "Certificat vérifié",
+    "issuedTo": "Délivré à",
+    "forCourse": "pour",
+    "certificateNumber": "Certificat n°{{number}}",
+    "issued": "Délivré le {{date}}",
+    "viewPdf": "Voir le certificat en PDF"
+  },
+  "courseDetail": {
+    "lessonCount": "{{count}} leçon",
+    "lessonCount_plural": "{{count}} leçons",
+    "quizCount": "{{count}} quiz",
+    "quizCount_plural": "{{count}} quiz",
+    "preview": "Aperçu",
+    "minutes": "{{count}} min",
+    "noLessonsYet": "Aucune leçon publiée pour le moment.",
+    "notFound": "Cours introuvable.",
+    "enrollError": "Inscription impossible pour le moment.",
+    "loading": "Chargement du cours…",
+    "backToCourses": "Retour aux cours",
+    "noRatings": "Pas encore d'avis",
+    "studentsCount": "{{count}} étudiants",
+    "createdBy": "Créé par",
+    "watchPreview": "Voir l'aperçu",
+    "whatYouLearn": "Ce que vous allez apprendre",
+    "aboutCourse": "À propos de ce cours",
+    "noDescription": "Aucune description pour le moment.",
+    "requirements": "Prérequis",
+    "requiresCompleting": "Nécessite d'avoir terminé",
+    "first": "au préalable",
+    "courseContent": "Contenu du cours",
+    "unitCount": "{{count}} leçon",
+    "unitCount_plural": "{{count}} leçons",
+    "submoduleCount": "{{count}} sous-module",
+    "submoduleCount_plural": "{{count}} sous-modules",
+    "certificate": "Certificat",
+    "certificateDescription": "Terminez ce cours pour obtenir un certificat Asa Academy vérifiable. Voici un exemple de son apparence.",
+    "certificateSampleAlt": "Exemple de certificat pour {{title}}",
+    "teachingTeam": "Équipe pédagogique",
+    "studentReviews": "Avis des étudiants",
+    "defaultStudent": "Étudiant",
+    "taughtBy": "Enseigné par",
+    "free": "Gratuit",
+    "enrolled": "Vous êtes inscrit !",
+    "enrolling": "Inscription…",
+    "enrollNow": "S'inscrire",
+    "totalHours": "{{count}} h au total",
+    "certificateOnCompletion": "Certificat à la fin du cours",
+    "levelLabel": "Niveau {{level}}"
+  }
+}

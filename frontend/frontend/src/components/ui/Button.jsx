@@ -1,11 +1,11 @@
 import { IconLoader } from './LoadingSpinner'
 
 const variants = {
-  primary: 'bg-navy-900 text-white shadow-sm shadow-navy-900/20 hover:bg-brand-500 hover:shadow-md hover:shadow-brand-500/30',
-  secondary: 'bg-navy-50 text-navy-800 hover:bg-navy-100',
-  outline: 'text-navy-800 ring-1 ring-navy-900/15 hover:bg-navy-50',
-  danger: 'bg-red-600 text-white shadow-sm shadow-red-600/20 hover:bg-red-700 hover:shadow-md hover:shadow-red-600/30',
-  ghost: 'text-navy-700 hover:bg-navy-50',
+  primary: 'bg-navy-900 text-white shadow-sm shadow-navy-900/20 hover:bg-brand-500 hover:shadow-md hover:shadow-brand-500/30 dark:bg-brand-500 dark:hover:bg-brand-400',
+  secondary: 'bg-navy-50 text-navy-800 hover:bg-navy-100 dark:bg-white/10 dark:text-navy-100 dark:hover:bg-white/15',
+  outline: 'text-navy-800 ring-1 ring-navy-900/15 hover:bg-navy-50 dark:text-navy-100 dark:ring-white/20 dark:hover:bg-white/5',
+  danger: 'bg-red-600 text-white shadow-sm shadow-red-600/20 hover:bg-red-700 hover:shadow-md hover:shadow-red-600/30 dark:bg-red-500 dark:hover:bg-red-600',
+  ghost: 'text-navy-700 hover:bg-navy-50 dark:text-navy-100 dark:hover:bg-white/5',
 }
 
 const sizes = {

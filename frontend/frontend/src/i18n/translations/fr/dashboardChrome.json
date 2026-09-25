@@ -1,0 +1,119 @@
+{
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "profile": "Profil",
+    "settings": "Paramètres",
+    "users": "Utilisateurs",
+    "allUsers": "Tous les utilisateurs",
+    "students": "Étudiants",
+    "instructors": "Instructeurs",
+    "staff": "Personnel",
+    "courses": "Cours",
+    "allCourses": "Tous les cours",
+    "createCourse": "Créer un cours",
+    "categories": "Catégories",
+    "modulesLessons": "Modules et leçons",
+    "enrollments": "Inscriptions",
+    "groups": "Groupes",
+    "assessments": "Évaluations",
+    "quizzes": "Quiz",
+    "createQuiz": "Créer un quiz",
+    "questionBanks": "Banques de questions",
+    "assignments": "Devoirs",
+    "createAssignment": "Créer un devoir",
+    "exams": "Examens",
+    "rubrics": "Grilles d'évaluation",
+    "gradingQueue": "File de correction",
+    "certificates": "Certificats",
+    "payments": "Paiements",
+    "transactions": "Transactions",
+    "refunds": "Remboursements",
+    "communication": "Communication",
+    "announcements": "Annonces",
+    "notifications": "Notifications",
+    "messages": "Messages",
+    "discussions": "Discussions",
+    "liveClasses": "Cours en direct",
+    "allLiveClasses": "Tous les cours en direct",
+    "scheduleLiveClass": "Planifier un cours en direct",
+    "support": "Assistance",
+    "tickets": "Tickets",
+    "faqs": "FAQ",
+    "auditLogs": "Journaux d'audit",
+    "systemSettings": "Paramètres système",
+    "academics": "Académique",
+    "myCourses": "Mes cours",
+    "contentModulesLessons": "Contenu, modules et leçons",
+    "examsGrades": "Examens et notes",
+    "enrolledStudents": "Étudiants inscrits",
+    "content": "Contenu",
+    "learning": "Apprentissage",
+    "browseCourses": "Parcourir les cours",
+    "grades": "Notes",
+    "transcript": "Relevé de notes"
+  },
+  "roles": {
+    "roleAdmin": "Administrateur",
+    "roleAcademicManager": "Responsable académique",
+    "roleInstructor": "Instructeur",
+    "roleStudent": "Étudiant",
+    "roleContentManager": "Responsable de contenu",
+    "roleSupportStaff": "Agent d'assistance"
+  },
+  "sidebar": {
+    "expand": "Développer la barre latérale",
+    "collapse": "Réduire la barre latérale"
+  },
+  "topbar": {
+    "openMenu": "Ouvrir le menu",
+    "portal": "Portail"
+  },
+  "searchBar": {
+    "placeholder": "Rechercher des cours…"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "markAllRead": "Tout marquer comme lu",
+    "loading": "Chargement…",
+    "caughtUp": "Vous êtes à jour.",
+    "markAsRead": "Marquer comme lu"
+  },
+  "userMenu": {
+    "myProfile": "Mon profil"
+  },
+  "refresh": "Actualiser",
+  "recentActivity": {
+    "title": "Activité récente",
+    "empty": "Rien à afficher pour le moment."
+  },
+  "timeAgo": {
+    "justNow": "à l'instant",
+    "minutes": "il y a {{count}} min",
+    "hours": "il y a {{count}} h",
+    "days": "il y a {{count}} j"
+  },
+  "quickActions": {
+    "defaultTitle": "Actions rapides"
+  },
+  "reminders": {
+    "title": "Rappels",
+    "liveClassDetail": "{{course}} · {{date}}{{time}}",
+    "atTime": " à {{time}}",
+    "inactiveCourseDetail": "{{percent}} % terminé · dernière activité {{date}}",
+    "sections": {
+      "upcoming_live_classes": "Cours en direct à venir",
+      "inactive_courses": "À reprendre",
+      "unresolved_payments": "Paiement requis"
+    },
+    "ctas": {
+      "upcoming_live_classes": "Voir les cours en direct",
+      "inactive_courses": "Continuer l'apprentissage",
+      "unresolved_payments": "Voir les paiements"
+    }
+  },
+  "upcomingLiveClasses": {
+    "title": "Cours en direct à venir",
+    "viewAll": "Tout voir",
+    "empty": "Aucun cours en direct programmé."
+  }
+}

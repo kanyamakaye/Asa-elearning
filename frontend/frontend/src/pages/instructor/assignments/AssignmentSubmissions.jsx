@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
+import { useLanguage } from '../../../context/LanguageContext'
 import { getAssignment, getSubmissions, gradeSubmission } from '../../../services/assignmentService'
 import Alert from '../../../components/ui/Alert'
 import Badge from '../../../components/ui/Badge'
@@ -13,6 +14,7 @@ import Textarea from '../../../components/ui/Textarea'
 const statusTone = { submitted: 'neutral', late: 'warning', graded: 'success', returned: 'brand', draft: 'neutral' }
 
 function GradeRow({ submission, maxMarks, rubric, onGraded }) {
+  const { t } = useLanguage()
   const [marks, setMarks] = useState(submission.marks_awarded ?? '')
   const [feedback, setFeedback] = useState(submission.feedback ?? '')
   const [rubricScores, setRubricScores] = useState(submission.rubric_scores ?? {})
@@ -28,7 +30,7 @@ function GradeRow({ submission, maxMarks, rubric, onGraded }) {
 
   async function submit() {
     if (marks === '' || Number(marks) < 0 || Number(marks) > maxMarks) {
-      setError(`Enter a score between 0 and ${maxMarks}.`)
+      setError(t('dashboardInstructor.assignmentSubmissions.scoreRangeError', { max: maxMarks }))
       return
     }
     setSaving(true)
@@ -44,38 +46,38 @@ function GradeRow({ submission, maxMarks, rubric, onGraded }) {
   }
 
   return (
-    <div className="rounded-2xl bg-white p-5 ring-1 ring-navy-900/8">
+    <div className="rounded-2xl bg-white p-5 ring-1 ring-navy-900/8 dark:bg-navy-800 dark:ring-white/10">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-sm font-bold text-navy-900">{submission.student?.full_name ?? submission.student?.username}</p>
-          <p className="text-xs text-navy-700/45">Submitted {new Date(submission.submitted_at).toLocaleString()}</p>
+          <p className="text-sm font-bold text-navy-900 dark:text-white">{submission.student?.full_name ?? submission.student?.username}</p>
+          <p className="text-xs text-navy-700/45 dark:text-navy-100/45">{t('dashboardInstructor.assignmentSubmissions.submittedAt', { date: new Date(submission.submitted_at).toLocaleString() })}</p>
         </div>
         <Badge tone={statusTone[submission.status]}>{submission.status}</Badge>
       </div>
 
       {submission.submission_text && (
-        <p className="mt-3 rounded-xl bg-navy-50/60 p-3 text-sm text-navy-800">{submission.submission_text}</p>
+        <p className="mt-3 rounded-xl bg-navy-50/60 p-3 text-sm text-navy-800 dark:bg-white/5 dark:text-navy-100">{submission.submission_text}</p>
       )}
       {submission.file && (
-        <a href={submission.file} target="_blank" rel="noreferrer" className="mt-2 inline-block text-xs font-semibold text-brand-500 hover:text-navy-900">
-          View submitted file
+        <a href={submission.file} target="_blank" rel="noreferrer" className="mt-2 inline-block text-xs font-semibold text-brand-500 hover:text-navy-900 dark:hover:text-white">
+          {t('dashboardInstructor.assignmentSubmissions.viewSubmittedFile')}
         </a>
       )}
 
       {error && <Alert tone="error" className="mt-3">{error}</Alert>}
 
       {rubric && (
-        <div className="mt-4 space-y-2 rounded-xl bg-navy-50/60 p-3.5">
-          <p className="text-xs font-semibold text-navy-700/60">{rubric.title} — score each criterion</p>
+        <div className="mt-4 space-y-2 rounded-xl bg-navy-50/60 p-3.5 dark:bg-white/5">
+          <p className="text-xs font-semibold text-navy-700/60 dark:text-navy-100/60">{t('dashboardInstructor.assignmentSubmissions.rubricScoreEach', { title: rubric.title })}</p>
           {rubric.criteria.map((c) => (
             <div key={c.id} className="flex items-center gap-3">
-              <span className="min-w-0 flex-1 truncate text-sm text-navy-800">{c.title}</span>
+              <span className="min-w-0 flex-1 truncate text-sm text-navy-800 dark:text-navy-100">{c.title}</span>
               <Input
                 type="number" min="0" max={c.max_points} className="w-20"
                 value={rubricScores[c.id] ?? ''}
                 onChange={(e) => updateCriterionScore(c.id, e.target.value, c.max_points)}
               />
-              <span className="w-12 shrink-0 text-xs text-navy-700/45">/ {c.max_points}</span>
+              <span className="w-12 shrink-0 text-xs text-navy-700/45 dark:text-navy-100/45">/ {c.max_points}</span>
             </div>
           ))}
         </div>
@@ -83,15 +85,15 @@ function GradeRow({ submission, maxMarks, rubric, onGraded }) {
 
       <div className="mt-4 grid gap-3 sm:grid-cols-[120px_1fr_auto] sm:items-end">
         <div>
-          <span className="text-xs font-semibold text-navy-700/60">Score / {maxMarks}</span>
+          <span className="text-xs font-semibold text-navy-700/60 dark:text-navy-100/60">{t('dashboardInstructor.assignmentSubmissions.scoreOutOf', { max: maxMarks })}</span>
           <Input type="number" min="0" max={maxMarks} className="mt-1.5" value={marks} onChange={(e) => setMarks(e.target.value)} disabled={!!rubric} />
         </div>
         <div>
-          <span className="text-xs font-semibold text-navy-700/60">Feedback</span>
+          <span className="text-xs font-semibold text-navy-700/60 dark:text-navy-100/60">{t('dashboardInstructor.assignmentSubmissions.feedback')}</span>
           <Textarea rows={1} className="mt-1.5" value={feedback} onChange={(e) => setFeedback(e.target.value)} />
         </div>
         <Button size="sm" loading={saving} disabled={saving} onClick={submit}>
-          {saving ? 'Saving…' : submission.status === 'graded' ? 'Update Grade' : 'Grade'}
+          {saving ? t('dashboardInstructor.assignmentSubmissions.saving') : submission.status === 'graded' ? t('dashboardInstructor.assignmentSubmissions.updateGrade') : t('dashboardInstructor.assignmentSubmissions.grade')}
         </Button>
       </div>
     </div>
@@ -99,6 +101,7 @@ function GradeRow({ submission, maxMarks, rubric, onGraded }) {
 }
 
 export default function AssignmentSubmissions() {
+  const { t } = useLanguage()
   const { id } = useParams()
   const [assignment, setAssignment] = useState(null)
   const [submissions, setSubmissions] = useState([])
@@ -120,20 +123,23 @@ export default function AssignmentSubmissions() {
     setSubmissions((subs) => subs.map((s) => (s.id === updated.id ? updated : s)))
   }
 
-  if (loading) return <LoadingSpinner label="Loading submissions…" />
+  if (loading) return <LoadingSpinner label={t('dashboardInstructor.assignmentSubmissions.loading')} />
   if (error) return <Alert tone="error">{error}</Alert>
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <PageHeader
-        breadcrumb={<Breadcrumb items={[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Assignments', to: '/dashboard/assignments' }, { label: 'Submissions' }]} />}
+        breadcrumb={<Breadcrumb items={[{ label: t('dashboardInstructor.assignmentSubmissions.breadcrumbDashboard'), to: '/dashboard' }, { label: t('dashboardInstructor.assignmentSubmissions.breadcrumbAssignments'), to: '/dashboard/assignments' }, { label: t('dashboardInstructor.assignmentSubmissions.breadcrumbSubmissions') }]} />}
         title={assignment?.title}
-        description={`${submissions.length} submission${submissions.length === 1 ? '' : 's'} · ${submissions.filter((s) => s.status === 'graded').length} graded`}
+        description={t('dashboardInstructor.assignmentSubmissions.submissionCountGraded', {
+          count: submissions.length,
+          graded: submissions.filter((s) => s.status === 'graded').length,
+        })}
       />
 
       {submissions.length === 0 ? (
-        <div className="rounded-2xl bg-white p-10 text-center ring-1 ring-navy-900/8">
-          <p className="text-sm text-navy-700/50">No submissions yet.</p>
+        <div className="rounded-2xl bg-white p-10 text-center ring-1 ring-navy-900/8 dark:bg-navy-800 dark:ring-white/10">
+          <p className="text-sm text-navy-700/50 dark:text-navy-100/50">{t('dashboardInstructor.assignmentSubmissions.noSubmissions')}</p>
         </div>
       ) : (
         <div className="space-y-4">

@@ -1,10 +1,11 @@
 // Mirrors accounts.validators.ComplexityValidator + Django's
 // MinimumLengthValidator on the backend — client-side feedback only, the
-// backend is still the source of truth.
+// backend is still the source of truth. `key` resolves to
+// auth.passwordRules.<key> wherever this is rendered.
 export const PASSWORD_RULES = [
-  { test: (v) => v.length >= 8, label: 'At least 8 characters' },
-  { test: (v) => /[A-Z]/.test(v), label: 'An uppercase letter' },
-  { test: (v) => /[a-z]/.test(v), label: 'A lowercase letter' },
-  { test: (v) => /\d/.test(v), label: 'A number' },
-  { test: (v) => /[^A-Za-z0-9]/.test(v), label: 'A special character' },
+  { key: 'minLength', test: (v) => v.length >= 8 },
+  { key: 'uppercase', test: (v) => /[A-Z]/.test(v) },
+  { key: 'lowercase', test: (v) => /[a-z]/.test(v) },
+  { key: 'number', test: (v) => /\d/.test(v) },
+  { key: 'specialChar', test: (v) => /[^A-Za-z0-9]/.test(v) },
 ]

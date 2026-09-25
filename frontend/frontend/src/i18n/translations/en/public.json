@@ -1,0 +1,430 @@
+{
+  "nav": {
+    "home": "Home",
+    "courses": "Courses",
+    "instructors": "Instructors",
+    "pricing": "Pricing",
+    "about": "About",
+    "faq": "FAQ",
+    "contact": "Contact",
+    "logIn": "Log In",
+    "getStarted": "Get Started",
+    "dashboard": "Dashboard",
+    "logOut": "Log Out",
+    "greeting": "Hi, {{name}}",
+    "toggleMenu": "Toggle menu"
+  },
+  "courses": {
+    "eyebrow": "Popular courses",
+    "heading": "Learn from courses students love",
+    "subheadWithCount": "{{count}} courses across every category",
+    "subhead": "Built for real-world skills",
+    "viewAll": "View all courses",
+    "free": "Free",
+    "generalCategory": "General",
+    "hours": "{{count}}h",
+    "studentsEnrolled": "{{count}} students enrolled"
+  },
+  "instructors": {
+    "eyebrow": "Meet the instructors",
+    "heading": "Learn from industry experts",
+    "viewAll": "View all instructors",
+    "linkedinLabel": "{{name}} on LinkedIn",
+    "courseCount": "{{count}} courses"
+  },
+  "hero": {
+    "eyebrow": "Learn skills. Build your future.",
+    "headlineStart": "Master the skills that",
+    "headlineEnd": "move your career forward",
+    "subhead": "Learn practical, industry-relevant skills from experienced instructors, build real-world projects, and turn what you learn into career opportunities.",
+    "primaryCta": "Start Learning",
+    "secondaryCta": "Explore Courses",
+    "searchLabel": "Search courses",
+    "searchPlaceholder": "What do you want to learn today?",
+    "searchButton": "Search",
+    "popularLabel": "Popular:",
+    "popularSearches": {
+      "webDevelopment": "Web Development",
+      "dataScience": "Data Science",
+      "digitalMarketing": "Digital Marketing",
+      "accounting": "Accounting",
+      "french": "French"
+    },
+    "certCardTitle": "Certificate earned",
+    "certCardSubtitle": "Data Science Path",
+    "streakCardTitle": "12-day streak",
+    "streakCardSubtitle": "{{count}} learners today",
+    "stats": {
+      "courses": "Courses",
+      "students": "Students",
+      "instructors": "Instructors",
+      "completionRate": "Completion rate"
+    }
+  },
+  "trustStrip": {
+    "heading": "Skills that hiring teams are actively looking for"
+  },
+  "categoryExplorer": {
+    "eyebrow": "Browse by category",
+    "heading": "Explore courses across every subject",
+    "headingWithCount": "Explore {{count}} courses across every subject",
+    "subhead": "Pick a category to jump straight into courses picked for that path — beginner through advanced, all in one place.",
+    "courseCount": "{{count}} courses",
+    "viewAll": "View all courses"
+  },
+  "features": {
+    "eyebrow": "Why Asa Academy",
+    "heading": "Everything you need to learn and teach online",
+    "subhead": "One integrated environment for the entire learning lifecycle — from enrollment to certification.",
+    "items": {
+      "liveClasses": {
+        "title": "Live & recorded classes",
+        "description": "Join scheduled live sessions with instructors or learn at your own pace with on-demand video lessons."
+      },
+      "quizzes": {
+        "title": "Quizzes & assignments",
+        "description": "Test your understanding with quizzes and coursework, then get graded with detailed instructor feedback."
+      },
+      "progress": {
+        "title": "Progress tracking",
+        "description": "Follow your learning journey lesson by lesson with a personal dashboard that shows exactly where you stand."
+      },
+      "certificates": {
+        "title": "Verified certificates",
+        "description": "Earn a certificate of completion for every course you finish, with a unique code anyone can verify."
+      },
+      "discussions": {
+        "title": "Discussions & messaging",
+        "description": "Ask questions in course discussions and message instructors directly whenever you get stuck."
+      },
+      "everyRole": {
+        "title": "Built for every role",
+        "description": "Purpose-built dashboards for students, instructors, and administrators keep everyone focused on what matters."
+      }
+    }
+  },
+  "howItWorks": {
+    "eyebrow": "How it works",
+    "heading": "Start learning in four simple steps",
+    "steps": {
+      "createAccount": {
+        "title": "Create your account",
+        "description": "Sign up in minutes as a student and tell us what you want to learn."
+      },
+      "browseEnroll": {
+        "title": "Browse & enroll",
+        "description": "Search by category, level, or instructor and enroll in the courses that fit your goals."
+      },
+      "learnAtPace": {
+        "title": "Learn at your pace",
+        "description": "Watch lessons, join live classes, complete quizzes and assignments, and track your progress."
+      },
+      "earnCertificate": {
+        "title": "Earn your certificate",
+        "description": "Finish the course and receive a verified certificate you can share and prove."
+      }
+    }
+  },
+  "learningPaths": {
+    "eyebrow": "Learning paths",
+    "heading": "Don't just take a course. Follow a path.",
+    "subhead": "Every category is structured from beginner to advanced, so you always know what to learn next.",
+    "courseCount": "{{count}} courses",
+    "levels": {
+      "beginner": "Beginner",
+      "intermediate": "Intermediate",
+      "advanced": "Advanced"
+    },
+    "startPath": "Start this path"
+  },
+  "careerOutcomes": {
+    "eyebrow": "Career outcomes",
+    "heading": "Learning should lead somewhere.",
+    "steps": {
+      "learn": { "label": "Learn", "description": "Structured lessons from working instructors" },
+      "practice": { "label": "Practice", "description": "Quizzes and assignments that reinforce every concept" },
+      "trackProgress": { "label": "Track Progress", "description": "A dashboard that shows exactly where you stand" },
+      "getCertified": { "label": "Get Certified", "description": "A verifiable certificate once you complete the course" },
+      "advance": { "label": "Advance", "description": "Proof of skill you can share with employers" }
+    }
+  },
+  "testimonials": {
+    "eyebrow": "Testimonials",
+    "heading": "Loved by students and instructors",
+    "defaultStudentName": "Asa Academy student",
+    "studentOfCategory": "Student, {{category}}"
+  },
+  "instructorCta": {
+    "eyebrow": "For instructors",
+    "heading": "Share your expertise with thousands of learners",
+    "description": "Asa Academy gives instructors everything needed to build, teach, and grow a course — from content creation to grading and analytics.",
+    "cta": "Start Teaching Today",
+    "points": {
+      "unlimitedCourses": "Create and publish unlimited courses",
+      "liveClasses": "Run live classes and track attendance",
+      "grading": "Grade quizzes and assignments with ease",
+      "getPaid": "Get paid for every enrollment"
+    }
+  },
+  "studentPortal": {
+    "eyebrow": "Student portal",
+    "heading": "Give every learner a window into their progress",
+    "description": "Students sign in to their own dashboard and follow their learning anytime, without waiting on an instructor.",
+    "points": {
+      "courses": "Enrolled courses and lesson progress",
+      "grades": "Quiz scores and assignment grades",
+      "certificates": "Certificates, attendance and learning reports"
+    },
+    "getStarted": "Get started",
+    "logIn": "Log in",
+    "illustrationAlt": "Illustration of a student unlocking their portal on a phone"
+  },
+  "pricing": {
+    "eyebrow": "Pricing",
+    "heading": "Simple, honest pricing",
+    "subhead": "No subscriptions or hidden fees. Start with free courses, or pay once per course for lifetime access.",
+    "freeTitle": "Free Courses",
+    "freeFeatures": {
+      "fullAccess": "Full access to every free course",
+      "progressTracking": "Quizzes, assignments, and progress tracking",
+      "discussions": "Course discussions and instructor messaging",
+      "certificate": "A verified certificate on completion"
+    },
+    "freeCta": "Create Free Account",
+    "mostPopular": "Most popular",
+    "paidTitle": "Paid Courses",
+    "perCourse": "Per course",
+    "paidFeatures": {
+      "everythingFree": "Everything in free courses",
+      "inDepthCourses": "In-depth, instructor-led paid courses",
+      "lifetimeAccess": "Lifetime access — learn at your own pace",
+      "onePrice": "One clear price per course, no subscription"
+    },
+    "paidCta": "Browse Paid Courses"
+  },
+  "faq": {
+    "eyebrow": "FAQ",
+    "heading": "Frequently asked questions"
+  },
+  "cta": {
+    "heading": "Ready to start learning today?",
+    "description": "Join thousands of students and instructors already growing their skills on Asa Academy.",
+    "primaryCta": "Create Free Account",
+    "secondaryCta": "Browse Courses"
+  },
+  "footer": {
+    "columns": {
+      "platform": "Platform",
+      "categories": "Categories",
+      "forStudents": "For Students",
+      "forInstructors": "For Instructors",
+      "support": "Support"
+    },
+    "links": {
+      "home": "Home",
+      "courses": "Courses",
+      "instructors": "Instructors",
+      "aboutUs": "About Us",
+      "pricing": "Pricing",
+      "browseCourses": "Browse Courses",
+      "learningPaths": "Learning Paths",
+      "careerOutcomes": "Career Outcomes",
+      "verifyCertificate": "Verify a Certificate",
+      "createAccount": "Create an Account",
+      "logIn": "Log In",
+      "becomeInstructor": "Become an Instructor",
+      "meetInstructors": "Meet Our Instructors",
+      "instructorPricing": "Instructor Pricing & Plans",
+      "contactUs": "Contact Us",
+      "faq": "FAQ",
+      "helpCenter": "Help Center",
+      "privacyPolicy": "Privacy Policy",
+      "termsOfService": "Terms of Service"
+    },
+    "viewAllCourses": "View all courses",
+    "tagline": "Learn Without Limits",
+    "faqs": "FAQs",
+    "customerSupport": "Customer Support",
+    "findUs": "Find Us",
+    "getDirections": "Get directions",
+    "copyright": "© {{year}} Asa Academy. All rights reserved.",
+    "privacy": "Privacy",
+    "terms": "Terms",
+    "cookiePolicy": "Cookie Policy",
+    "subscribed": "Thanks — you're on the list.",
+    "emailAddress": "Email address",
+    "emailPlaceholder": "Get updates by email",
+    "subscribe": "Subscribe"
+  },
+  "coursesMegaMenu": {
+    "getStarted": "Get Started",
+    "quickLinks": {
+      "exploreCourses": "Explore Courses",
+      "exploreInstructors": "Explore Instructors",
+      "learningPaths": "Learning Paths",
+      "getCertified": "Get Certified",
+      "pricingPlans": "Pricing & Plans",
+      "becomeInstructor": "Become an Instructor"
+    },
+    "courseCategories": "Course Categories",
+    "viewAll": "View all",
+    "courseCount": "{{count}} courses",
+    "topCourses": "Top {{category}} Courses",
+    "noCourses": "No courses yet in this category.",
+    "viewAllCategoryCourses": "View all {{category}} courses"
+  },
+  "pageHeader": {
+    "home": "Home"
+  },
+  "coursesCatalog": {
+    "crumb": "Courses",
+    "eyebrow": "Course catalog",
+    "title": "Explore every course",
+    "subtitle": "Filter by category or search to find the course that fits what you want to learn next.",
+    "countSummary": "{{count}} courses across {{categoryCount}} categories",
+    "resultsFor": "{{count}} results for",
+    "clear": "Clear",
+    "all": "All",
+    "noneFoundTitle": "No courses found",
+    "noneFoundWithQuery": "We couldn't find any courses matching \"{{query}}\".",
+    "noneFoundNoQuery": "No courses have been published in this category yet.",
+    "clearSearch": "Clear search",
+    "free": "Free",
+    "generalCategory": "General",
+    "hours": "{{count}}h",
+    "studentsEnrolled": "{{count}} students enrolled",
+    "loading": "Loading…",
+    "loadMore": "Load More Courses",
+    "searchPlaceholder": "Search courses, e.g. Python, Excel…",
+    "search": "Search",
+    "filters": "Filters",
+    "categories": "Categories",
+    "level": "Level",
+    "price": "Price",
+    "levels": {
+      "all": "All levels",
+      "beginner": "Beginner",
+      "intermediate": "Intermediate",
+      "advanced": "Advanced"
+    },
+    "prices": {
+      "all": "Any price",
+      "free": "Free",
+      "paid": "Paid"
+    },
+    "sortBy": "Sort by",
+    "sort": {
+      "newest": "Newest",
+      "priceLow": "Price: low to high",
+      "priceHigh": "Price: high to low",
+      "title": "Title: A to Z"
+    },
+    "showingOne": "1 course",
+    "showing": "{{count}} courses",
+    "clearAll": "Clear all filters",
+    "students": "{{count}} students",
+    "noneFoundFiltered": "Try another search term or remove some filters."
+  },
+  "contact": {
+    "crumb": "Contact",
+    "eyebrow": "We're here to help",
+    "title": "Get in touch with Asa Academy",
+    "subtitle": "Questions about a course, a technical issue, or interested in teaching? Send us a message and our team will get back to you.",
+    "infoCards": {
+      "email": { "title": "Email Us", "line1": "support@asaacademy.com", "line2": "We reply within 24 hours" },
+      "call": { "title": "Call Us", "line1": "+254 700 123 456", "line2": "Mon–Fri, 8am–6pm EAT" },
+      "visit": { "title": "Visit Us", "line1": "Westlands Business Park", "line2": "Nairobi, Kenya" }
+    },
+    "form": {
+      "sentTitle": "Message sent",
+      "sentDescription": "Thanks for reaching out. Our team will get back to you within 24 hours.",
+      "sendAnother": "Send another message",
+      "heading": "Send us a message",
+      "subheading": "Fill out the form and we'll respond as soon as possible.",
+      "fullName": "Full name",
+      "subject": "Subject",
+      "selectTopic": "Select a topic",
+      "message": "Message",
+      "messagePlaceholder": "Tell us how we can help...",
+      "sending": "Sending…",
+      "send": "Send Message"
+    },
+    "subjects": {
+      "general": "General Inquiry",
+      "courseSupport": "Course Support",
+      "technical": "Technical Issue",
+      "partnership": "Partnership",
+      "instructorApplication": "Instructor Application",
+      "billing": "Billing & Payments"
+    },
+    "office": {
+      "title": "Our Office",
+      "line1": "Westlands Business Park",
+      "line2": "Nairobi, Kenya",
+      "getDirections": "Get Directions"
+    },
+    "officeHours": {
+      "title": "Office Hours",
+      "weekdays": { "day": "Monday – Friday", "hours": "8:00 AM – 6:00 PM" },
+      "saturday": { "day": "Saturday", "hours": "9:00 AM – 2:00 PM" },
+      "sunday": { "day": "Sunday", "hours": "Closed" }
+    },
+    "faqPrompt": "Looking for quick answers instead? Check our",
+    "faqLink": "frequently asked questions"
+  },
+  "verifyCertificate": {
+    "title": "Verify a Certificate",
+    "subtitle": "Enter the verification code printed on an Asa Academy certificate to confirm it's genuine.",
+    "checking": "Checking…",
+    "verify": "Verify",
+    "genericError": "Verification failed.",
+    "verified": "Certificate verified",
+    "issuedTo": "Issued to",
+    "forCourse": "for",
+    "certificateNumber": "Certificate #{{number}}",
+    "issued": "Issued {{date}}",
+    "viewPdf": "View certificate PDF"
+  },
+  "courseDetail": {
+    "lessonCount": "{{count}} lesson",
+    "lessonCount_plural": "{{count}} lessons",
+    "quizCount": "{{count}} quiz",
+    "quizCount_plural": "{{count}} quizzes",
+    "preview": "Preview",
+    "minutes": "{{count}} min",
+    "noLessonsYet": "No lessons published yet.",
+    "notFound": "Course not found.",
+    "enrollError": "Unable to enroll right now.",
+    "loading": "Loading course…",
+    "backToCourses": "Back to courses",
+    "noRatings": "No ratings yet",
+    "studentsCount": "{{count}} students",
+    "createdBy": "Created by",
+    "watchPreview": "Watch preview",
+    "whatYouLearn": "What you'll learn",
+    "aboutCourse": "About this course",
+    "noDescription": "No description provided yet.",
+    "requirements": "Requirements",
+    "requiresCompleting": "Requires completing",
+    "first": "first",
+    "courseContent": "Course content",
+    "unitCount": "{{count}} lesson",
+    "unitCount_plural": "{{count}} lessons",
+    "submoduleCount": "{{count}} submodule",
+    "submoduleCount_plural": "{{count}} submodules",
+    "certificate": "Certificate",
+    "certificateDescription": "Complete this course to earn a verifiable Asa Academy certificate. Here's a sample of what it looks like.",
+    "certificateSampleAlt": "Sample certificate for {{title}}",
+    "teachingTeam": "Teaching team",
+    "studentReviews": "Student reviews",
+    "defaultStudent": "Student",
+    "taughtBy": "Taught by",
+    "free": "Free",
+    "enrolled": "You're enrolled!",
+    "enrolling": "Enrolling…",
+    "enrollNow": "Enroll Now",
+    "totalHours": "{{count}}h total",
+    "certificateOnCompletion": "Certificate on completion",
+    "levelLabel": "{{level}} level"
+  }
+}

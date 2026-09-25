@@ -1,37 +1,39 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
+import { useLanguage } from '../../context/LanguageContext'
 import { API_BASE_URL } from '../../lib/api'
 import { getMyTranscript } from '../../lib/queries'
 import DataTable from '../../components/dashboard/DataTable'
 import { IconArrowDown, IconAward } from '../../components/icons'
 
-const STATUS_LABELS = {
-  active: 'In Progress',
-  completed: 'Completed',
-  pending: 'Pending',
-  cancelled: 'Cancelled',
-  suspended: 'Suspended',
+const STATUS_KEYS = {
+  active: 'inProgress',
+  completed: 'completed',
+  pending: 'pending',
+  cancelled: 'cancelled',
+  suspended: 'suspended',
 }
 
 const statusStyles = {
-  active: 'bg-brand-50 text-brand-600',
-  completed: 'bg-emerald-50 text-emerald-700',
-  pending: 'bg-amber-50 text-amber-700',
-  cancelled: 'bg-red-50 text-red-700',
-  suspended: 'bg-navy-100 text-navy-700',
+  active: 'bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400',
+  completed: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400',
+  pending: 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400',
+  cancelled: 'bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400',
+  suspended: 'bg-navy-100 text-navy-700 dark:bg-white/10 dark:text-navy-100',
 }
 
 function StatCard({ label, value }) {
   return (
-    <div className="rounded-2xl bg-white p-4 text-center ring-1 ring-navy-900/8">
-      <p className="text-2xl font-extrabold text-navy-900">{value}</p>
-      <p className="mt-1 text-xs font-medium text-navy-700/55">{label}</p>
+    <div className="rounded-2xl bg-white p-4 text-center ring-1 ring-navy-900/8 dark:bg-navy-800 dark:ring-white/10">
+      <p className="text-2xl font-extrabold text-navy-900 dark:text-white">{value}</p>
+      <p className="mt-1 text-xs font-medium text-navy-700/55 dark:text-navy-100/55">{label}</p>
     </div>
   )
 }
 
 export default function Transcript() {
   const { accessToken, user } = useAuth()
+  const { t } = useLanguage()
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [downloading, setDownloading] = useState(false)
@@ -57,7 +59,7 @@ export default function Transcript() {
       const res = await fetch(`${API_BASE_URL}/enrollments/transcript/pdf/`, {
         headers: { Authorization: `Bearer ${accessToken}` },
       })
-      if (!res.ok) throw new Error('Unable to generate your transcript right now.')
+      if (!res.ok) throw new Error(t('dashboardStudent.transcript.generateError'))
       const blob = await res.blob()
       const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
@@ -68,7 +70,7 @@ export default function Transcript() {
       link.remove()
       URL.revokeObjectURL(url)
     } catch (err) {
-      setDownloadError(err.message || 'Unable to generate your transcript right now.')
+      setDownloadError(err.message || t('dashboardStudent.transcript.generateError'))
     } finally {
       setDownloading(false)
     }
@@ -84,36 +86,36 @@ export default function Transcript() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-navy-900">My Transcript</h1>
-          <p className="mt-1 text-sm text-navy-700/55">
-            Your full academic record — every course, the hours completed, and the grade earned.
+          <h1 className="text-2xl font-extrabold tracking-tight text-navy-900 dark:text-white">{t('dashboardStudent.transcript.heading')}</h1>
+          <p className="mt-1 text-sm text-navy-700/55 dark:text-navy-100/55">
+            {t('dashboardStudent.transcript.subtitle')}
           </p>
         </div>
         <button
           type="button"
           onClick={handleDownload}
           disabled={downloading || loading}
-          className="inline-flex items-center gap-2 rounded-full bg-navy-900 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-500 disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-full bg-navy-900 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-500 disabled:opacity-60 dark:bg-brand-500 dark:hover:bg-brand-400"
         >
           <IconArrowDown className="h-4 w-4" />
-          {downloading ? 'Preparing…' : 'Download PDF'}
+          {downloading ? t('dashboardStudent.transcript.preparing') : t('dashboardStudent.transcript.downloadPdf')}
         </button>
       </div>
-      {downloadError && <p className="text-xs font-medium text-red-600">{downloadError}</p>}
+      {downloadError && <p className="text-xs font-medium text-red-600 dark:text-red-400">{downloadError}</p>}
 
       {loading ? (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="h-20 animate-pulse rounded-2xl bg-white ring-1 ring-navy-900/8" />
+            <div key={i} className="h-20 animate-pulse rounded-2xl bg-white ring-1 ring-navy-900/8 dark:bg-navy-800 dark:ring-white/10" />
           ))}
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-          <StatCard label="Courses Enrolled" value={summary?.total_courses ?? 0} />
-          <StatCard label="Courses Completed" value={summary?.completed_courses ?? 0} />
-          <StatCard label="Hours Completed" value={summary?.total_hours_completed ?? 0} />
-          <StatCard label="Overall Average" value={summary?.overall_average != null ? `${summary.overall_average}%` : '—'} />
-          <StatCard label="Certificates Earned" value={summary?.certificates_earned ?? 0} />
+          <StatCard label={t('dashboardStudent.transcript.coursesEnrolled')} value={summary?.total_courses ?? 0} />
+          <StatCard label={t('dashboardStudent.transcript.coursesCompleted')} value={summary?.completed_courses ?? 0} />
+          <StatCard label={t('dashboardStudent.transcript.hoursCompleted')} value={summary?.total_hours_completed ?? 0} />
+          <StatCard label={t('dashboardStudent.transcript.overallAverage')} value={summary?.overall_average != null ? `${summary.overall_average}%` : '—'} />
+          <StatCard label={t('dashboardStudent.transcript.certificatesEarned')} value={summary?.certificates_earned ?? 0} />
         </div>
       )}
 
@@ -121,46 +123,46 @@ export default function Transcript() {
         loading={loading}
         rows={courses}
         rowKey="course_id"
-        emptyMessage="You haven't enrolled in any courses yet."
-        search={{ value: search, onChange: setSearch, placeholder: 'Search by course…' }}
+        emptyMessage={t('dashboardStudent.transcript.noEnrollments')}
+        search={{ value: search, onChange: setSearch, placeholder: t('dashboardStudent.transcript.searchPlaceholder') }}
         exportFilename="transcript"
-        exportTitle="Academic Transcript"
+        exportTitle={t('dashboardStudent.transcript.exportTitle')}
         columns={[
           {
             key: 'course_title',
-            label: 'Course',
+            label: t('dashboardStudent.transcript.columnCourse'),
             exportValue: (c) => c.course_title,
             render: (c) => (
               <div>
-                <p className="font-semibold text-navy-900">{c.course_title}</p>
-                <p className="text-xs text-navy-700/45">{c.category} &middot; {c.level}</p>
+                <p className="font-semibold text-navy-900 dark:text-white">{c.course_title}</p>
+                <p className="text-xs text-navy-700/45 dark:text-navy-100/45">{c.category} &middot; {c.level}</p>
               </div>
             ),
           },
-          { key: 'duration_hours', label: 'Hours', render: (c) => `${c.duration_hours}h` },
+          { key: 'duration_hours', label: t('dashboardStudent.transcript.columnHours'), render: (c) => `${c.duration_hours}h` },
           {
             key: 'status',
-            label: 'Status',
-            exportValue: (c) => STATUS_LABELS[c.status] ?? c.status,
+            label: t('dashboardStudent.transcript.columnStatus'),
+            exportValue: (c) => t(`dashboardStudent.transcript.status.${STATUS_KEYS[c.status] ?? c.status}`),
             render: (c) => (
               <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusStyles[c.status] ?? ''}`}>
-                {STATUS_LABELS[c.status] ?? c.status}
+                {t(`dashboardStudent.transcript.status.${STATUS_KEYS[c.status] ?? c.status}`)}
               </span>
             ),
           },
           {
             key: 'completed_at',
-            label: 'Completed',
+            label: t('dashboardStudent.transcript.columnCompleted'),
             render: (c) => (c.completed_at ? new Date(c.completed_at).toLocaleDateString() : '—'),
           },
           {
             key: 'grade',
-            label: 'Grade',
+            label: t('dashboardStudent.transcript.columnGrade'),
             exportValue: (c) => (c.grade_percentage != null ? `${c.letter_grade} (${c.grade_percentage}%)` : ''),
             render: (c) =>
               c.grade_percentage != null ? (
-                <span className="font-bold text-navy-900">
-                  {c.letter_grade} <span className="font-normal text-navy-700/50">({c.grade_percentage}%)</span>
+                <span className="font-bold text-navy-900 dark:text-white">
+                  {c.letter_grade} <span className="font-normal text-navy-700/50 dark:text-navy-100/50">({c.grade_percentage}%)</span>
                 </span>
               ) : (
                 '—'
@@ -168,12 +170,12 @@ export default function Transcript() {
           },
           {
             key: 'certificate_issued',
-            label: 'Certificate',
-            exportValue: (c) => (c.certificate_issued ? 'Earned' : ''),
+            label: t('dashboardStudent.transcript.columnCertificate'),
+            exportValue: (c) => (c.certificate_issued ? t('dashboardStudent.transcript.earned') : ''),
             render: (c) =>
               c.certificate_issued ? (
-                <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700">
-                  <IconAward className="h-3.5 w-3.5" /> Earned
+                <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+                  <IconAward className="h-3.5 w-3.5" /> {t('dashboardStudent.transcript.earned')}
                 </span>
               ) : (
                 '—'

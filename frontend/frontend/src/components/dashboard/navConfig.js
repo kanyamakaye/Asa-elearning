@@ -15,88 +15,85 @@ import {
   IconUsers,
 } from '../icons'
 
-const DASHBOARD = { label: 'Dashboard', to: '/dashboard', icon: IconHome, end: true }
-const PROFILE = { label: 'Profile', to: '/dashboard/profile', icon: IconUsers }
-const SETTINGS = { label: 'Settings', to: '/dashboard/settings', icon: IconSettings }
+// `id` is a stable identity (React key, open-submenu tracking) independent
+// of `labelKey` — Sidebar.jsx resolves labelKey via t('dashboardChrome.nav.*')
+// at render time, so the identity used for state/keys never changes when
+// the active language does.
+const DASHBOARD = { id: 'dashboard', labelKey: 'dashboard', to: '/dashboard', icon: IconHome, end: true }
+const PROFILE = { id: 'profile', labelKey: 'profile', to: '/dashboard/profile', icon: IconUsers }
+const SETTINGS = { id: 'settings', labelKey: 'settings', to: '/dashboard/settings', icon: IconSettings }
 
-// A nav entry is either a leaf link ({ label, to, icon, end? }) or a
-// collapsible submenu ({ label, icon, children: [leaf, ...] }).
+// A nav entry is either a leaf link ({ id, labelKey, to, icon, end? }) or a
+// collapsible submenu ({ id, labelKey, icon, children: [leaf, ...] }).
 export const NAV_BY_ROLE = {
   admin: [
     DASHBOARD,
     {
-      label: 'Users',
-      icon: IconUsers,
+      id: 'users', labelKey: 'users', icon: IconUsers,
       children: [
-        { label: 'All Users', to: '/dashboard/users', icon: IconUsers },
-        { label: 'Students', to: '/dashboard/users?role=student', icon: IconUsers },
-        { label: 'Instructors', to: '/dashboard/users?role=instructor', icon: IconUsers },
-        { label: 'Staff', to: '/dashboard/users?role=academic_manager,content_manager,support_staff,admin', icon: IconShield },
+        { id: 'allUsers', labelKey: 'allUsers', to: '/dashboard/users', icon: IconUsers },
+        { id: 'students', labelKey: 'students', to: '/dashboard/users?role=student', icon: IconUsers },
+        { id: 'instructors', labelKey: 'instructors', to: '/dashboard/users?role=instructor', icon: IconUsers },
+        { id: 'staff', labelKey: 'staff', to: '/dashboard/users?role=academic_manager,content_manager,support_staff,admin', icon: IconShield },
       ],
     },
     {
-      label: 'Courses',
-      icon: IconBook,
+      id: 'courses', labelKey: 'courses', icon: IconBook,
       children: [
-        { label: 'All Courses', to: '/dashboard/courses', icon: IconBook },
-        { label: 'Create Course', to: '/dashboard/courses/create', icon: IconBook },
-        { label: 'Categories', to: '/dashboard/categories', icon: IconClipboard },
-        { label: 'Modules & Lessons', to: '/dashboard/courses', icon: IconClipboard },
+        { id: 'allCourses', labelKey: 'allCourses', to: '/dashboard/courses', icon: IconBook },
+        { id: 'createCourse', labelKey: 'createCourse', to: '/dashboard/courses/create', icon: IconBook },
+        { id: 'categories', labelKey: 'categories', to: '/dashboard/categories', icon: IconClipboard },
+        { id: 'modulesLessons', labelKey: 'modulesLessons', to: '/dashboard/courses', icon: IconClipboard },
       ],
     },
-    { label: 'Enrollments', to: '/dashboard/enrollments', icon: IconClipboard },
-    { label: 'Groups', to: '/dashboard/groups', icon: IconUsers },
+    { id: 'enrollments', labelKey: 'enrollments', to: '/dashboard/enrollments', icon: IconClipboard },
+    { id: 'groups', labelKey: 'groups', to: '/dashboard/groups', icon: IconUsers },
     {
-      label: 'Assessments',
-      icon: IconFileText,
+      id: 'assessments', labelKey: 'assessments', icon: IconFileText,
       children: [
-        { label: 'Quizzes', to: '/dashboard/quizzes', icon: IconFileText },
-        { label: 'Create Quiz', to: '/dashboard/quizzes/create', icon: IconFileText },
-        { label: 'Question Banks', to: '/dashboard/question-banks', icon: IconFileText },
-        { label: 'Assignments', to: '/dashboard/assignments', icon: IconFileText },
-        { label: 'Create Assignment', to: '/dashboard/assignments/create', icon: IconFileText },
-        { label: 'Exams', to: '/dashboard/exams', icon: IconFileText },
-        { label: 'Rubrics', to: '/dashboard/rubrics', icon: IconFileText },
-        { label: 'Grading Queue', to: '/dashboard/grading', icon: IconFileText },
+        { id: 'quizzes', labelKey: 'quizzes', to: '/dashboard/quizzes', icon: IconFileText },
+        { id: 'createQuiz', labelKey: 'createQuiz', to: '/dashboard/quizzes/create', icon: IconFileText },
+        { id: 'questionBanks', labelKey: 'questionBanks', to: '/dashboard/question-banks', icon: IconFileText },
+        { id: 'assignments', labelKey: 'assignments', to: '/dashboard/assignments', icon: IconFileText },
+        { id: 'createAssignment', labelKey: 'createAssignment', to: '/dashboard/assignments/create', icon: IconFileText },
+        { id: 'exams', labelKey: 'exams', to: '/dashboard/exams', icon: IconFileText },
+        { id: 'rubrics', labelKey: 'rubrics', to: '/dashboard/rubrics', icon: IconFileText },
+        { id: 'gradingQueue', labelKey: 'gradingQueue', to: '/dashboard/grading', icon: IconFileText },
       ],
     },
-    { label: 'Certificates', to: '/dashboard/certificates', icon: IconAward },
+    { id: 'certificates', labelKey: 'certificates', to: '/dashboard/certificates', icon: IconAward },
     {
-      label: 'Payments',
-      icon: IconCreditCard,
+      id: 'payments', labelKey: 'payments', icon: IconCreditCard,
       children: [
-        { label: 'Transactions', to: '/dashboard/payments', icon: IconCreditCard },
-        { label: 'Refunds', to: '/dashboard/refunds', icon: IconCreditCard },
+        { id: 'transactions', labelKey: 'transactions', to: '/dashboard/payments', icon: IconCreditCard },
+        { id: 'refunds', labelKey: 'refunds', to: '/dashboard/refunds', icon: IconCreditCard },
       ],
     },
     {
-      label: 'Communication',
-      icon: IconChat,
+      id: 'communication', labelKey: 'communication', icon: IconChat,
       children: [
-        { label: 'Announcements', to: '/dashboard/announcements', icon: IconBell },
-        { label: 'Notifications', to: '/dashboard/notifications', icon: IconBell },
-        { label: 'Messages', to: '/dashboard/messages', icon: IconChat },
-        { label: 'Discussions', to: '/dashboard/discussions', icon: IconChat },
+        { id: 'announcements', labelKey: 'announcements', to: '/dashboard/announcements', icon: IconBell },
+        { id: 'notifications', labelKey: 'notifications', to: '/dashboard/notifications', icon: IconBell },
+        { id: 'messages', labelKey: 'messages', to: '/dashboard/messages', icon: IconChat },
+        { id: 'discussions', labelKey: 'discussions', to: '/dashboard/discussions', icon: IconChat },
       ],
     },
     {
-      label: 'Live Classes',
-      icon: IconTrendingUp,
+      id: 'liveClasses', labelKey: 'liveClasses', icon: IconTrendingUp,
       children: [
-        { label: 'All Live Classes', to: '/dashboard/live-classes', icon: IconTrendingUp },
-        { label: 'Schedule Live Class', to: '/dashboard/live-classes/create', icon: IconTrendingUp },
+        { id: 'allLiveClasses', labelKey: 'allLiveClasses', to: '/dashboard/live-classes', icon: IconTrendingUp },
+        { id: 'scheduleLiveClass', labelKey: 'scheduleLiveClass', to: '/dashboard/live-classes/create', icon: IconTrendingUp },
       ],
     },
     {
-      label: 'Support',
-      icon: IconLifeBuoy,
+      id: 'support', labelKey: 'support', icon: IconLifeBuoy,
       children: [
-        { label: 'Tickets', to: '/dashboard/tickets', icon: IconLifeBuoy },
-        { label: 'FAQs', to: '/dashboard/faqs', icon: IconLifeBuoy },
+        { id: 'tickets', labelKey: 'tickets', to: '/dashboard/tickets', icon: IconLifeBuoy },
+        { id: 'faqs', labelKey: 'faqs', to: '/dashboard/faqs', icon: IconLifeBuoy },
       ],
     },
-    { label: 'Audit Logs', to: '/dashboard/audit-logs', icon: IconShield },
-    { label: 'System Settings', to: '/dashboard/coming-soon?label=System%20Settings', icon: IconSettings },
+    { id: 'auditLogs', labelKey: 'auditLogs', to: '/dashboard/audit-logs', icon: IconShield },
+    { id: 'systemSettings', labelKey: 'systemSettings', to: '/dashboard/coming-soon?label=System%20Settings', icon: IconSettings },
     PROFILE,
     SETTINGS,
   ],
@@ -104,30 +101,28 @@ export const NAV_BY_ROLE = {
   academic_manager: [
     DASHBOARD,
     {
-      label: 'Academics',
-      icon: IconBook,
+      id: 'academics', labelKey: 'academics', icon: IconBook,
       children: [
-        { label: 'Courses', to: '/dashboard/courses', icon: IconBook },
-        { label: 'Enrollments', to: '/dashboard/enrollments', icon: IconClipboard },
-        { label: 'Groups', to: '/dashboard/groups', icon: IconUsers },
-        { label: 'Students', to: '/dashboard/users?role=student', icon: IconUsers },
-        { label: 'Instructors', to: '/dashboard/users?role=instructor', icon: IconUsers },
-        { label: 'Certificates', to: '/dashboard/certificates', icon: IconAward },
+        { id: 'courses', labelKey: 'courses', to: '/dashboard/courses', icon: IconBook },
+        { id: 'enrollments', labelKey: 'enrollments', to: '/dashboard/enrollments', icon: IconClipboard },
+        { id: 'groups', labelKey: 'groups', to: '/dashboard/groups', icon: IconUsers },
+        { id: 'students', labelKey: 'students', to: '/dashboard/users?role=student', icon: IconUsers },
+        { id: 'instructors', labelKey: 'instructors', to: '/dashboard/users?role=instructor', icon: IconUsers },
+        { id: 'certificates', labelKey: 'certificates', to: '/dashboard/certificates', icon: IconAward },
       ],
     },
     {
-      label: 'Assessments',
-      icon: IconFileText,
+      id: 'assessments', labelKey: 'assessments', icon: IconFileText,
       children: [
-        { label: 'Quizzes', to: '/dashboard/quizzes', icon: IconFileText },
-        { label: 'Question Banks', to: '/dashboard/question-banks', icon: IconFileText },
-        { label: 'Assignments', to: '/dashboard/assignments', icon: IconFileText },
-        { label: 'Exams', to: '/dashboard/exams', icon: IconFileText },
-        { label: 'Rubrics', to: '/dashboard/rubrics', icon: IconFileText },
-        { label: 'Grading Queue', to: '/dashboard/grading', icon: IconFileText },
+        { id: 'quizzes', labelKey: 'quizzes', to: '/dashboard/quizzes', icon: IconFileText },
+        { id: 'questionBanks', labelKey: 'questionBanks', to: '/dashboard/question-banks', icon: IconFileText },
+        { id: 'assignments', labelKey: 'assignments', to: '/dashboard/assignments', icon: IconFileText },
+        { id: 'exams', labelKey: 'exams', to: '/dashboard/exams', icon: IconFileText },
+        { id: 'rubrics', labelKey: 'rubrics', to: '/dashboard/rubrics', icon: IconFileText },
+        { id: 'gradingQueue', labelKey: 'gradingQueue', to: '/dashboard/grading', icon: IconFileText },
       ],
     },
-    { label: 'Live Classes', to: '/dashboard/live-classes', icon: IconTrendingUp },
+    { id: 'liveClasses', labelKey: 'liveClasses', to: '/dashboard/live-classes', icon: IconTrendingUp },
     PROFILE,
     SETTINGS,
   ],
@@ -135,44 +130,40 @@ export const NAV_BY_ROLE = {
   instructor: [
     DASHBOARD,
     {
-      label: 'My Courses',
-      icon: IconBook,
+      id: 'myCourses', labelKey: 'myCourses', icon: IconBook,
       children: [
-        { label: 'All Courses', to: '/dashboard/courses', icon: IconBook },
-        { label: 'Create Course', to: '/dashboard/courses/create', icon: IconBook },
-        { label: 'Content, Modules & Lessons', to: '/dashboard/courses', icon: IconClipboard },
+        { id: 'allCourses', labelKey: 'allCourses', to: '/dashboard/courses', icon: IconBook },
+        { id: 'createCourse', labelKey: 'createCourse', to: '/dashboard/courses/create', icon: IconBook },
+        { id: 'contentModulesLessons', labelKey: 'contentModulesLessons', to: '/dashboard/courses', icon: IconClipboard },
       ],
     },
     {
-      label: 'Assessments',
-      icon: IconFileText,
+      id: 'assessments', labelKey: 'assessments', icon: IconFileText,
       children: [
-        { label: 'Quizzes', to: '/dashboard/quizzes', icon: IconFileText },
-        { label: 'Question Banks', to: '/dashboard/question-banks', icon: IconFileText },
-        { label: 'Assignments', to: '/dashboard/assignments', icon: IconFileText },
-        { label: 'Exams & Grades', to: '/dashboard/exams', icon: IconFileText },
-        { label: 'Rubrics', to: '/dashboard/rubrics', icon: IconFileText },
-        { label: 'Grading Queue', to: '/dashboard/grading', icon: IconFileText },
+        { id: 'quizzes', labelKey: 'quizzes', to: '/dashboard/quizzes', icon: IconFileText },
+        { id: 'questionBanks', labelKey: 'questionBanks', to: '/dashboard/question-banks', icon: IconFileText },
+        { id: 'assignments', labelKey: 'assignments', to: '/dashboard/assignments', icon: IconFileText },
+        { id: 'examsGrades', labelKey: 'examsGrades', to: '/dashboard/exams', icon: IconFileText },
+        { id: 'rubrics', labelKey: 'rubrics', to: '/dashboard/rubrics', icon: IconFileText },
+        { id: 'gradingQueue', labelKey: 'gradingQueue', to: '/dashboard/grading', icon: IconFileText },
       ],
     },
     {
-      label: 'Students',
-      icon: IconUsers,
+      id: 'students', labelKey: 'students', icon: IconUsers,
       children: [
-        { label: 'Enrolled Students', to: '/dashboard/enrollments', icon: IconUsers },
-        { label: 'Groups', to: '/dashboard/groups', icon: IconUsers },
+        { id: 'enrolledStudents', labelKey: 'enrolledStudents', to: '/dashboard/enrollments', icon: IconUsers },
+        { id: 'groups', labelKey: 'groups', to: '/dashboard/groups', icon: IconUsers },
       ],
     },
     {
-      label: 'Communication',
-      icon: IconChat,
+      id: 'communication', labelKey: 'communication', icon: IconChat,
       children: [
-        { label: 'Discussions', to: '/dashboard/discussions', icon: IconChat },
-        { label: 'Messages', to: '/dashboard/messages', icon: IconChat },
-        { label: 'Announcements', to: '/dashboard/announcements', icon: IconBell },
+        { id: 'discussions', labelKey: 'discussions', to: '/dashboard/discussions', icon: IconChat },
+        { id: 'messages', labelKey: 'messages', to: '/dashboard/messages', icon: IconChat },
+        { id: 'announcements', labelKey: 'announcements', to: '/dashboard/announcements', icon: IconBell },
       ],
     },
-    { label: 'Live Classes', to: '/dashboard/live-classes', icon: IconTrendingUp },
+    { id: 'liveClasses', labelKey: 'liveClasses', to: '/dashboard/live-classes', icon: IconTrendingUp },
     PROFILE,
     SETTINGS,
   ],
@@ -180,27 +171,25 @@ export const NAV_BY_ROLE = {
   student: [
     DASHBOARD,
     {
-      label: 'Learning',
-      icon: IconBook,
+      id: 'learning', labelKey: 'learning', icon: IconBook,
       children: [
-        { label: 'Browse Courses', to: '/dashboard/browse-courses', icon: IconSearch },
-        { label: 'My Courses', to: '/dashboard/my-courses', icon: IconBook },
-        { label: 'Assessments', to: '/dashboard/assessments', icon: IconClipboard },
-        { label: 'Grades', to: '/dashboard/grades', icon: IconTrendingUp },
-        { label: 'Transcript', to: '/dashboard/transcript', icon: IconFileText },
-        { label: 'Certificates', to: '/dashboard/certificates', icon: IconAward },
+        { id: 'browseCourses', labelKey: 'browseCourses', to: '/dashboard/browse-courses', icon: IconSearch },
+        { id: 'myCourses', labelKey: 'myCourses', to: '/dashboard/my-courses', icon: IconBook },
+        { id: 'assessments', labelKey: 'assessments', to: '/dashboard/assessments', icon: IconClipboard },
+        { id: 'grades', labelKey: 'grades', to: '/dashboard/grades', icon: IconTrendingUp },
+        { id: 'transcript', labelKey: 'transcript', to: '/dashboard/transcript', icon: IconFileText },
+        { id: 'certificates', labelKey: 'certificates', to: '/dashboard/certificates', icon: IconAward },
       ],
     },
     {
-      label: 'Communication',
-      icon: IconChat,
+      id: 'communication', labelKey: 'communication', icon: IconChat,
       children: [
-        { label: 'Notifications', to: '/dashboard/notifications', icon: IconBell },
-        { label: 'Messages', to: '/dashboard/messages', icon: IconChat },
-        { label: 'Discussions', to: '/dashboard/discussions', icon: IconChat },
+        { id: 'notifications', labelKey: 'notifications', to: '/dashboard/notifications', icon: IconBell },
+        { id: 'messages', labelKey: 'messages', to: '/dashboard/messages', icon: IconChat },
+        { id: 'discussions', labelKey: 'discussions', to: '/dashboard/discussions', icon: IconChat },
       ],
     },
-    { label: 'Live Classes', to: '/dashboard/live-classes', icon: IconTrendingUp },
+    { id: 'liveClasses', labelKey: 'liveClasses', to: '/dashboard/live-classes', icon: IconTrendingUp },
     PROFILE,
     SETTINGS,
   ],
@@ -208,12 +197,11 @@ export const NAV_BY_ROLE = {
   content_manager: [
     DASHBOARD,
     {
-      label: 'Content',
-      icon: IconBook,
+      id: 'content', labelKey: 'content', icon: IconBook,
       children: [
-        { label: 'Courses', to: '/dashboard/courses', icon: IconBook },
-        { label: 'Categories', to: '/dashboard/categories', icon: IconClipboard },
-        { label: 'Modules & Lessons', to: '/dashboard/courses', icon: IconClipboard },
+        { id: 'courses', labelKey: 'courses', to: '/dashboard/courses', icon: IconBook },
+        { id: 'categories', labelKey: 'categories', to: '/dashboard/categories', icon: IconClipboard },
+        { id: 'modulesLessons', labelKey: 'modulesLessons', to: '/dashboard/courses', icon: IconClipboard },
       ],
     },
     PROFILE,
@@ -223,11 +211,10 @@ export const NAV_BY_ROLE = {
   support_staff: [
     DASHBOARD,
     {
-      label: 'Support',
-      icon: IconLifeBuoy,
+      id: 'support', labelKey: 'support', icon: IconLifeBuoy,
       children: [
-        { label: 'Tickets', to: '/dashboard/tickets', icon: IconLifeBuoy },
-        { label: 'FAQs', to: '/dashboard/faqs', icon: IconLifeBuoy },
+        { id: 'tickets', labelKey: 'tickets', to: '/dashboard/tickets', icon: IconLifeBuoy },
+        { id: 'faqs', labelKey: 'faqs', to: '/dashboard/faqs', icon: IconLifeBuoy },
       ],
     },
     PROFILE,
@@ -235,6 +222,18 @@ export const NAV_BY_ROLE = {
   ],
 }
 
+export const ROLE_LABEL_KEYS = {
+  admin: 'roleAdmin',
+  academic_manager: 'roleAcademicManager',
+  instructor: 'roleInstructor',
+  student: 'roleStudent',
+  content_manager: 'roleContentManager',
+  support_staff: 'roleSupportStaff',
+}
+
+// Kept for any code that still wants a plain English label outside of a
+// React render (t() needs LanguageContext, which isn't always in scope) —
+// Sidebar/Topbar use ROLE_LABEL_KEYS + t() instead.
 export const ROLE_LABELS = {
   admin: 'Administrator',
   academic_manager: 'Academic Manager',

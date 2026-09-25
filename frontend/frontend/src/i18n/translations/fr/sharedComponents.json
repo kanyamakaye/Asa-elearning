@@ -1,0 +1,13 @@
+{
+  "dataTable": {
+    "export": "Exporter",
+    "exportExcel": "Exporter en Excel",
+    "exportPdf": "Exporter en PDF",
+    "searchPlaceholder": "Rechercher…",
+    "noRecords": "Aucun enregistrement trouvé.",
+    "showingRange": "Affichage de {{from}} à {{to}} sur {{total}}",
+    "previous": "Précédent",
+    "pageOf": "Page {{page}} sur {{totalPages}}",
+    "next": "Suivant"
+  }
+}
